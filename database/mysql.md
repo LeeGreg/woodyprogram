@@ -136,6 +136,8 @@
 
     ![image-20190414102025282](/Users/dingyuanjie/Library/Application Support/typora-user-images/image-20190414102025282.png)
 
+    ![image-20181213101139933](https://github.com/xiaojieWoody/woodyprogram/blob/master/img/image-20190414102025282.png)
+
   * 隔离级别实现：锁、MVCC
 
     * ==innodb的临键锁解决幻读，加上Next-key锁==
