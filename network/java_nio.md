@@ -832,22 +832,290 @@ fileChannel.write(buffer, position, buffer, new CompletionHandler<Integer, ByteB
 });
 ```
 
+# BIO Demo
+
+```java
+public class ThreadPoolUtil {
+
+    private ThreadPoolUtil(){}
+
+    private static class ThreadPoolHolder{
+        static ThreadFactory nameThreadFactory = new ThreadFactoryBuilder().setNameFormat("demo-pool-%d").build();
+        private static final ExecutorService threadPool = new ThreadPoolExecutor(5, 200,
+                0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(1024),
+                nameThreadFactory,
+                new ThreadPoolExecutor.AbortPolicy());
+    }
+
+    public static final ExecutorService getThreadPool() {
+        return ThreadPoolHolder.threadPool;
+    }
+}
+```
+
+```java
+public class Test {
+
+    public static void main(String[] args) throws InterruptedException {
+
+        //运行服务器
+        ThreadPoolUtil.getThreadPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    BIOServer.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //防止客户端先于服务器启动前执行代码
+        Thread.sleep(100);
+
+        final char[] op = {'+', '-', '*', '/'};
+        final Random random = new Random(System.currentTimeMillis());
+
+        ThreadPoolUtil.getThreadPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    //随机产生算术表达式
+                    String expression = random.nextInt(10) + "" + op[random.nextInt(4)] +
+                            (random.nextInt(10) + 1);
+                    try {
+                        BIOClient.send(expression);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        Thread.sleep(random.nextInt(1000));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+}
+```
+
+```java
+public class BIOServer {
+
+    private static int DEFAULT_PORT = 7777;
+    // 单例的ServerSocket
+    private static ServerSocket serverSocket;
+
+    public static void start() throws IOException {
+        start(DEFAULT_PORT);
+    }
+
+    //不会被大量访问，不太需要考虑效率，直接进行方法同步就行了
+    public synchronized static void start(int port) throws IOException {
+        if (serverSocket != null) {
+            return;
+        }
+        try {
+            serverSocket = new ServerSocket(port);
+            System.out.println("服务端已启动，端口号：" + port);
+
+            while (true) {
+                // 如果没有客户端连接，则阻塞在accept操作上
+                Socket socket = serverSocket.accept();
+                ThreadPoolUtil.getThreadPool().execute(new ServerHandler(socket));
+            }
+        } finally {
+            if (serverSocket != null) {
+                System.out.println("服务端已关闭");
+                serverSocket.close();
+            }
+        }
+    }
+}
+```
+
+```java
+public class ServerHandler implements Runnable {
+
+    private Socket socket;
+
+    public ServerHandler(Socket socket) {
+        this.socket = socket;
+    }
+
+    @Override
+    public void run() {
+        BufferedReader in = null;
+        PrintWriter out = null;
+
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            //问题所在out = new PrintWriter(socket.getOutputStream());
+            //没有自动冲刷消息到通道 应该 out = new PrintWriter(socket.getOutputStream(), true);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            String expression;
+            int result;
+            while (true) {
+                // 通过BufferReader读取一行，读完返回null
+                if ((expression = in.readLine()) == null) {
+                    break;
+                }
+                System.out.println("服务端收到消息：" + expression);
+                result = Calculator.cal(expression);
+                out.println(result);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //清理 in out socket
+            if(in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(out != null) {
+                out.close();
+            }
+            if(socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}
+```
+
+```java
+public class Calculator {
+
+    public static int cal(String expression) throws Exception {
+        char op = expression.charAt(1);
+        switch (op) {
+            case '+':
+                return (expression.charAt(0) - 48) + (expression.charAt(2) - 48);
+            case '-':
+                return (expression.charAt(0) - 48) - (expression.charAt(2) - 48);
+            case '*':
+                return (expression.charAt(0) - 48) * (expression.charAt(2) - 48);
+            case '/':
+                return (expression.charAt(0) - 48) / (expression.charAt(2) - 48);
+            default:
+                throw new Exception("Calculator error");
+        }
+    }
+}
+```
+
+```java
+public class BIOClient {
+
+//    //默认的端口号
+    private static int DEFAULT_SERVER_PORT = 7777;
+
+    private static String DEFAULT_SERVER_IP = "127.0.0.1";
+
+    public static void send(String expression) throws IOException {
+        send(DEFAULT_SERVER_PORT, expression);
+    }
+
+    public static void send(int port, String expression) throws IOException {
+        System.out.println(("算术表达式为：" + expression));
+        Socket socket = null;
+
+        BufferedReader in = null;
+        PrintWriter out = null;
+
+        try {
+            socket = new Socket(DEFAULT_SERVER_IP, port);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            out.println(expression);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            System.out.println(("结果为：" + in.readLine()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            //清理 in、out、socket
+            //不清理会导致阻塞
+            if(in != null) {
+                in.close();
+            }
+            if(out != null) {
+                out.close();
+            }
+            if(socket != null) {
+                socket.close();
+            }
+        }
+    }
+}
+```
+
 # NIO Demo
 
 ```java
-//server
-public class Server {
+public class CodecUtil {
+    public static ByteBuffer read(SocketChannel channel) {
+        // 注意，不考虑拆包的处理
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        try {
+            int count = channel.read(buffer);
+            if (count == -1) {
+                return null;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return buffer;
+    }
+
+    public static void write(SocketChannel channel, String content) {
+        // 写入 Buffer
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        try {
+            buffer.put(content.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        // 写入 Channel
+        buffer.flip();
+        try {
+            // 注意，不考虑写入超过 Channel 缓存区上限。
+            channel.write(buffer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String newString(ByteBuffer buffer) {
+        buffer.flip();
+        byte[] bytes = new byte[buffer.remaining()];
+        System.arraycopy(buffer.array(), buffer.position(), bytes, 0, buffer.remaining());
+        try {
+            return new String(bytes, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+```
+
+```java
+public class NIOServer {
 
     private Integer port;
     private Charset charset = Charset.forName("UTF-8");
     private Selector selector;
 
-    public static void main(String[] args) throws IOException {
-       new Server(8082).listener();
-    }
-
     //启动服务端
-    public Server(Integer port) throws IOException {
+    public NIOServer(Integer port) throws IOException {
         this.port = port;
         ServerSocketChannel server = ServerSocketChannel.open();
         server.configureBlocking(false);
@@ -857,13 +1125,17 @@ public class Server {
         System.out.println("服务端已启动，监听端口：" + this.port);
     }
 
+    public static void main(String[] args) throws IOException {
+        new NIOServer(8082).listener();
+    }
+
     //监听事件
     public void listener() {
         try {
             //轮询
             while (true) {
-                int wait = selector.select();
-                if(wait == 0) {
+                int wait = selector.select(30 * 1000L);
+                if (wait == 0) {
                     continue;
                 }
                 Set<SelectionKey> selectionKeys = selector.selectedKeys();
@@ -871,8 +1143,8 @@ public class Server {
                 while (keyIterator.hasNext()) {
                     SelectionKey key = keyIterator.next();
                     keyIterator.remove();
-                    if(!key.isValid()) {
-                    	continue;     //忽略无效的SelectionKey
+                    if (!key.isValid()) {
+                        continue;     //忽略无效的SelectionKey
                     }
                     //处理事件
                     process(key);
@@ -885,30 +1157,51 @@ public class Server {
 
     //处理事件
     private void process(SelectionKey key) throws IOException {
-        if(key.isAcceptable()) {
-            ServerSocketChannel server =(ServerSocketChannel)key.channel();
-            SocketChannel client = server.accept();
-            client.configureBlocking(false);
-            client.register(selector, SelectionKey.OP_READ);
-            client.write(charset.encode("已连接到服务器，请输入昵称："));
-
-        } else if(key.isReadable()) {
-            try {
-                //服务器端从通道中读取客户端发送的信息到缓存
-                SocketChannel client = (SocketChannel)key.channel();
-                StringBuilder msg = new StringBuilder();
-                ByteBuffer buffer = ByteBuffer.allocate(1024);
-                while (client.read(buffer) > 0) {
-                    buffer.flip();
-                    msg.append(charset.decode(buffer));
-                }
-                //将此客户端发送的消息，通过服务器器端广播给其他客户端
-                broadcast(client, msg.toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (key.isAcceptable()) {
+            handleAcceptableKey(key);
         }
+        if (key.isReadable()) {
+            handleReadableKey(key);
+        }
+    }
 
+    private void handleAcceptableKey(SelectionKey key) throws IOException {
+        ServerSocketChannel server = (ServerSocketChannel) key.channel();
+        SocketChannel client = server.accept();
+        client.configureBlocking(false);
+        client.register(selector, SelectionKey.OP_READ);
+        client.write(charset.encode("已连接到服务器，请输入昵称："));
+    }
+
+    private void handleReadableKey(SelectionKey key) throws IOException {
+        try {
+            //服务器端从通道中读取客户端发送的信息到缓存
+            SocketChannel client = (SocketChannel) key.channel();
+            ByteBuffer readBuffer = CodecUtil.read(client);
+            // 处理连接已经断开的情况
+            if (readBuffer == null) {
+                System.out.println("断开Channel");
+                client.register(selector, 0);
+                return;
+            }
+            // 打印数据
+            if (readBuffer.position() > 0) {
+                String content = CodecUtil.newString(readBuffer);
+                System.out.println("读取数据客户端数据：" + content);
+                //将此客户端发送的消息，通过服务器器端广播给其他客户端
+                broadcast(client, content.toString());
+            }
+//            StringBuilder msg = new StringBuilder();
+//            ByteBuffer buffer = ByteBuffer.allocate(1024);
+//            while (client.read(buffer) > 0) {
+//                buffer.flip();
+//                msg.append(charset.decode(buffer));
+//            }
+            //将此客户端发送的消息，通过服务器器端广播给其他客户端
+//            broadcast(client, msg.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     //服务器广播消息给客户端
@@ -917,8 +1210,8 @@ public class Server {
         Set<SelectionKey> keys = selector.keys();
         for (SelectionKey key : keys) {
             SelectableChannel channel = key.channel();
-            if(channel instanceof SocketChannel && channel != client) {
-                SocketChannel targetChannel = (SocketChannel)channel;
+            if (channel instanceof SocketChannel && channel != client) {
+                SocketChannel targetChannel = (SocketChannel) channel;
                 targetChannel.write(charset.encode(msg));
             }
         }
@@ -927,7 +1220,7 @@ public class Server {
 ```
 
 ```java
-public class Client {
+public class NIOClient {
 
     //客户端连接服务器端
     private InetSocketAddress serverAddress = new InetSocketAddress("localhost", 8082);
@@ -935,23 +1228,25 @@ public class Client {
     private Charset charset = Charset.forName("UTF-8");
     private SocketChannel client;     //当前客户端
 
-    public static void main(String[] args) throws IOException {
-       new Client().session();
-    }
-
     //启动客户端，连接服务器
-    public Client() throws IOException {
+    public NIOClient() throws IOException {
         client = SocketChannel.open(serverAddress);
         client.configureBlocking(false);
-        selector = selector.open();
+        selector = Selector.open();
         //注册可读事件，接收服务端发送给自己的的消息
         client.register(selector, SelectionKey.OP_READ);
     }
 
+    public static void main(String[] args) throws IOException {
+        new NIOClient().session();
+    }
+
     //客户端开始读写线程
     public void session() {
-        new Reader().start();
-        new Writer().start();
+        ThreadPoolUtil.getThreadPool().execute(new Reader());
+        ThreadPoolUtil.getThreadPool().execute(new Writer());
+//        new Reader().start();
+//        new Writer().start();
     }
 
     //客户端读操作（读是"被动的"，需要轮询有谁给自己发送消息）
@@ -982,13 +1277,18 @@ public class Client {
             //读取服务器端发送过来的数据
             if (key.isReadable()) {
                 SocketChannel client = (SocketChannel) key.channel();
-                ByteBuffer buffer = ByteBuffer.allocate(1024);
-                StringBuilder msg = new StringBuilder();
-                while (client.read(buffer) > 0) {
-                    buffer.flip();
-                    msg.append(charset.decode(buffer));
+//                ByteBuffer buffer = ByteBuffer.allocate(1024);
+//                StringBuilder msg = new StringBuilder();
+//                while (client.read(buffer) > 0) {
+//                    buffer.flip();
+//                    msg.append(charset.decode(buffer));
+//                }
+//                System.out.println("收到服务器的信息为：" + msg);
+                ByteBuffer readBuffer = CodecUtil.read(client);
+                if(readBuffer.position() > 0) {
+                    String msg = CodecUtil.newString(readBuffer);
+                    System.out.println("收到服务器的信息为：" + msg);
                 }
-                System.out.println("收到服务器的信息为：" + msg);
             }
         }
     }
@@ -1000,16 +1300,32 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
                 String msg = scanner.nextLine();
-                try {
-                    client.write(charset.encode(msg));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                try {
+////                    client.write(charset.encode(msg));
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+                CodecUtil.write(client, msg);
             }
             scanner.close();
         }
     }
 }
+```
+
+# TODO
+
+```java
+//NIOServer
+/**
+ * 网络多客户端聊天室
+ * 功能1： 客户端通过Java NIO连接到服务端，支持多客户端的连接
+ * 功能2：客户端初次连接时，服务端提示输入昵称，如果昵称已经有人使用，提示重新输入，如果昵称唯一，则登录成功，之后发送消息都需要按照规定格式带着昵称发送消息
+ * 功能3：客户端登录后，发送已经设置好的欢迎信息和在线人数给客户端，并且通知其他客户端该客户端上线
+ * 功能4：服务器收到已登录客户端输入内容，转发至其他登录客户端。
+ * 
+ * TODO 客户端下线检测
+ */
 ```
 
 
