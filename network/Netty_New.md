@@ -6,20 +6,35 @@
 
 # Netty简介
 
-- Netty 是一款`异步`的`事件驱动`的`NIO`网络应用程序框架，支持快速地开发可维护的高性能的面向协议（TCP、UDP和文件传输）的服务器和客户端
-  - 封装了JDK底层BIO和NIO模型，提供高度可用的API
+- Netty 是一款异步事件驱动的网络应用程序框架和工具用于简化网络编程，例如TCP和UDP套接字服务器，也是一个异步NIO客户端-服务端框架，主要用于开发Java网络应用程序（如协议服务器和客户端）
+  - 统一的 API，支持阻塞和非阻塞传输（封装了JDK底层BIO和NIO模型，提供高度可用的API）
   - 自带编码解码器解决拆包粘包问题，用户只用关心业务逻辑
   - 精心设计的Reactor线程模型支持高并发海量连接
   - 自带协议栈，无需用户关心（HTTP协议、WebSocket协议、自定义协议）
+  - 链接逻辑组件以支持复用
+- NIO，非阻塞IO/异步IO，是计算机操作系统对输入输出的一种处理方式：
+  - 发起IO请求的线程不等IO操作完成，就继续执行随后的代码，IO结果用其他方式通知发起IO请求的程序
+- BIO，阻塞IO/同步IO，
+  - 发起IO请求的线程不从正在调用的IO操作函数返回（即被阻塞），直至IO操作完成
 - 作为一个异步 NIO 框架，Netty 的所有 IO 操作都是异步非阻塞的，通过 FutureListener机制，用户可以方便的主动获取或者通过通知机制获得 IO 操作结果
 - 使用场景
   1. 互联⽹网领域 ：构建高性能RPC框架基础通信框架，如Dubbo
   2. 大数据领域、游戏行业、企业软件、通信行业
-- 设计
-  1. 统一的 API，支持多种传输类型，阻塞的和非阻塞的
-  2. 简单而强大的线程模型
-  3. 真正的无连接数据报套接字支持
-  4. 链接逻辑组件以支持复用
+- Reacotr设计模式
+  - 定义：是一种处理服务请求并发提交到一个或者多个服务处理程序的事件设计模式
+    - 当请求抵达后，服务处理程序使用解多路分配策略，然后同步地派发这些请求至相关的请求处理程序
+    - 单线程的，但是可以在多线程环境中存在
+  - 结构
+    - **资源：** 可供系统输入或输出的资源
+    - **同步事件解多路器：** 使用一个事件循环 ，以阻止所有的资源，当可以启动一个同步操作上的资源不会阻塞，多路分解器发送资源到分发器
+    - **分发器：** 处理请求程序的注册和注销，将资源分发到相关的处理程序
+    - **请求处理器：** 应用程序定义的请求处理程序（同步调用）和相关资源
+  - 优点：
+    - 可完全分离程序特定代码，这意味着应用可分为模块化的，可复用的组件
+    - 由于请求的处理程序是同步调用，可允许简单粗粒并发而不必添加多线程并发系统的复杂性
+  - 限制：
+    - 请求处理器只会被同步调用，限制最大并发数
+    - 可扩展性不仅受限于请求处理器的同步调用，同时也受解多路器限制
 
 # Netty架构图
 
@@ -34,15 +49,15 @@
   - HTTP Tunnel ：HTTP 通道的传输实现
   - In-VM Piple ：JVM 内部的传输实现
 - Protocol Support ：协议支持。
-  - Netty 对于一些通⽤协议的编解码实现。例如:HTTP、Redis、DNS 等等
+  - Netty 对于一些通⽤协议的编解码实现。例如:HTTP、WebSocket、Redis、DNS 等等
 
-![image-20181216202936512](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181216202936512-4963376.png)
+![image-20190420115756469](/Users/dingyuanjie/Library/Application Support/typora-user-images/image-20190420115756469.png)
 
 # 核心组件
 
 ## 关联关系
 
-- Netty 通过触发事件将 Selector 从应用程序中抽象出来，消除了所有本来将需要手动编写的派发代码。在内部，将会为每个 Channel 分配一个 EventLoop，用以处理所有事件：
+- Netty 通过触发事件将 Selector 从应用程序中抽象出来，消除了所有本来将需要手动编写的派发代码。在内部，将会为每个 Channel 指定一个 EventLoop，用以处理所有事件：
   1. 注册感兴趣的事件
   2. 将事件派发给 ChannelHandler
   3. 安排进一步的动作
@@ -66,9 +81,10 @@
     //被回调触发的 ChannelHandler
     public class ConnectHandler extends ChannelInboundHandlerAdapter { 
         //当一个新的连接已经被建立时channelActive(ChannelHandler Context)将会被调用
-        @Override
+      @Override
     	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-    		System.out.println("Client " + ctx.channel().remoteAddress() + " connected"); 	}
+    		System.out.println("Client " + ctx.channel().remoteAddress() + " connected"); 	
+      }
     }
     ```
 
@@ -76,61 +92,70 @@
 
   - Future 提供了另一种在操作完成时通知应用程序的方式。
 
-  - JDK的Future只允许手动检查对应的操作是否已经完成，或者一直阻塞直到它完成
+    - JDK的Future只允许手动检查对应的操作是否已经完成，或者一直阻塞直到它完成
 
-  - Netty的ChannelFuture，用于在执行异步操作的时候使用
+    - Netty的ChannelFuture，用于在执行异步操作的时候使用
 
-    - ChannelFuture— 异步通知（Netty 中所有的 I/O 操作都是异步非阻塞的）
-    - ==Netty 提供了ChannelFuture接口，其addListener()方法注册了一个ChannelFutureListener，以
-      便在某个操作完成时调用(无论是否成功)得到通知——监听器的回调方法operationComplete()==
-    - 可以将 ChannelFuture 看作是将来要执行的操作的结果的占位符。它究竟什么时候被执行则可能取决于若干的因素，因此不可能准确地预测，但是可以肯定的是它将会被执行。此外，所有属于同一个 Channel 的操作都被保证其将以它们被调用的顺序被执行
-    - 由ChannelFutureListener提供的通知机制消除了手动检查对应的操作是否完成的必要
-    - 每个 Netty 的出站 I/O 操作都将返回一个 ChannelFuture（因为是异步通知，所以都不会阻塞）
-    - 线程不用阻塞以等待对应的操作完成，所以它可以同时做其他的工作，从而更加有效地利用资源
-
-    ```java
-    //回调
-    Channel channel = ...;
-    //异步地连接 到远程节点
-    ChannelFuture future = channel.connect( new InetSocketAddress("192.168.0.1", 25));
-    //注册一个 ChannelFutureListener 以便在操作完成时获得通知
-    future.addListener(new ChannelFutureListener() {
-     //检查操作的状态
-     @Override
-     public void operationComplete(ChannelFuture future) {
-         // 如果操作是成功的，则创建 一个 ByteBuf 以持有数据
-         if (future.isSuccess()){
-             ByteBuf buffer = Unpooled.copiedBuffer("Hello",Charset.defaultCharset());
-             // 将数据异步地发送到远程节点。 返回一个 ChannelFuture
-             ChannelFuture wf = future.channel().writeAndFlush(buffer);
-         } else {
-             // 如果发生错误，则访问描述原因 的 Throwable
-             Throwable cause = future.cause();
-             cause.printStackTrace();
+      - ChannelFuture— 异步通知（Netty 中所有的 I/O 操作都是异步非阻塞的）
+      
+      - ==Netty 提供了ChannelFuture接口，其addListener()方法注册了一个ChannelFutureListener，以
+        便在某个操作完成时调用(无论是否成功)得到通知——监听器的回调方法operationComplete()==
+      
+      - 可以将 ChannelFuture 看作是将来要执行的操作的结果的占位符。
+      
+      - 它究竟什么时候被执行则可能取决于若干的因素，因此不可能准确地预测，但是可以肯定的是它将会被执行。此外，所有属于同一个 Channel 的操作都被保证其将以它们被调用的顺序被执行
+      
+      - 由ChannelFutureListener提供的通知机制消除了手动检查对应的操作是否完成的必要
+      
+      - 每个 Netty 的==出站 I/O 操作==都将返回一个 ChannelFuture（因为是异步通知，所以都不会阻塞）
+      
+      - 线程不用阻塞以等待对应的操作完成，所以它可以同时做其他的工作，从而更加有效地利用资源
+      
+        ```java
+        //回调
+        Channel channel = ...;
+        //异步地连接 到远程节点
+        ChannelFuture future = channel.connect( new InetSocketAddress("192.168.0.1", 25));
+        //注册一个 ChannelFutureListener 以便在操作完成时获得通知
+        future.addListener(new ChannelFutureListener() {
+         //检查操作的状态
+         @Override
+         public void operationComplete(ChannelFuture future) {
+             // 如果操作是成功的，则创建 一个 ByteBuf 以持有数据
+             if (future.isSuccess()){
+                 ByteBuf buffer = Unpooled.copiedBuffer("Hello",Charset.defaultCharset());
+                 // 将数据异步地发送到远程节点。 返回一个 ChannelFuture
+                 ChannelFuture wf = future.channel().writeAndFlush(buffer);
+             } else {
+                 // 如果发生错误，则访问描述原因 的 Throwable
+                 Throwable cause = future.cause();
+                 cause.printStackTrace();
+             }
          }
-     }
-    );
-    ```
+        );
+        ```
 
 - 事件和ChannelHandler
 
-  - Netty 使用不同的事件来通知我们状态的改变或者是操作的状态。这使得我们能够基于已经发生的事件来触发适当的动作：记录日志、数据转换、流控制、应用程序逻辑
+  - Netty 使用不同的事件来通知我们状态的改变或者是操作的状态。
 
-  - ==Netty 是一个网络编程框架，所以事件是按照它们与入站或出站数据流的相关性进行分类的==
+    - 这能够基于已经发生的事件来触发适当的动作：记录日志、数据转换、流控制、应用程序逻辑
 
+  - ==Netty 是一个网络编程框架，所有事件是按照它们与入站或出站数据流的相关性进行分类的==
+  
     - 可能由`入站数据`或者相关的状态更改而触发的事件包括：
       1. ==连接已被激活或者连接失活==
       2. ==数据读取==
       3. 用户事件
       4. 错误事件
     - `出站事件`是未来将会触发的某个动作的操作结果
-      1. ==打开或者关闭到远程节点的连接==
+    1. ==打开或者关闭到远程节点的连接==
       2. ==将数据写到或者冲刷到套接字==
 
   - ==每个事件都可以被分发给 ChannelHandler 类中的某个用户实现的方法，将事件驱动范式直接转换为应用程序构件块==
 
     ![image-20181025102529305](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181025102529305.png)
-
+  
     - 在内部，ChannelHandler 自己也使用了事件和 Future，使得它们也成为了应用程序将使用的相同抽象的消费者
 
 ## EventLoop
@@ -167,7 +192,7 @@
     while (!terminated) {
     	List<Runnable> readyEvents = blockUntilEventsReady(); 
         for (Runnable ev: readyEvents) {
-    		ev.run(); 
+    			ev.run(); 
         }
     }
     ```
@@ -210,7 +235,7 @@
     	new Runnable() {
             @Override
             public void run() {
-    			System.out.println("Run every 60 seconds"); 
+    					System.out.println("Run every 60 seconds"); 
             }
     }, 60, 60, TimeUnit.Seconds);
     
@@ -221,7 +246,9 @@
 
 - 线程管理
 
-  - Netty线程模型的卓越性能取决于对于当前执行的Thread的身份的确定 ，也就是说，确定它是否是分配给当前Channel以及它的EventLoop的那一个线程（EventLoop将负责处理一个Channel的整个生命周期内的所有事件）
+  - Netty线程模型的卓越性能取决于对于当前执行的Thread的身份的确定 
+
+    - 也就是说，确定它是否是分配给当前Channel以及它的EventLoop的那一个线程（EventLoop将负责处理一个Channel的整个生命周期内的所有事件）
 
   - ==如果(当前)调用线程正是支撑 EventLoop 的线程，那么所提交的代码块将会被(直接) 执行。否则，EventLoop 将调度该任务以便稍后执行，并将它放入到内部队列中。==
 
@@ -230,6 +257,7 @@
     ![image-20181029232009722](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181029232009722.png)
 
   - 永远不要将一个长时间运行的任务放入到执行队列中，因为它将阻塞需要在同一线程上执行的任何其他任务。如果必须要进行阻塞调用或者执行长时间运行的任务，建议使用一个专门的EventExecutor
+
   - 如同传输所采用的不同的事件处理实现一样，所使用的线程模型也可以强烈地影响到排队的任务对整体系统性能的影响
 
 - EventLoop线程的分配
@@ -250,7 +278,9 @@
 
 ## Channel
 
-- Channel 是对 socket 的装饰或者门面，其封装了对socket 的原子操作。传入或者传出数据的载体，可以被打开或者被关闭，连接或者断开连接
+- Channel 是对 socket 的装饰或者门面，其封装了对socket 的原子操作。
+
+  - 传入或者传出数据的载体，可以被打开或者被关闭，连接或者断开连接
 
 - Netty 实现的客户端NIO 套接字通道是 NioSocketChannel
 
@@ -270,11 +300,14 @@
 
 - Channel的注册过程
 
-  - Channel 注册过程所做的工作就是将 Channel 与对应的 EventLoop 关联, 因此这也体现了, 在 Netty 中, 每个 Channel 都会关联一个特定的 EventLoop, 并且这个 Channel中的所有 IO 操作都是在这个 EventLoop 中执行的; 当关联好 Channel 和 EventLoop 后, 会继续调用底层的 Java NIO SocketChannel 的 register 方法, 将底层的 Java NIOSocketChannel 注册到指定的 selector 中. 通过这两步, 就完成了 Netty Channel 的注册过程
+  - Channel 注册过程所做的工作就是将 Channel 与对应的 EventLoop 关联
+    -  因此这也体现了, 在 Netty 中, 每个 Channel 都会关联一个特定的 EventLoop, 并且这个 Channel中的所有 IO 操作都是在这个 EventLoop 中执行的; 
+    - 当关联好 Channel 和 EventLoop 后, 会继续调用底层的 Java NIO SocketChannel 的 register 方法, 将底层的 Java NIOSocketChannel 注册到指定的 selector 中. 
+    - 通过这两步, 就完成了 Netty Channel 的注册过程
 
 - NIO-选择器
 
-  - ==选择器背后的基本概念是充当一个注册表，在那里将可以请求在 Channel 的状态发生变化时得到通知==。可能的状态变化有：
+  - 选择器背后的基本概念是充当一个==注册表==，在那里将可以请求在 Channel 的状态发生变化时得到通知。可能的状态变化有：
 
     1. ==新的 Channel 已被接受并且就绪==
     2. ==Channel 连接已经完成==
@@ -328,7 +361,7 @@
           // 计算第一个字节 的偏移量
       	int offset = heapBuf.arrayOffset() + heapBuf.readerIndex(); 
           //获得可读字节数
-          int length = heapBuf.readableBytes();
+        int length = heapBuf.readableBytes();
           //使用数组、偏移量和长度作为参数调用自定义方法
       	handleArray(array, offset, length);
       }
@@ -363,7 +396,7 @@
 
     - 为多个 ByteBuf 提供一个聚合视图
 
-    - etty 通过一个 ByteBuf 子类——CompositeByteBuf——实现了这个模式，它提供了一个将多个缓冲区表示为单个合并缓冲区的虚拟表示
+    - netty 通过一个 ByteBuf 子类——CompositeByteBuf——实现了这个模式，它提供了一个将多个缓冲区表示为单个合并缓冲区的虚拟表示
 
     - 发送的消息往往只修改一部分，比如消息体一样，改变消息头。这里就不用每次都重新分配缓存了
 
@@ -566,32 +599,37 @@
       }
   });
   //连接到远程节点并返回一个 ChannelFuture，其将会在连接操作完成后接收到通知
-  //在调用 bind()或者 connect()方法之前必须先调用group()、channel()、handler()设置所需的组件
+  //在调用bind()或者connect()方法之前必须先调用group()、channel()、handler()设置所需的组件
   ChannelFuture future = bootstrap.connect(new InetSocketAddress("www.manning.com",80)); 
   future.addListener(new ChannelFutureListener() {
   	@Override
   	public void operationComplete(ChannelFuture channelFuture)throws Exception {
   		if (channelFuture.isSuccess()) {
   			System.out.println("Connection established"); 
-          } else {
+      } else {
   			System.err.println("Connection attempt failed"); 
-          } 
-      }
+      } 
+   }
   });
   ```
 
-  - `option`设置 ChannelOption，设置TCP参数，其将被应用到每个新创建的Channel 的 ChannelConfig。这些选项将会通过bind()或者 connect()方法设置到 Channel。这个方法在 Channel 已经被创建后再调用将不会有任何的效果
+  - `option`设置 ChannelOption，设置TCP参数，其将被应用到每个新创建的Channel 的 ChannelConfig。
 
-  - 可用的 ChannelOption 包括了底层连接的详细信息，如keep-alive 或者超时属性以及缓冲区设置
+    - 这些选项将会通过bind()或者 connect()方法设置到 Channel。
+    - 这个方法在 Channel 已经被创建后再调用将不会有任何的效果
+    - 可用的 ChannelOption 包括了底层连接的详细信息，如keep-alive 或者超时属性以及缓冲区设置
 
   - `attr`指定新创建的 Channel 的属性值，在 Channel 被创建后将不会有任何的效果，通过bind()或者 connect()方法设置到 Channel
 
-  - 像 Channel 这样的组件可能甚至会在正常的 Netty 生命周期之外被使用。在某些常用的属性和数据不可用时，Netty 提供了`AttributeMap`抽象(一个由 Channel 和引导类提供的集合)以及` AttributeKey`<T>(一个用于插入和获取属性值的泛型类)。使用这些工具，便可以安全地将任何类型的数据项与客户端和服务器 Channel(包含 ServerChannel 的子 Channel)相关联了
+  - 像 Channel 这样的组件可能甚至会在正常的 Netty 生命周期之外被使用。
+
+    - 在某些常用的属性和数据不可用时，Netty 提供了`AttributeMap`抽象(一个由 Channel 和引导类提供的集合)以及` AttributeKey`<T>(一个用于插入和获取属性值的泛型类)。
+    - 使用这些工具，便可以安全地将任何类型的数据项与客户端和服务器 Channel(包含 ServerChannel 的子 Channel)相关联了
 
     ```java
     final AttributeKey<Integer> id = new AttributeKey<Integer>("ID");
     bootstrap.option(ChannelOption.SO_KEEPALIVE,true)
-    		 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000); 
+    		     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000); 
     bootstrap.attr(id, 123456);
     
     Integer idValue = ctx.channel().attr(id).get();
@@ -612,7 +650,7 @@
       .handler(new SimpleChannelInboundHandler<DatagramPacket>(){
       	@Override
       	public void channelRead0(ChannelHandlerContext ctx,DatagramPacket msg) throws Exception {
-                   // Do something with the packet
+      		// Do something with the packet
       	}
       }); 
       //调用 bind()方法，因为该协议是无连接的
@@ -621,7 +659,7 @@
       	public void operationComplete(ChannelFuture channelFuture)throws Exception {
       	if (channelFuture.isSuccess()) {
       		System.out.println("Channel bound"); 
-       } else {
+        } else {
       		System.err.println("Bind attempt failed");
       		channelFuture.cause().printStackTrace(); 
        }
@@ -643,23 +681,23 @@
   NioEventLoopGroup group = new NioEventLoopGroup(); 
   ServerBootstrap bootstrap = new ServerBootstrap(); 
   bootstrap.group(group)
-  .channel(NioServerSocketChannel.class)
+           .channel(NioServerSocketChannel.class)
   //设置将被添加到已被接受的子Channel的ChannelPipeline中的ChannelHandler,将由已被接受的子 Channel处理，其代表一个绑定到远程节点的套接字
-  .childHandler(new SimpleChannelInboundHandler<ByteBuf>() {
-  	@Override
-  	protected void channelRead0(ChannelHandlerContext ctx,ByteBuf byteBuf) throws Exception { 
-          System.out.println("Received data");
-  	} 
-  });
+           .childHandler(new SimpleChannelInboundHandler<ByteBuf>() {
+  	           @Override
+  	           protected void channelRead0(ChannelHandlerContext ctx,ByteBuf byteBuf) throws Exception { 
+                   System.out.println("Received data");
+  	          } 
+            });
   ChannelFuture future = bootstrap.bind(new InetSocketAddress(8080)); future.addListener(new ChannelFutureListener() {
   	@Override
   	public void operationComplete(ChannelFuture channelFuture)throws Exception {
   		if (channelFuture.isSuccess()) {
   			System.out.println("Server bound"); 
-          } else {
+      } else {
   			System.err.println("Bound attempt failed");
-  				channelFuture.cause().printStackTrace();
-          }
+  			channelFuture.cause().printStackTrace();
+  		}
   	}                                                                                 );
   ```
 
@@ -670,11 +708,12 @@
 
   - 编写 Netty 应用程序的一个一般准则：==尽可能地重用 EventLoop，以减少线程创建所带来的开销==
 
-  - 服务器正在处理一个客户端的请求，这个请求需要它充当第三方系统的客户端。当一个应用程序(如一个代理服务器)必须要和组织现有的系统(如 Web 服务或者数据库)集成时，就可能发生这种情况。在这种情况下，将需要从已经被接受的子 Channel 中引导一个客户端 Channel
+  - 服务器正在处理一个客户端的请求，这个请求需要它充当第三方系统的客户端。
 
-  - 通过Bootstrap为每个新创建的客户端 Channel 定义另一个 EventLoop。这会产生额外的线程，以及在已被接受的子 Channel 和客户端 Channel 之间交换数据时不可避免的上下文切换
-
-  - 一个更好的解决方案是：通过将已被接受的子 Channel 的 EventLoop 传递给 Bootstrap的 group()方法来共享该 EventLoop。因为分配给 EventLoop 的所有 Channel 都使用同一个线程，所以这避免了额外的线程创建，以及相关的上下文切换
+    - 当一个应用程序(如一个代理服务器)必须要和组织现有的系统(如 Web 服务或者数据库)集成时，就可能发生这种情况。
+    - 在这种情况下，将需要从已经被接受的子 Channel 中引导一个客户端 Channel
+    - 通过Bootstrap为每个新创建的客户端 Channel 定义另一个 EventLoop。这会产生额外的线程，以及在已被接受的子 Channel 和客户端 Channel 之间交换数据时不可避免的上下文切换
+    - 一个更好的解决方案是：通过将已被接受的子 Channel 的 EventLoop 传递给 Bootstrap的 group()方法来共享该 EventLoop。因为分配给 EventLoop 的所有 Channel 都使用同一个线程，所以这避免了额外的线程创建，以及相关的上下文切换
 
     ![image-20181030111616868](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181030111616868.png)
 
@@ -684,40 +723,44 @@
     bootstrap.group(new NioEventLoopGroup(), new NioEventLoopGroup())
     .channel(NioServerSocketChannel.class) 
     .childHandler(new SimpleChannelInboundHandler<ByteBuf>() { 
-        ChannelFuture connectFuture;
+      ChannelFuture connectFuture;
     	@Override
     	public void channelActive(ChannelHandlerContext ctx) throws Exception {
     		Bootstrap bootstrap = new Bootstrap(); 		
             bootstrap.channel(NioSocketChannel.class)
-                .handler(new SimpleChannelInboundHandler<ByteBuf>() { 
-                    @Override
-    				protected void channelRead0( ChannelHandlerContext ctx, ByteBuf in) throws Exception { 
-                        System.out.println("Received data");
-    				} 
-                  });
+                     .handler(new SimpleChannelInboundHandler<ByteBuf>() { 
+                         @Override
+    				              protected void channelRead0( ChannelHandlerContext ctx, ByteBuf in) throws Exception { 
+                            System.out.println("Received data");
+    				             } 
+                      });
             //尽可能地重用 EventLoop，以减少线程创建所带来的开销
             // 使用与分配给已被接受的子 Channel 相同的 EventLoop
             bootstrap.group(ctx.channel().eventLoop()); 
             connectFuture = bootstrap.connect(new InetSocketAddress("www.manning.com", 80));
     	}
-        @Override
+      
+      @Override
     	protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
-            // 当连接完成时，执行一 些数据操作(如代理）
+        // 当连接完成时，执行一 些数据操作(如代理）
     		if (connectFuture.isDone()) {
-    		// do something with the data
+    		   // do something with the data
     		}
-    	} );
-        ChannelFuture future = bootstrap.bind(new InetSocketAddress(8080)); 		
-        future.addListener(new ChannelFutureListener() {
-    		@Override
-    		public void operationComplete(ChannelFuture channelFuture)throws Exception {
-    			if (channelFuture.isSuccess()) {
-    				System.out.println("Server bound"); 
-                } else {
-    				System.err.println("Bind attempt failed");
-    				channelFuture.cause().printStackTrace(); 
-                }
-    	});
+    	} 
+     );
+      
+      ChannelFuture future = bootstrap.bind(new InetSocketAddress(8080)); 		
+      future.addListener(new ChannelFutureListener() {
+        @Override
+        public void operationComplete(ChannelFuture channelFuture)throws Exception {
+          if (channelFuture.isSuccess()) {
+            System.out.println("Server bound"); 
+          } else {
+            System.err.println("Bind attempt failed");
+            channelFuture.cause().printStackTrace(); 
+          }
+        }
+    	);
     ```
 
 - 引导过程中添加多个 ChannelHandler
@@ -804,7 +847,9 @@
 
       ![image-20181214225622121](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181214225622121-4799382.png)
 
-    - 每个方法都带了ChannelHandlerContext作为参数，具体作用是，==在每个回调事件里面，处理完成之后，使用ChannelHandlerContext的fireChannelXXX方法来传递给下个ChannelHandler==，netty的codec模块和业务处理代码分离就用到了这个链路处理
+    - 每个方法都带了ChannelHandlerContext作为参数，具体作用是，
+
+      - ==在每个回调事件里面，处理完成之后，使用ChannelHandlerContext的fireChannelXXX方法来传递给下个ChannelHandler==，netty的code模块和业务处理代码分离就用到了这个链路处理
 
     - `channelRead`当从 Channel 读取数据时被调用，当某个 ChannelInboundHandler 的实现重写 channelRead()方法时，它将负责显式地释放与池化的 ByteBuf 实例相关的内存`ReferenceCountUtil.release(msg);`丢弃已接收的消息。
 
@@ -818,20 +863,24 @@
 
     - 它的方法将被 Channel、ChannelPipeline 以及 ChannelHandlerContext 调用
 
-    - 一个强大的功能是可以按需推迟操作或者事件，这使得可以通过一些复杂的方法来处理请求。例如，如果到远程节点的写入被暂停了，那么可以推迟冲刷操作并在稍后继续
+    - 一个强大的功能是可以按需推迟操作或者事件
+
+      - 这使得可以通过一些复杂的方法来处理请求。例如，如果到远程节点的写入被暂停了，那么可以推迟冲刷操作并在稍后继续
 
       ![image-20181214225758377](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181214225758377-4799478.png)
 
-    - `read` 当请求从 Channel 读取更多的数据时被调用
+    - ==`read`== 当请求从 Channel 读取更多的数据时被调用
 
     - `flush`当请求通过 Channel 将入队数据冲刷到远程节点时被调用 
 
     - `write`当请求通过 Channel 将数据写到远程节点时被调用
 
-    - ChannelOutboundHandler中的大部分方法都需要一个==ChannelPromise==参数，以便在操作完成时得到通知。可以调用它的addListener注册监听，当回调方法所对应的操作完成后，会触发这个监听
-
+    - ChannelOutboundHandler中的大部分方法都需要一个==ChannelPromise==参数，以便在操作完成时得到通知。
+  
+      - 可以调用它的addListener注册监听，当回调方法所对应的操作完成后，会触发这个监听
+  
     - ChannelPromise是ChannelFuture的一个子类，其定义了一些可写的方法，如setSuccess()和setFailure()，从而使ChannelFuture不可变
-
+  
       ```java
       public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
        ctx.write(msg,promise);
@@ -840,17 +889,17 @@
            @Override
            public void operationComplete(Future<? super Void> future) throws Exception {
                if(future.isSuccess()){
-                   System.out.println("OK");
+                 System.out.println("OK");
       			} 
            }
        }); 
       }
       ```
-
-  - ChannelInboundHandler和ChannelOutboundHandler的区别
+  
+  - ChannelInboundHandler和ChannelOutboundHandler的==区别==
     - 区别主要在于ChannelInboundHandler的channelRead和channelReadComplete回调和
       ChannelOutboundHandler的write和flush回调上
-    - ChannelOutboundHandler的channelRead回调负责执行入栈数据的decode逻辑，ChannelOutboundHandler的write负责执行出站数据的encode工作
+    - ChannelOutboundHandler的==channelRead==回调负责执行==入栈数据的decode逻辑==，ChannelOutboundHandler的==write==负责执行==出站数据的encode工作==
     - 其他回调方法和具体触发逻辑有关，和in与out无关
   - ChannelHandler 适配器
     - 只需要简单地扩展它们，并且重写那些想要自定义的方法
@@ -1105,12 +1154,12 @@
             int readable = in.readableBytes(); 
             if (readable > MAX_FRAME_SIZE) {
                 //跳过所有可读字节
-    			in.skipBytes(readable);
+    					in.skipBytes(readable);
                 //抛出 TooLongFrameException 并通知 ChannelHandler
-    			throw new TooLongFrameException("Frame too big!");
+    					throw new TooLongFrameException("Frame too big!");
             }
                 // do something
-    			... 
+    					... 
     	}
     }
     ```
@@ -1149,7 +1198,7 @@
     public class IntegerToStringEncoder extends MessageToMessageEncoder<Integer> {
     	@Override
     	public void encode(ChannelHandlerContext ctx, Integer msg,List<Object> out) throws Exception {
-    		out.add(String.valueOf(msg)); 
+    			out.add(String.valueOf(msg)); 
         }
     }
     ```
@@ -1211,7 +1260,7 @@
 
     ```java
     public class SslChannelInitializer extends ChannelInitializer<Channel>{ 
-        private final SslContext context;
+      private final SslContext context;
     	private final boolean startTls;
     	public SslChannelInitializer(SslContext context, boolean startTls) {
     		this.context = context;
@@ -1235,23 +1284,23 @@
     ```java
     //添加 HTTP 支持
     public class HttpPipelineInitializer extends ChannelInitializer<Channel> { 
-        private final boolean client;
+      private final boolean client;
     	public HttpPipelineInitializer(boolean client) {
-                this.client = client;
-        }
+      	this.client = client;
+      }
     	@Override
     	protected void initChannel(Channel ch) throws Exception {
     		ChannelPipeline pipeline = ch.pipeline(); 
-            if (client) {
+          if (client) {
                 //将字节解码为 HttpResponse、HttpContent 和 LastHttpContent 消息
-    			pipeline.addLast("decoder", new HttpResponseDecoder());
+    						pipeline.addLast("decoder", new HttpResponseDecoder());
                 //将 HttpRequest、HttpContent 和 LastHttpContent 消息编码为字节
-    			pipeline.addLast("encoder", new HttpRequestEncoder()); 
+    						pipeline.addLast("encoder", new HttpRequestEncoder()); 
             } else {
                 //将字节解码为 HttpRequest、HttpContent 和 LastHttpContent 消息
-    			pipeline.addLast("decoder", new HttpRequestDecoder());
+    						pipeline.addLast("decoder", new HttpRequestDecoder());
                 //将 HttpResponse、HttpContent 和 LastHttpContent 消息编码为字节
-    			pipeline.addLast("encoder", new HttpResponseEncoder()); 
+    						pipeline.addLast("encoder", new HttpResponseEncoder()); 
             }
     	} 
     }
@@ -1267,17 +1316,17 @@
   ```java
   //自动聚合 HTTP 的消息片段
   public class HttpAggregatorInitializer extends ChannelInitializer<Channel> { 
-      private final boolean isClient;
+    private final boolean isClient;
   	public HttpAggregatorInitializer(boolean isClient) {
-              this.isClient = isClient;
+        this.isClient = isClient;
   	}
   	@Override
   	protected void initChannel(Channel ch) throws Exception {
   		ChannelPipeline pipeline = ch.pipeline(); 
           if (isClient) {
-  			pipeline.addLast("codec", new HttpClientCodec()); 
+  						pipeline.addLast("codec", new HttpClientCodec()); 
           } else {
-  			pipeline.addLast("codec", new HttpServerCodec());
+  						pipeline.addLast("codec", new HttpServerCodec());
           }
   		pipeline.addLast("aggregator",new HttpObjectAggregator(512 * 1024));
   	} 
@@ -1292,21 +1341,21 @@
   ```java
   //自动压缩 HTTP 消息
   public class HttpCompressionInitializer extends ChannelInitializer<Channel> { 
-      private final boolean isClient;
+    private final boolean isClient;
   	public HttpCompressionInitializer(boolean isClient) {
-            this.isClient = isClient;
-      }
+    	this.isClient = isClient;
+    }
       @Override
   	protected void initChannel(Channel ch) throws Exception {
   		ChannelPipeline pipeline = ch.pipeline(); 
-          if (isClient) {
+      if (isClient) {
   			pipeline.addLast("codec", new HttpClientCodec());
-              //如果是客户端，则添加 HttpContentDecompressor 以 处理来自服务器的压缩内容
+        //如果是客户端，则添加 HttpContentDecompressor 以 处理来自服务器的压缩内容
   			pipeline.addLast("decompressor",new HttpContentDecompressor());
   		} else {       
   			pipeline.addLast("codec", new HttpServerCodec()); 	
-              // 如果是服务器，则添加 HttpContentCompressor 来压缩数据(如果客户端支持它)
-              pipeline.addLast("compressor",new HttpContentCompressor());
+       // 如果是服务器，则添加 HttpContentCompressor 来压缩数据(如果客户端支持它)
+        pipeline.addLast("compressor",new HttpContentCompressor());
   		} 
       }
   }
@@ -1327,18 +1376,18 @@
   ```java
   //在服务器端支持 WebSocket
   public class WebSocketServerInitializer extends ChannelInitializer<Channel>{ 
-      @Override
+    @Override
   	protected void initChannel(Channel ch) throws Exception {
-          ch.pipeline().addLast(
+      ch.pipeline().addLast(
   			new HttpServerCodec(),
   			new HttpObjectAggregator(65536), // 为握手提供聚合的HttpRequest
-              // 如果被请求 的端点是 "/websocket"， 则处理该升级握手
+        // 如果被请求的端点是 "/websocket"， 则处理该升级握手
   			new WebSocketServerProtocolHandler("/websocket"), 
-              // TextFrameHandler 处理 TextWebSocketFrame
-              new TextFrameHandler(),  //继承SimpleChannelInboundHandler<自己类型>
-              // BinaryFrameHandler 处理 BinaryWebSocketFrame
+        // TextFrameHandler 处理 TextWebSocketFrame
+        new TextFrameHandler(),  //继承SimpleChannelInboundHandler<自己类型>
+        // BinaryFrameHandler 处理 BinaryWebSocketFrame
   			new BinaryFrameHandler(),//继承SimpleChannelInboundHandler<自己类型>
-              // ContinuationFrameHandler 处理 ContinuationWebSocketFrame
+        // ContinuationFrameHandler 处理 ContinuationWebSocketFrame
   			new ContinuationFrameHandler());//继承SimpleChannelInboundHandler<自己类型>
       }
       ...
@@ -1357,7 +1406,7 @@
     //发送心跳
     //使用通常的发送心跳消息到远程节点的方法时，如果在60秒之内没有接收或者发送任何的数据，将如何得到通知;如果没有响应，则连接会被关闭
     public class IdleStateHandlerInitializer extends ChannelInitializer<Channel>{
-        @Override
+      @Override
     	protected void initChannel(Channel ch) throws Exception {
        		ChannelPipeline pipeline = ch.pipeline();
             //IdleStateHandler 将在被触发时发送一个IdleStateEvent 事件
@@ -1373,12 +1422,12 @@
     		public void userEventTriggered(ChannelHandlerContext ctx,Object evt) throws Exception {
     		if (evt instanceof IdleStateEvent) {
                 //发送心跳消息，并在发送失败时关闭该连接
-    			ctx.writeAndFlush(HEARTBEAT_SEQUENCE.duplicate())
-                    .addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-            } else {
+    					ctx.writeAndFlush(HEARTBEAT_SEQUENCE.duplicate())
+             		 .addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+        } else {
                 //不是IdleStateEvent事件，所以将它传递给下一个 ChannelInboundHandler
-    			super.userEventTriggered(ctx, evt); 
-            }
+    						super.userEventTriggered(ctx, evt); 
+        }
     	}
     }
     ```
@@ -1401,8 +1450,8 @@
     
     public static final class FrameHandler extends SimpleChannelInboundHandler<ByteBuf> { 	@Override
     	public void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-    	// Do something with the data extracted from the frame
-    } 
+    		// Do something with the data extracted from the frame
+    	} 
     }
     ```
 
@@ -1424,9 +1473,9 @@
     	@Override
     	public void operationComplete(ChannelFuture future)throws Exception {
     		if (!future.isSuccess()) {
-    			Throwable cause = future.cause();
-    			// Do something 处理失败
-            }
+    				Throwable cause = future.cause();
+    				// Do something 处理失败
+        }
     });
     ```
 
@@ -1437,15 +1486,15 @@
     public class ChunkedWriteHandlerInitializer extends ChannelInitializer<Channel> { 		private final File file;
     	private final SslContext sslCtx;
     	public ChunkedWriteHandlerInitializer(File file, SslContext sslCtx) { 
-            this.file = file;
+        this.file = file;
     		this.sslCtx = sslCtx;
     	}
     	@Override
     	protected void initChannel(Channel ch) throws Exception {
     		ChannelPipeline pipeline = ch.pipeline(); 
-            pipeline.addLast(new SslHandler(sslCtx.newEngine(ch.alloc()); 
+        pipeline.addLast(new SslHandler(sslCtx.newEngine(ch.alloc()); 
     		//添加 ChunkedWriteHandler 以处理作为 ChunkedInput 传入的数据
-    		pipeline.addLast(new ChunkedWriteHandler());                                           //一旦连接建立，WriteStreamHandler就开始写文件数据
+    		pipeline.addLast(new ChunkedWriteHandler());                                         //一旦连接建立，WriteStreamHandler就开始写文件数据
     		pipeline.addLast(new WriteStreamHandler());
     	}
     	public final class WriteStreamHandler extends ChannelInboundHandlerAdapter {
@@ -1476,7 +1525,7 @@
     // 添加 MarshallingEncoder 以将 POJO 转换为 ByteBuf
     pipeline.addLast(new MarshallingEncoder(marshallerProvider));
     // 添加 ObjectHandler， 以处理普通的实现了 Serializable 接口的 POJO
-    pipeline.addLast(newObjectHandler());
+    pipeline.addLast(new ObjectHandler());
     ```
 
   - Protocol Buffers 序列化
@@ -1503,11 +1552,11 @@
      future.addListener(new ChannelFutureListener() {
      	@Override
      	public void operationComplete(ChannelFuture f) {
-     	if (!f.isSuccess()) { 
+     		if (!f.isSuccess()) { 
              f.cause().printStackTrace();
-     		f.channel().close();
-     	}
-     }); 
+     				f.channel().close();
+     		}
+     	}); 
      ```
 
   2. 几乎所有的 ChannelOutboundHandler 上的方法都会传入一个 ChannelPromise 的实例。作为 ChannelFuture 的子类，ChannelPromise 也可以被分配用于异步通知的监听器。但是，ChannelPromise 还具有提供立即通知的可写方法 `setSuccess()` `setFailure`
@@ -1535,106 +1584,20 @@
 
 ## ==WebSocket==
 
-- ==是HTML5新增的协议，它的目的是在浏览器和服务器之间建立一个不受限的双向通信的通道，任何一方都可以主动发消息给对方==
-
-- HTTP协议是一个请求－响应协议，浏览器不主动请求，服务器是没法主动发数据给浏览器
-
-- WebSocket并不是全新的协议，而是利用了HTTP协议来建立连接
-
-- WebSocket连接是如何创建
-
-  1. WebSocket连接必须由浏览器发起，因为请求协议是一个标准的HTTP请求
-
-     ```properties
-     GET ws://localhost:3000/ws/chat HTTP/1.1
-     Host: localhost
-     Upgrade: websocket
-     Connection: Upgrade
-     Origin: http://localhost:3000
-     Sec-WebSocket-Key: client-random-string
-     Sec-WebSocket-Version: 13
-     ```
-
-     - 该请求和普通的HTTP请求有几点不同：
-       1. GET请求的地址不是类似`/path/`，而是以`ws://`开头的地址；
-       2. 请求头`Upgrade: websocket`和`Connection: Upgrade`表示这个连接将要被转换为WebSocket连接；
-       3. `Sec-WebSocket-Key`是用于标识这个连接，并非用于加密数据；
-       4. `Sec-WebSocket-Version`指定了WebSocket的协议版本
-
-  2. 服务器如果接受该请求，就会返回如下响应：
-
-     ```properties
-     //该响应代码101表示本次连接的HTTP协议即将被更改，更改后的协议就是Upgrade: websocket指定的WebSocket协议
-     //版本号和子协议规定了双方能理解的数据格式，以及是否支持压缩等等。如果仅使用WebSocket的API，就不需要关心这些
-     HTTP/1.1 101 Switching Protocols
-     Upgrade: websocket
-     Connection: Upgrade
-     Sec-WebSocket-Accept: server-random-string
-     ```
-
-  3. 一个WebSocket连接就建立成功，浏览器和服务器就可以随时主动发送消息给对方。
-     - 消息有两种，一种是文本，一种是二进制数据。通常，可以发送JSON格式的文本，这样，在浏览器处理起来就十分容易
-
-- 为什么WebSocket连接可以实现全双工通信而HTTP连接不行呢？
-
-  - 实际上HTTP协议是建立在TCP协议之上的，TCP协议本身就实现了全双工通信，但是HTTP协议的请求－应答机制限制了全双工通信
-  - WebSocket连接建立以后，其实只是简单规定了一下：接下来的通信不用HTTP协议了，直接互相发数据
-
-- 安全的WebSocket连接机制和和HTTPS类似。
-
-  - 首先，浏览器用`wss://xxx`创建WebSocket连接时，会先通过HTTPS创建安全的连接，然后，该HTTPS连接升级为WebSocket连接，底层通信走的仍然是安全的SSL/TLS协议
-
-- 旨在为 Web 上的双向数据传输问题提供一个切实可行的解决方案，使得客户端和服务器之间可以在任意时刻传输消息，因此，这也就要求它们异步地处理消息回执
-- ==在从标准的HTTP或者HTTPS协议切换到WebSocket时，将会使用一种称为升级握手的机制==
-- 因此 ，使用WebSocket的应用程序将始终以HTTP/S作为开始，然后再执行升级。这个升级动作发生的确切时刻特定于应用程序;它可能会发生在启动时，也可能会发生在请求了某个特定的URL之后
-- 可以采用下面的`约定`:如果被请求的 URL 以/ws 结尾，那么将会把该协议升级为 WebSocket;否则，服务器将使用基本的 HTTP/S。在连接已经升级完成之后，`所有`数据都将会使用 WebSocket 进行传输
-  1. 处理 HTTP 请求
-     - 首先，实现该处理 HTTP 请求的组件。这个组件将提供用于访问聊天室并显示由连接的客户端发送的消息的网页
-  2. 处理 WebSocket 帧
-     - 接下来，将处理传输实际聊天消息的 WebSocket 帧
-  3. 初始化 ChannelPipeline
-     - 然后，为每个新创建的 Channel 初始化其 ChannelPipeline
-     - Netty 的 WebSocketServerProtocolHandler 处理了所有委托管理的 WebSocket 帧类型以及升级握手本身。如果握手成功，那么所需的 ChannelHandler 将会被添加到 ChannelPipeline中，而那些不再需要的 ChannelHandler 则将会被移除
-  4. 引导
-
-## UDP广播事件
-
-- 无连接协议即用户数据报协议(UDP)，它通常用在性能至关重要并且能够容忍一定的数据包丢失的情况下
-
-  并没有持久化连接这样的概念，并且每个消息(一个 UDP 数据报)都是一个单独的传输单元
-
-  | TCP                                                          | UDP                                                         |
-  | ------------------------------------------------------------ | ----------------------------------------------------------- |
-  | 面向连接的传输，有序和可靠的消息传输                         | 无连接协议，每个消息(一个 UDP 数据报)都是一个单独的传输单元 |
-  | 纠错机制，其中每个节点都将确认它们所接收到的包，而没有被确认的包将会被发送方重新传输 | 没有纠错机制                                                |
-  | 一系列的有序消息将会在两个方向上流动                         | 无序，且不确定是否传输成功                                  |
-  | 三次握手协议、四次挥手协议                                   | 比TCP快：所有的握手以及消息管理机制的开销都已经被消除了     |
-
-1. 单播的传输模式
-   - 定义为发送消息给一个由唯一的地址所标识的单一的网络目的地
-   - 面向连接的协议和无连接协议都支持这种模式
-2. UDP 传输模式
-   - 提供了向多个接收者发送消息的额外传输模式：
-     - 多播——传输到一个预定义的主机组
-     - 广播——传输到网络(或者子网)上的所有主机
-   - 弊端：
-     - 路由器通常也会阻止广播消息，并将它们限制在它们的来源网络上
-     - 能够轻松访问数据（只需简单地通过在指定的端口上启动一个监听程序便可以监听接受消息）
-
 # 传统RPC调用性能差的三宗罪
 
 ## 网络传输方式问题
 
 - 传统的 RPC 框架或者基于 RMI 等方式的远程服务(过程)调用采用了同步阻塞 IO
-- 当客户端的并发压力或者网络时延增大之后，同步阻塞IO会由于频繁的wait导致IO线程经常性的阻塞，由于线程无法高效的工作，IO 处理能力自然下降。
-- 采用 BIO 通信模型的服务端，通常由一个独立的 Acceptor 线程负责监听客户端的连接，接收到客户端连接之后为客户端连接创建一个新的线程处理请求消息，处理完成之后，返回应答消息给客户端，线程销毁，这就是典型的一请求一应答模型
-- 问题：不具备弹性伸缩能力，当并发访问量增加后，服务端的线程个数和并发访问数成线性正比，由于线程是 JAVA 虚拟机非常宝贵的系统资源，当线程数膨胀之后，系统的性能急剧下降，随着并发量的继续增加，可能会发生句柄溢出、线程堆栈溢出等问题，并导致服务器最终宕机
+  - 当并发访问量增加后，服务端的线程个数和并发访问数成线性正比
+  - 同步阻塞IO会由于频繁的wait导致IO线程经常性的阻塞
 
 ## 序列化方式问题
 
-- Java 序列化机制是 Java 内部的一种对象编解码技术，无法跨语言使用;
-- 相比于其它开源的序列化框架，Java 序列化后的码流太大，无论是网络传输还是持久化到磁盘，都会导致额外的资源占用;
-- 序列化性能差(CPU 资源占用高)
+- Java 序列化机制
+  - 是 Java 内部的一种对象编解码技术，无法跨语言使用;
+  - Java 序列化后的码流太大，无论是网络传输还是持久化到磁盘，都会导致额外的资源占用;
+  - 序列化性能差(CPU 资源占用高)
 
 ## 线程模型问题
 
@@ -1785,8 +1748,7 @@
   1. 序列化后的码流大小(网络带宽的占用);
   2. 序列化&反序列化的性能(CPU 资源占用);
   3. 是否支持跨语言(异构系统的对接和开发语言切换)
-- Netty 默认提供了对 Google Protobuf 的支持，通过扩展 Netty 的编解码接口，用户可以实现其它的高性能序列化框架，例如 Thrift 的压缩二进制编解码框架
-- Protobuf 序列化后的码流只有 Java 序列化的 1/4 左右。正是由于 Java原生序列化性能表现太差，才催生出了各种高性能的开源序列化技术和框架(性能差只是其中的一个原因，还有跨语言、IDL 定义等其它因素)
+- Netty 默认提供了对 Google Protobuf 的支持，Protobuf 序列化后的码流只有 Java 序列化的 1/4 左右，通过扩展 Netty 的编解码接口，用户可以实现其它的高性能序列化框架，例如 Thrift 的压缩二进制编解码框架
 
 ## 灵活的TCP参数配置能力
 
@@ -2011,13 +1973,11 @@ public class RPCProxy {
         T result = (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz}, methodProxy);
         return result;
     }
-
 }
 
 class MethodProxy implements InvocationHandler {
 
     private Class<?> clazz;
-
     public MethodProxy(Class<?> clazz) {
         this.clazz = clazz;
     }
@@ -2039,6 +1999,7 @@ class MethodProxy implements InvocationHandler {
     }
 
     private Object rpcInvoke(Object proxy, Method method, Object[] args) {
+      	//构造请求消息
         InvokeMsg msg = new InvokeMsg();
         //犯过的错
         //protol.setClassName(method.getClass().getName());
@@ -2046,39 +2007,45 @@ class MethodProxy implements InvocationHandler {
         msg.setMethodName(method.getName());
         msg.setParams(method.getParameterTypes());
         msg.setValue(args);
+				
+      	//发送并接收消息
+        Object result = rpcRequest(requestMsg);
+      	//返回结果
+        return result;
+    }
+  	
+  	private Object rpcRequest(InvokeMsg requestMsg) {
+        final RPCProxyHandler proxyHandler = new RPCProxyHandler();
 
-        final RPCProxyHandler consumerHandler = new RPCProxyHandler();
-
-        EventLoopGroup group = new NioEventLoopGroup();
+        EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
+        Bootstrap bootstrap = new Bootstrap();
+        bootstrap.group(eventLoopGroup)
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        ChannelPipeline pipeline = socketChannel.pipeline();
+                      // pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
+											//pipeline.addLast(new LengthFieldPrepender(4));
+                        pipeline.addLast("encoder", new ObjectEncoder());
+                        pipeline.addLast("decoder", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)));
+                        // 业务逻辑处理
+                        pipeline.addLast("handler", proxyHandler);
+                    }
+                });
         try {
-            Bootstrap b = new Bootstrap();
-            b.group(group)
-                    .channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ChannelPipeline pipeline = ch.pipeline();
-//                            pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
-//                            pipeline.addLast(new LengthFieldPrepender(4));
-                            pipeline.addLast("encoder", new ObjectEncoder());
-                            pipeline.addLast("decoder", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)));
-                            pipeline.addLast("handler", consumerHandler);
-                        }
-                    });
-
-            ChannelFuture future = b.connect("localhost", 8085).sync();
+            ChannelFuture channelFuture = bootstrap.connect("localhost", 8081).sync();
             //犯过的错
-            //future.channel().writeAndFlush(protol);
-            future.channel().writeAndFlush(msg).sync();
-            future.channel().closeFuture().sync();
-
-
-        } catch (Exception e) {
+            //future.channel().writeAndFlush(requestMsg);
+            channelFuture.channel().writeAndFlush(requestMsg).sync();
+            channelFuture.channel().closeFuture().sync();
+        } catch (InterruptedException e) {
             e.printStackTrace();
+            logger.error("RPC调用失败！", e);
         } finally {
-            group.shutdownGracefully();
+            eventLoopGroup.shutdownGracefully();
         }
-        return consumerHandler.getResponse();
+        return proxyHandler.getResult();
     }
 }
 ```
@@ -2086,6 +2053,7 @@ class MethodProxy implements InvocationHandler {
 ```java
 //业务处理
 public class RPCProxyHandler extends ChannelInboundHandlerAdapter {
+ 		private Logger logger = LoggerFactory.getLogger(RPCProxyHandler.class);
     private Object response;
     public Object getResponse() {
         return response;
@@ -2101,8 +2069,10 @@ public class RPCProxyHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        System.out.println("client exception is general");
-        super.exceptionCaught(ctx, cause);
+      System.out.println("client exception is general");
+      logger.error("读取远程消息失败！", cause);
+     	cause.printStackTrace();
+      ctx.close();
     }
 }
 ```
@@ -2116,135 +2086,123 @@ public class RPCProxyHandler extends ChannelInboundHandlerAdapter {
 - 支持实时、双向和基于事件的浏览器和服务器之间的通信
 
 ```java
-//server
-//配置连接信息
-Configuration configuration = new Configuration();
-configuration.setHostname("127.0.0.1");
-configuration.setPort(8091);
+public class NettySocketIOServer {
 
-//初始化服务器
-SocketIOServer server = new SocketIOServer(configuration);
-
-//连接监听
-server.addConnectListener(new ConnectListener() {
-    @Override
-    public void onConnect(SocketIOClient client) {
-        String token = client.getHandshakeData().getUrlParams().get("token").get(0);
-        if (!StringUtil.isNullOrBlank(token) && "1323sdfsfsdsdfsaf13".equals(token)) {
-            System.out.println("client sid :" + client.getSessionId() + " 成功连接服务器");
-        } else {
-            client.disconnect();
-        }
-
-        //发送回调事件
-        Object ackChatObjectData = new Object();
-        client.sendEvent("eventServerAck", new AckCallback<String>(String.class) {
-            //客户端响应完成后执行
+    public NettySocketIOServer() throws InterruptedException {
+        //配置连接信息
+        Configuration configuration = new Configuration();
+        configuration.setHostname("127.0.0.1");
+        configuration.setPort(8099);
+				//初始化服务器
+        SocketIOServer server = new SocketIOServer(configuration);
+				//监听连接事件
+        server.addConnectListener(new ConnectListener() {
             @Override
-            public void onSuccess(String result) {
-                System.out.println("ack from client: " + client.getSessionId() + " data: " + result);
+            public void onConnect(SocketIOClient client) {
+                String token = client.getHandshakeData().getUrlParams().get("token").get(0);
+                if (!StringUtils.isEmpty(token) && "1323sdfsfsdsdfsaf13".equals(token)) {
+                    System.out.println("client sid :" + client.getSessionId() + " 成功连接服务器");
+                } else {
+                    client.disconnect();
+                }
+
+                String msg = "服务端Msg——1";
+                client.sendEvent("ServerConnectedEvent", new AckCallback<String>(String.class) {
+                    @Override
+                    public void onSuccess(String result) {
+                        System.out.println("服务端收到客户端的连接确认消息" + client.getSessionId() + " data: " + result);
+                    }
+                }, msg);
             }
-        }, ackChatObjectData);
+        });
+			
+      	//final SocketIONamespace chat1namespace = server.addNamespace("/chat1");
+      	// broadcast messages to all clients
+				//chat1namespace.getBroadcastOperations().sendEvent("message", data);
+      
+        // 监听自定义事件
+        server.addEventListener("HelloWorldEvent", Object.class, new DataListener<Object>() {
+            @Override
+            public void onData(SocketIOClient client, Object data, AckRequest ackSender) throws Exception {
+                System.out.println("服务端接收来自客户端请求的信息 ： " + data.toString());
+                if (ackSender.isAckRequested()) {
+                    ackSender.sendAckData("服务端发送确认收到客户端HelloWorldEvent的信息" + data.toString());
+                }
+            }
+        });
+
+        //Ping事件
+        server.addPingListener(new PingListener() {
+            @Override
+            public void onPing(SocketIOClient client) {
+                System.out.println("Ping..." + client.getSessionId());
+            }
+        });
+
+      	//监听断开事件
+        server.addDisconnectListener(new DisconnectListener() {
+            @Override
+            public void onDisconnect(SocketIOClient client) {
+                System.out.println("Hi " + client.getSessionId() + "已经断开连接");
+            }
+        });
+
+        //开启服务器
+        server.start();
+        Thread.sleep(Integer.MAX_VALUE);
+        server.stop();
     }
-});
 
-//final SocketIONamespace chat1namespace = server.addNamespace("/chat1");
-//        chat1namespace.addEventListener("message", String.class, new DataListener<String>() {
-//            @Override
-//            public void onData(SocketIOClient client, String data, AckRequest ackRequest) {
-//                // broadcast messages to all clients
-//                chat1namespace.getBroadcastOperations().sendEvent("message", data);
-//            }
-//        });
-
-//监听事件
-server.addEventListener(io.socket.engineio.client.Socket.EVENT_MESSAGE, Object.class, new DataListener<Object>() {
-    @Override
-    public void onData(SocketIOClient client, Object data, AckRequest ackSender) throws Exception {
-        System.out.println("接收来自客户端的信息 ： " + data.toString());
-        //发送事件
-        //server.getBroadcastOperations().sendEvent(Socket.EVENT_MESSAGE, "hi");
-        client.sendEvent("ServerEvent", "你好啊，client_" + client.getSessionId());
+    public static void main(String[] args) throws InterruptedException {
+        new NettySocketIOServer();
     }
-});
-
-//监听带回调事件
-server.addEventListener("ClientEventAck", String.class, new DataListener<String>() {
-    @Override
-    public void onData(SocketIOClient client, String data, final AckRequest ackSender) throws Exception {
-        System.out.println(data);
-        if (ackSender.isAckRequested()) {
-            ackSender.sendAckData("ClientEventAck : this msg is server acked!");
-        }
-    }
-});
-
-//开启服务器
-server.start();
-Thread.sleep(Integer.MAX_VALUE);
-server.stop();
+}
 ```
 
 ```java
-//client
-//客户端配置
-IO.Options options = new IO.Options();
-options.transports = new String[]{"websocket"};
-options.timeout = 5000;
-options.reconnectionAttempts = 50;
-options.reconnectionDelay = 500;
+public class NettySocketIOClient {
 
-//连接服务端
-Socket socket = IO.socket("http://127.0.0.1:8091?token=1323sdfsfsdsdfsaf13");
-//Socket socket = IO.socket("http://127.0.0.1:8091?/chat1?token=1323sdfsfsdsdfsaf13");
+    public NettySocketIOClient() throws URISyntaxException, InterruptedException {
+        //客户端配置
+        IO.Options options = new IO.Options();
+        options.transports = new String[]{"websocket"};  //传输协议
+        options.timeout = 5000;
+        options.reconnectionAttempts = 50;
+        options.reconnectionDelay = 500;
 
-//监听消息
-socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
-    @Override
-    public void call(Object... objects) {
-        socket.send("来自客户端连接的问候");
+        //连接服务端
+        Socket socket = IO.socket("http://127.0.0.1:8099?token=1323sdfsfsdsdfsaf13");
+
+        //监听自定义事件
+        socket.on("ServerConnectedEvent", new Emitter.Listener() {
+            @Override
+            public void call(Object... objects) {
+                System.out.println("客户端收到服务端的消息（ServerConnectedEvent）" + objects[0].toString());
+
+                Ack ack = (Ack) objects[objects.length - 1];
+                ack.call("客户端确认收到服务端发送的连接成功信息" + objects[0].toString());
+            }
+        });
+        
+        // 客户端主动推送消息
+        socket.emit("HelloWorldEvent", "客户端主动给服务端发送HelloWorldEvent事件消息", new Ack() {
+            @Override
+            public void call(Object... objects) {
+                for (Object obj : objects) {
+                    System.out.println("客户端收到服务端确认HelloWorldEvent事件消息" + obj.toString());
+                }
+            }
+        });
+        //重新连接到服务端
+        socket.io().reconnection(true);
+				//连接到服务端
+        socket.connect();
+//        Thread.sleep(6000);
+//        socket.disconnect();
     }
-});
-socket.on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
-    @Override
-    public void call(Object... args) {
-        System.out.println("连接关闭");
-    }
-});
 
-socket.on("ServerEvent", new Emitter.Listener() {
-    @Override
-    public void call(Object... objects) {
-        for (Object obj : objects) {
-            System.out.println(obj.toString());
-        }
+    public static void main(String[] args) throws Exception {
+        new NettySocketIOClient();
     }
-});
-
-socket.emit("ClientEventAck", "ClientEventAckMsg", new Ack() {
-    @Override
-    public void call(Object... args) {
-        for (Object obj : args) {
-            System.out.println(obj.toString());
-        }
-    }
-});
-
-socket.on("eventServerAck", new Emitter.Listener() {
-    @Override
-    public void call(Object... args) {
-        for (Object obj : args) {
-            System.out.println("eventServerAck------" + obj.toString());
-        }
-        Ack ack = (Ack) args[args.length - 1];
-        ack.call("this msg is eventServerAck client acked");
-    }
-});
-
-//连接服务器
-socket.connect();
-//socket.disconnect();
+}
 ```
-
-
-

@@ -1,3 +1,5 @@
+##==《Java编程思想》第21章并发==
+
 # MS
 
 * 提到线程安全，要将读写分开考虑
@@ -27,7 +29,9 @@
 
 * 在多线程环境下，SimpleDateFormate是线程安全的吗？
 
-  * 非线程安全
+  * 是线程不安全的类，一般不要定义为static变量，如果定义为 static，必须加锁，或者使用 DateUtils 工具类 
+
+  * 说明:如果是 JDK8 的应用，可以使用 Instant 代替 Date，LocalDateTime 代替Calendar，DateTimeFormatter 代替 SimpleDateFormat，官方给出的解释:simple beautiful strong immutable thread-safe。
 
   * ==使用局部变量==，需要的时候创建新实例，将有线程安全问题的对象由共享变为局部私有都能避免多线程问题，不过也加重了创建对象的负担
 
@@ -442,6 +446,8 @@
 * 线程的监视
 
 * ThreadLocal关键字
+
+  * 建议使用 static修饰
 
   * 当使用 ThreadLocal 维护变量时，其==为每个使用该变量的线程提供独立的变量副本==，所以每一个线程都可以独立的改变自己的副本，而不会影响其他线程对应的副本
 

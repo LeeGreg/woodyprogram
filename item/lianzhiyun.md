@@ -1,52 +1,69 @@
-```java
-//Execution default-war of goal org.apache.maven.plugins:maven-war-plugin:2.1.1:war failed  ... /efastFR/lib不存在
-//解决，直接在efastFR模块下加lib目录即可
+# 长连接
 
-// 日志要弄明白
-// MDC
+## Spring版本
 
-// 当报错时，查看控制台的日志，可以将日志级别调低点以查看更多的信息，包括SQL语句以及参数
-// DEBUG级别
+![Netty-SocketIO](/Users/dingyuanjie/Desktop/MS/png/Netty-SocketIO.png)
 
-<dependency>
-            <groupId>com.arcsoft</groupId>
-            <artifactId>face</artifactId>
-            <version>2.1</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../efastFR/libs/arcsoft-sdk-face-2.1.0.0.jar</systemPath>
-        </dependency>
-        
-  
-远程debug
-1. jpda 6004
-   Java_OPT ...6004
-2. 外部telnet端口能通
-3. 服务器以/bin/catalina.sh jpda start方式启动
-	-bash-4.2$ cd bin/
-	-bash-4.2$ ./catalina.sh jpda start
+* ==SocketServerStarter==
+  * Socket io 长连接server启动者，在Spring容器启动的之后或者关闭的时候进行定生成的起停操作
+  * 实现`ApplicationListener`接口，重写`onApplicationEvent(ApplicationEvent event)`监听`Spring`容器事件
+  * 在xml配置文件中将其配置成Bean，并设置所需扫描包路径属性`basePackage`
+    * 该路径下是标注自定义注解的一些自定义事件类
+* 监听容器事件
+  * 可以从事件中获取`ApplicationContext`
+  * 如果是`ContextRefreshedEvent`Spring容器刷新事件，则启动SocketServer服务
+  * 如果是`ContextStoppedEvent`Spring容器停止事件或`ContextClosedEvent`容器关闭事件，则停止SocketServer长连接服务
+* 启动SocketServer服务
+  * 获取配置的属性：host、group（用于分组）
+  * 获取长连接事件类的class对象
+    * 扫描指定包路径下包含自定义注解标注的事件类，如@SocketIOListener、@SocketIOEvent以及@SocketDisconnectListener注解的类，并存储到各自相应的Map（`Map<String, List<Class<?>>>`）中，key表示组，Value表示标注事件注解的class对象
+      * 将包路径转换成`classpath*:`文件路径形式
+      * `ResourcePatternResolver`根据路径获取其下所有的`Resource`
+      * 遍历`Resource`，`MetadataReaderFactory`根据`Resource`获取`MetadataReader`元数据
+      * `ScannedGenericBeanDefinition`根据`MetadataReader`作为构造函数参数来生成`BeanDefinition`
+      * `BeanDefinitionFilter`的`filter`方法来过滤掉不符合条件的`BeanDefinition`
+        * `filter`方法根据`ScannedGenericBeanDefinition`参数，可以通过反射获取其class对象（`definition.getBeanClassName()`）
+        * 获取class对象上的注解，如果`SocketIOEvent`、`SocketIOListener`和`SocketDisconnectListener`都不存在，则不符合条件，返回false
+      * 遍历所有`Set<BeanDefinition>`，通过反射获取其上的注解（`SocketIOEvent`、`SocketIOListener`和`SocketDisconnectListener`），通过判断，分别存入相应的Map中
+  * 遍历groups（分组，目前就一个分组`common`），设置SocketIO服务端配置
+    * 启动前，先把在线客户端下线
+      * ...
+    * 根据key为group来获取各事件Map中的事件class对象`List<Class<?>>`
+    * 构造`SocketIO`服务配置`Configuration`
+      * `port（根据group来设置）`
+      * 客户端连接认证`config.setAuthorizationListener(new AuthorizationListener(group));`
+        * 实现`AuthorizationListener`接口，重写`isAuthorized(HandshakeData data)`
+        * 从`HandshakeData`的`URL`或`Header`中获取`sid`
+        * 根据`sid`，获取`Redission` (==登录这块==)，如果不为空且没过期，则从中获取登录信息（username、companyCode等）
+        * 构建根据这些信息（username、companyCode、group、sid等）构建`SocketAuthBean`，并把这些信息设置到==`HandshakeData`==的==URL参数==中（前缀`SOCKET_PARAMS_KEY`）
+        * 将`SocketAuthBean`，存入到redis的Hash中，key为`rs:socket:cu:+companyCode+username`，value为 `SocketAuthBean`转成的Map
+        * 将`companyCode:username`存入redis的Set中，key为`rs:socket:c:CompanyCode`，value为`companyCode:username`
+        * 将`companyCode:username`存入redis的Set中，key为`rs:socket:ng:node:group`，value为`companyCode:username` (node为port)
+      * 传输协议(websocket)、方式(polling轮询)、传输最大内容长度、ping超时时间、轮询间隔、boss线程数、worker线程数
+      * Storefactory，使用redis存储socket会话，否则使用默认（存储在内存）
+        * `Config`中配置redis连接信息，连接超时时间、重试间隔时间、重新连接超时时间、host、port、pass、db
+        * 根据`redis`配置创建`redission`，然后传入`RedissonStoreFactory`构造函数中创建该实例，然后设置到`SocketIO`的`StoreFactory`配置中
+    * 根据SocketIO配置文件来构造`SocketIOServer`
+      * 添加服务端事件监听
+        * 连接事件`server.addConnectListener(new SocketIOConnectListener(group));`
+          * `SocketIOConnectListener实现ConnectListener`，重写`onConnect(SocketIOClient client)`
+            * 从`SocketIOClient`中获取`HandshakeData（包含认证拦截时设置的一些登录数据，如username、companyCode、sid、group等）`
+            * ==当客户端连接上socket io服务时，创建对应的redis通道监听器==
+              * 根据`SOCKET_MESSAGE_BY_companyCode_username`构建redis的`ChannelTopic`
+              * 
+        * 断开连接事件`server.addDisconnectListener(new SocketIODisconnectListener(group));`
+        * 自定义事件监听
+          * 
+      * 服务端异步启动，并添加监听
+        * `server.startAsync().addListener{new ChannelFutureListener(){...}}`
 
-URL urlInfo = new URL(imgUrl);
-File file = new File(urlInfo.toURI().getPath());
+## SpringBoot版
 
-// 将MultipartFile转为File
-private File getFileByMultipartFile(MultipartFile multipartFile) {
-  if(multipartFile != null) {
-    CommonsMultipartFile cf= (CommonsMultipartFile)multipartFile;
-    DiskFileItem fi = (DiskFileItem)cf.getFileItem();
-    if(fi != null) {
-      return fi.getStoreLocation();
-    }
-  }
-  return null;
-}
+# Hessian
 
-BufferedImage image = ImageIO.read(inputStream);
-image可能为空
-```
+# 登录
 
-
-
-# 人脸
+ # 人脸
 
 ## 技术
 
@@ -134,4 +151,277 @@ image可能为空
   * 更新用户基本信息、绑定状态
 
 ## 门口机
+
+* 重启时，回主动去平台获取用户信息
+* 平台审核通过后，会主动推送到门口机
+
+# 设计模式
+
+* 简单工厂模式 + 策略模式
+
+  ```java
+  public interface OpenDoorLog {
+      ResultBean onMessage(String msg);
+  }
+  ```
+
+  ```java
+  @Component
+  public class CardOpenDoorLog implements OpenDoorLog {
+      @Override
+      public ResultBean onMessage(String msg) {
+          return new ResultBean(true, "CardOpenDoorLog---" + msg);
+      }
+  }
+  ```
+
+  ```java
+  @Component
+  public class FaceOpenDoorLog implements OpenDoorLog {
+  
+      @Override
+      public ResultBean onMessage(String msg) {
+          return new ResultBean(true, "FaceOpenDoorLog---" + msg);
+      }
+  }
+  ```
+
+  ```java
+  public enum OpenDoorTypeEnum {
+      CARD_OPENDOOR("card", CardOpenDoorLog.class),
+      FACE_OPENDOOR("face", FaceOpenDoorLog.class);
+  
+      private String type;
+      private Class<? extends OpenDoorLog> clazz;
+  
+      OpenDoorTypeEnum(String type, Class<? extends OpenDoorLog> clazz) {
+          this.type = type;
+          this.clazz = clazz;
+      }
+  
+      public static Class getOpenDoorClassByType(String type) {
+          if(!StringUtils.isNullOrBlank(type)) {
+              OpenDoorTypeEnum[] openDoors = OpenDoorTypeEnum.values();
+              for(OpenDoorTypeEnum openDoor : openDoors) {
+                  if(type.equals(openDoor.getType())) {
+                      return openDoor.getClazz();
+                  }
+              }
+          }
+          return null;
+      }
+     // getter、setter...
+  }
+  ```
+
+  ```java
+  public static void main(String[] args) throws IllegalAccessException, InstantiationException {
+    String openDoorType = "face";
+    Class<? extends OpenDoorLog> clazz = OpenDoorTypeEnum.getOpenDoorClassByType(openDoorType);
+    //如果是在SpringBoot项目中，可通过@Autowired ApplicationConext的getBean(processClass)获取相应的处理对象
+    //前提是处理类被@Component注解标注并被Spring扫描到
+    OpenDoorLog openDoorLog = clazz.newInstance();
+    System.out.println(JSON.toJSONString(openDoorLog.onMessage("11111111")));
+  }
+  ```
+
+* 装饰器模式
+
+# Lua
+
+```xml
+<bean id="stringRedisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
+        <property name="connectionFactory" ref="jedisConnectionFactory"/>
+</bean>
+```
+
+```lua
+// resources/lua/PhoneLimit.lua
+local num=redis.call('incr',KEYS[1])
+if tonumber(num)==1 then
+    redis.call('expire',KEYS[1],ARGV[1])
+    return 1
+elseif tonumber(num)>tonumber(ARGV[2]) then
+    return 0
+else
+	return 1
+end
+```
+
+```java
+@Autowired
+private StringRedisTemplate stringRedisTemplate;
+private static final String IPACCESS_KEY_PREX = "ipaccess_";
+
+private DefaultRedisScript<Long> script = new DefaultRedisScript<Long>();
+			script.setResultType(Long.class);
+			script.setScriptSource(new ResourceScriptSource(new ClassPathResource("lua/PhoneLimit.lua")));
+
+List<String> keys = new ArrayList<>();
+keys.add(IPACCESS_KEY_PREX + mobile);
+// 因为序列化原因，只能用StringRedisTemplate
+Long execute = stringRedisTemplate.execute(script, keys, "60","1");
+```
+
+# 其他
+
+## ServiceException
+
+```java
+public class ServiceException extends RuntimeException {
+
+    private static final long serialVersionUID = 315849313532101582L;
+    
+    public ServiceException(String exceptionMsg) {
+        super(exceptionMsg);
+    }
+    
+    public ServiceException(Throwable cause) {
+        super(cause);
+    }
+    
+    public ServiceException(String exceptionMsg, Throwable cause) {
+        super(exceptionMsg, cause);
+    }
+    
+    private String code;
+    private String[] params;
+    //getter、setter
+}
+```
+
+## Controller
+
+```java
+@RequestMapping("/facePhoto/appFaceReject")
+@ResponseBody
+public ResultBean rejectFacePhoto(HttpServletRequest request, HttpServletResponse response,
+                             HouseHolderBean houseHolderBean) {
+  ResultBean result = new ResultBean(true, SUCCESS);
+  try {
+    holderManageService.rejectFacePhoto(houseHolderBean);
+  } catch (Exception e) {
+    result.setSuccess(false);
+    if (e instanceof ServiceException) {
+      result.setMessage(e.getMessage());
+    } else {
+      result.setMessage("人脸照片驳回失败!");
+    }
+  }
+  return result;
+}
+```
+
+## AbstractController
+
+```java
+public abstract class AbstractController {
+	protected final Logger logger = LogManager.getLogger(getClass());
+  //定义些常量、公共参数的校验方法（如Header中参数）、及获取当前登录用户信息的方法
+	//...
+}
+```
+
+## SpringWebUtils
+
+* 工具类，封装一些从request、session中获取信息的方法，如用户的登录信息
+
+```java
+@Component
+public class SpringWebUtils {
+  public static HttpServletRequest getRequest() {
+        return ((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest();
+    }
+  //...
+}
+```
+
+## SpringUtils
+
+* 单例模式
+
+* 根据带`ApplicationContext`参数的构造函数创建
+
+  * `private static ApplicationContext ctx;`
+  * 获取`ApplicationContext`中`Bean`
+    * `ApplicationContext.getBean(beanName)、ApplicationContext.getBean(beanClassPath)`
+
+  ```java
+  // 将 basePackage = com.tkrng.community.socket 转为 com/tkrng/community/socket
+  private String resolveBasePackage(String basePackage) {
+          return ClassUtils.convertClassNameToResourcePath(ctx.getEnvironment().resolveRequiredPlaceholders(basePackage));
+      }
+  
+  // 
+  private ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
+  //
+  private MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory(resourcePatternResolver);
+    
+  // 扫描包路径获取Set<BeanDefinition>
+  // BeanDefinitionFilter：扫描时可进行条件过滤，过滤掉不需要的BeanDefinition
+  public Set<BeanDefinition> findCandidateComponents(String basePackage, BeanDefinitionFilter sbdFlter) {
+    Set<BeanDefinition> candidates = new LinkedHashSet<BeanDefinition>();
+    try {
+      // 获取指定包下
+      String packageSearchPath = "classpath*:" + resolveBasePackage(basePackage) + "/" + "**/*.class";
+      // 获取指定包中资源
+      Resource[] resources = resourcePatternResolver.getResources(packageSearchPath);
+      // 遍历资源
+      for (Resource resource : resources) {
+        if (resource.isReadable()) {
+          try {
+            // 将资源转换成元数据
+            MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(resource);
+            // 将元数据转为BeanDefinition
+            ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
+            sbd.setResource(resource);
+            sbd.setSource(resource);
+            // 根据传入的条件过滤对象来过滤掉不符合条件的BeanDefinition
+            // sbdFlter.filter(sbd)为true时表示保留
+            if ((sbdFlter != null) && (sbdFlter.filter(sbd))) {  
+               candidates.add(sbd);
+            }
+          } catch (Throwable ex) {
+            throw new BeanDefinitionStoreException("Failed to read candidate component class: " + resource, ex);
+          }
+        }
+      }
+    } catch (IOException ex) {
+      throw new BeanDefinitionStoreException("I/O failure during classpath scanning", ex);
+    }
+    return candidates;
+  }
+  
+  // 调用根据包来获取包内BeanDefinition
+  // 扫描时，BeanDefinitionFilter（相当于过滤条件）过滤掉不符合条件的BeanDefinition
+  Set<BeanDefinition> candidateComponents = springUtils.findCandidateComponents(packageStr,
+                      new BeanDefinitionFilter() {
+     //匿名内部类               
+  	@Override
+  	public boolean filter(ScannedGenericBeanDefinition sbd) {
+  		try {
+  			GenericBeanDefinition definition = sbd;
+  			Class<?> entityClazz = Class.forName(definition.getBeanClassName());
+  			SocketIOEvent annotation = (SocketIOEvent) entityClazz
+                              .getAnnotation(SocketIOEvent.class);
+  			SocketIOListener listener = (SocketIOListener) 		 	
+          										entityClazz.getAnnotation(SocketIOListener.class);
+  			SocketDisconnectListener dicconnectListener = (SocketDisconnectListener) 
+          										entityClazz.getAnnotation(SocketDisconnectListener.class);
+  			if (annotation == null && listener == null && dicconnectListener == null) {
+  					return false;        
+  			}
+  					return true;
+  			} catch (ClassNotFoundException e) {
+  					logger.error("", e);
+  			}
+  			 	return false;
+  		}
+  	});
+  }
+  ```
+
+  
+
+## 分页
 

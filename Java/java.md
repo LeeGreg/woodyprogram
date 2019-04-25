@@ -45,9 +45,6 @@
     * 运算过程中，低精度的类型自动向高精度类型转换；高精度的数值显示强制转换后赋值给低精度类型变量
   * +=运算中，`b + = a`结合了强制类型转换的功能，因此，不会出现编译错误
   * 而对于`b=a+b;`简单的运算，没有类型转换（`b = (char)(a+b)`），在编译过程中会报错
-* 64 位 JVM 中，int 的长度是多数？
-
-  * Java 中，int 类型变量的长度是一个固定值，与平台无关，都是 32 位
 * Java 中的编译期常量是什么？使用它又什么风险？
 
   * 公共静态不可变（==public static final== ）变量也就是我们所说的编译期常量，这里的 public 可选的。实际上这些变量在编译时会被替换掉，因为编译器知道这些变量的值，并且知道这些变量在运行时不能改变。这种方式存在的一个问题是你使用了一个内部的或第三方库中的公有编译时常量，但是==这个值后面被其他人改变了==，但是你的客户端仍然在使用老的值，甚至你已经部署了一个新的jar。为了避免这种情况，当你在更新依赖 JAR 文件时，确保==重新编译==你的程序
@@ -65,10 +62,8 @@
     * 执行完finally语句后，返回之前保存在局部变量表里的值
   * ==规范规定了，当try和finally里都有return时，会忽略try的return，而使用finally的return==
 * ==object有哪些方法-9==
-  * clone() 创建并返回此对象的一个副本
-  * toString() 返回该对象的字符串表示
-  * equals(Object obj) 判断其他某个对象是否与此对象“相等”
-  * hashCode() 返回该对象的哈希码值
+  
+  * clone() 、toString() 、equals(Object obj) 、hashCode() 
   * finalize() 当垃圾回收器确定不存在对该对象的更多引用时，由对象的垃圾回收器调用此方法
   * getClass() 返回此 Object 的运行时类
   * notify() 唤醒在此对象监视器上等待的单个线程
@@ -79,55 +74,12 @@
 
 # 经验
 
-```java
-//1. 使用list之前，先判断list是否为null或者size<1
-//2. 使用对象前，考虑是否有null的情形
-//3. 如果从xml配置文件不能很好的注入依赖（特别是基本数据类型），可以考虑从config.properties中定义，然后赋值
-//4. 对象某个属性没赋值或者为null，那么该属性与另一个字符串属性相加+，值为nullstr
-//5. 增加字段时，要考虑是否要唯一
-//6. 查找时，要考虑是否过滤掉已删除的，注意状态
-//7. 分析问题时，先从对方开始，询问操作过程，然后再从自身找问题
-//8. 要考虑一种场景：初始化时，啥数据都没有，要考虑不能报错
-//9. 如果有多种类型，考虑是否返回数组，包含所产生的类型
-//10. 返回null时，注意是否会影响调用程序报空指针异常
-//11. 涉及到设置session时，要考虑多用户情形，比如session改成向redis中存入数据，则要考虑key不能是固定，要随用户
-//12. 使用redis时考虑设置有效期
-//13. 之前没问题，现在有问题，查看对比提交文件
-//14. freemarker页面404  路径到view映射问题，曲线救国，新写controller，从path中获取路径，然后return到view
-//15. 系统访问不了，先排查tomcat启动过程中是否报错了，看启动日志
-//16. 访问不了，telnet试下端口能访问不、防火墙开放了不
-//17. 根据业务场景，对用户输入的数据进行校验、验证，防止恶意攻击
-//18. 防止NPE（空指针异常）是调用者的事情，被调用的方法可以返回null，但需说明什么情况下返回null
-```
-
-* 【强制】获取单例对象需要保证线程安全，其中的方法也要保证线程安全。
-
-  * 说明：资源驱动类、工具类、单例⼯厂类都需要注意。
-* 【强制】线程资源必须通过线程池提供，不允许在应用中⾃行显式创建线程。
 * 【强制】==线程池不允许使用 Executors 去创建，而是通过 ThreadPoolExecutor 的方式==，这样的处理⽅式让写的同学更加明确线程池的运行规则，规避资源耗尽的⻛风险
   * 说明：Executors 返回的线程池对象的弊端如下:
     * 1）FixedThreadPool 和 SingleThreadPool
       * 允许的==请求队列长度为 Integer.MAX_VALUE==，可能会堆积大量的请求，从而导致OOM。
     * 2）CachedThreadPool 和 ScheduledThreadPool：
       * 允许的==创建线程数量为 Integer.MAX_VALUE==，可能会创建⼤量的线程，从⽽导致OOM。
-
-* 【强制】SimpleDateFormat 是线程不安全的类，一般不要定义为static变量，如果定义为 static，必须加锁，或者使用 DateUtils 工具类 
-
-  ```java
-  //正例:注意线程安全，使用 DateUtils。亦推荐如下处理:
-  private static final ThreadLocal<DateFormat> df = new
-    ThreadLocal<DateFormat>() { 
-      @Override
-  	protected DateFormat initialValue() {
-          return new SimpleDateFormat("yyyy-MM-dd");
-      }
-  };
-  //说明:如果是 JDK8 的应用，可以使用 Instant 代替 Date，LocalDateTime 代替Calendar，DateTimeFormatter 代替 SimpleDateFormat，官方给出的解释:simple beautiful strong immutable thread-safe。
-  ```
-
-* 【强制】高并发时，同步调⽤应该去考量锁的性能损耗。能⽤⽆无锁数据结构，就不要用锁；能锁区块，就不要锁整个方法体；能用对象锁，就不要用类锁。
-
-  * 说明：尽可能使加锁的代码块工作量尽可能的小，避免在锁代码块中调用 RPC 方法
 
 * 【强制】==对多个资源、数据库表、对象同时加锁时，需要保持一致的加锁顺序，否则可能会造成死锁==。
 
@@ -136,25 +88,12 @@
 
   * 说明：如果每次访问冲突概率⼩于 20%，推荐使用乐观锁，否则使用悲观锁。乐观锁的重试次数不得⼩于3次。
 * 【强制】==多线程并行处理定时任务时，Timer 运行多个 TimeTask 时，只要其中之一没有捕获抛出的异常，其它任务便会自动终止运行，使用 ScheduledExecutorService 则没有这个问题==。
-* 【推荐】使用 CountDownLatch 进行异步转同步操作，每个线程退出前必须调⽤用 countDown方法，线程执行代码注意 catch 异常，确保 countDown 方法被执行到，避免主线程⽆法执行至 await 方法，直到超时才返回结果。
-
-  * 说明：注意，⼦线程抛出异常堆栈，不能在主线程 try-catch 到。
-* 【推荐】避免 Random 实例被多线程使用，虽然共享该实例是线程安全的，但会因竞争同一 seed 导致的性能下降。 
-
-  * 说明：Random 实例包括 java.util.Random 的实例或者 Math.random()的⽅式。 正例：在 JDK7 之后，可以直接使用 API ThreadLocalRandom，而在 JDK7 之前，需要编码保证每个线程持有⼀个实例
-
 * 【参考】==volatile 解决多线程内存不可见问题。对于一写多读，是可以解决变量同步问题，但是如果多写，同样⽆法解决线程安全问题==。如果是 count++操作，使⽤用如下类实现： 
   AtomicInteger count = new AtomicInteger(); count.addAndGet(1);
 
    如果是 JDK8，推荐使⽤LongAdder 对象，⽐AtomicLong 性能更好(减少乐观锁的重试次数)。
 
 * 【参考】 HashMap 在容量不够进行 resize 时由于高并发可能出现死链，导致 CPU 飙升，在开发过程中可以使⽤其它数据结构或加锁来规避此⻛险。
-
-* 【参考】==ThreadLocal ⽆法解决共享对象的更新问题，ThreadLocal 对象建议使用 static修饰==。这个变量是针对一个线程内所有操作共享的，所以设置为静态变量，所有此类实例共享此静态变量 ，也就是说在类第一次被使用时装载，只分配一块存储空间，所有此类的对象(只要是这个线程内定义的)都可以操控这个变量。
-
-* 【强制】在高并发场景中，避免使⽤”等于”判断作为中断或退出的条件。
-
-  * 说明：如果并发控制没有处理好，容易产生等值判断被“击穿”的情况，使用⼤于或小于的区间判断条件来代替 
 
 * 【参考】下列情形，需要进行参数校验：
 
@@ -203,41 +142,6 @@
     * 使用抛异常返回⽅式，调用⽅如果没有捕获到就会产⽣运行时错误
     * 如果不加栈信息，只是new自定义异常，加⼊⾃己的理解的error message，对于调⽤端解决问题的帮助不会太多。如果加了栈信息，在频繁调用出错的情况下，数据序列化和传输的性能损耗也是问题。
 
-* 【强制】应用中不可直接使用⽇志系统(Log4j、Logback)中的 API，而应依赖==使⽤用日志框架SLF4J 中的 API==，使用门⾯模式的⽇志框架，有利于维护和各个类的⽇志处理⽅式统一。
-
-  ```java
-  import org.slf4j.Logger;
-  import org.slf4j.LoggerFactory;
-  private static final Logger logger = LoggerFactory.getLogger(Abc.class);
-  ```
-
-* 【强制】==对 trace/debug/info 级别的⽇志输出，必须使用条件输出形式或者使⽤占位符的方式==。 
-
-  ```java
-  //说明:
-  logger.debug("Processing trade with id: " + id + " and symbol: " + symbol); 
-  //如果日志级别是warn，上述日志不会打印，但是会执行字符串拼接操作，如果 symbol是对象，会执行toString()方法，浪费了系统资源，执行了上述操作，最终日志却没有打印。正例:(条件)建设采⽤如下方式
-  if (logger.isDebugEnabled()) { 
-      logger.debug("Processing trade with id: " + id + " and symbol: " + symbol);
-  }
-  //正例:(占位符) 
-  logger.debug("Processing trade with id: {} and symbol : {} ", id, symbol);
-  ```
-
-* 【强制】避免重复打印日志，浪费磁盘空间，务必在 log4j.xml中设置 additivity=false。
-
-  ```java
-  //正例:
-  <logger name="com.taobao.dubbo.config" additivity="false">
-  ```
-
-* 【强制】==异常信息应该包括两类信息：案发现场信息和异常堆栈信息。如果不处理理，那么通过关键字 throws 往上抛出==
-
-  ```java
-  //正例：
-  logger.error(各类参数或者对象toString() + "_" +e.getMessage(), e);
-  ```
-
 * 【强制】用户请求传入的任何参数必须做有效性验证。 
   * 说明：忽略参数校验可能导致
     * page size 过大导致内存溢出  
@@ -283,11 +187,11 @@
 * 变量：
 
   1. 成员变量：(实例变量、类变量）  =》  ⽆需显示初始化，具有默认初始化，堆内存中
-  2. 局部变量：(形参、⽅法局部变量、代码块局部变量) => 除形参外，都必须显示初始化
+  2. 局部变量：(形参、⽅法局部变量、代码块局部变量) => 除形参外，使用之前都必须显示初始化
 
 * 面向对象编程中的基本目的：
 
-  让代码只操纵对基类的引用。这样，如果要添加一个新类来扩展程序，就不会影响到原来的代码
+  * 让代码只操纵对基类的引用。这样，如果要添加一个新类来扩展程序，就不会影响到原来的代码
 
 * this总是指向调⽤该方法的对象
 
@@ -303,10 +207,6 @@
 * 形参个数可变的⽅法 test(int a, String ... books) books可以是数组
 
 * 向下类型转型前，先instanceof（对象是不是某个特定类型的实例）
-
-* RTTI：在运行时，识别一个对象的类型
-
-* 如果某个对象出现在字符串表达式中，toString()方法就会被自动调用以生成表示该对象的String
 
 * 值传递，引用变量存放在栈内存里，指向真正存储在堆内存中的对象
 
@@ -339,7 +239,8 @@
 
 ==所有的类都是在对其第一次使用时，动态加载到JVM中==
 
-* 当程序创建第一个对类的静态成员的引用时，就会加载这个类。这个证明构造器也是类的静态方法，即使在构造器之前并没有使用static关键字。因此，使用new操作符创建类的新对象也会被当作对类的静态成员的引用
+* 当程序创建第一个对类的静态成员的引用时，就会加载这个类。
+  * 这个证明构造器也是类的静态方法，即使在构造器之前并没有使用static关键字。因此，使用new操作符创建类的新对象也会被当作对类的静态成员的引用
 * Java程序在它开始运行之前并非完全被加载，其各个部分是在必须时才加载的
 * Class对象仅在需要的时候才被加载，static初始化是在类加载时进行的
 * ==使用newInstance()来创建的类，必须带有默认的构造器==
@@ -405,7 +306,7 @@ static {
   6. ==子类不能继承父类的构造器(构造⽅法或者构造函数)，如果父类的构造器带有参数，则必须在子类的构造器中显式地通过 super 关键字调用父类的构造器并配以适当的参数列表==
   7. ==如果父类构造器没有参数，则在子类的构造器中不需要使用 super 关键字调⽤父类构造器，系统会自动调用⽗类的⽆参构造器==
   8. 创建任何对象总是从该类所在继承树最顶层类的构造器开始执行，然后依次向下执行，最后才执行本类的构造器
-  9. 继承：is a关系，严重地破坏了父类的封装性
+  9. 继承：is a关系，==严重地破坏了父类的封装性==
   10. 组合：has a关系，把旧类对象作为新类的成员变量组合进来
 
 * 多态
@@ -468,36 +369,95 @@ static {
 
 ## 跨域
 
-==跨域，是指浏览器不能执行其他网站的脚本。它是由浏览器的同源策略造成的，是浏览器对JavaScript实施的安全限制==
+* 是指一个域下的文档或脚本试图去请求另一个域下的资源，由浏览器的同源策略造成的，是一种安全策略
 
-同源是指，域名、协议、端口均为相同
+* 同源是指，域名、协议、端口均为相同
 
-常见跨域场景：
+* 常见跨域场景：
 
-1. 主域不同、子域名不同、端口不同、协议不同
-2. localhost   调用 127.0.0.1 跨域
+  1. 主域不同、子域名不同、端口不同、协议不同
 
-同源策略限制了以下行为：
+  2. localhost   调用 127.0.0.1 跨域
 
-* Cookie、JS对象无法获取，Ajax请求发送不出去
+* 同源策略限制了以下行为：
+  *  Cookie、LocalStorage 和 IndexDB 无法读取
+  * DOM和JS对象无法获取
+  * Ajax请求不能发送
 
-解决方法：
+[解决方法](<https://segmentfault.com/a/1190000011145364>)：
 
 1. jsonp跨域
 
-   jsonp跨域其实也是JavaScript设计模式中的一种代理模式
+   * 在html页面中通过相应的标签从不同域名下加载静态资源文件是被浏览器允许的
+* 可以通过动态创建script，再请求一个带参网址实现跨域通信
+     * 原生
+  * jquery ajax，`dataType: 'jsonp'`
+   
+* 最大的缺陷是，只能够实现get请求
+   
+2. document.domain + iframe跨域
 
-   ==在html页面中通过相应的标签从不同域名下加载静态资源文件是被浏览器允许的==，所以可以通过这个“漏洞”来进行跨域。
+   * 仅限主域相同，子域不同的跨域应用场景
+   * 实现原理：两个页面都通过js强制设置document.domain为基础主域，就实现了同域
 
-   一般，可以动态的创建script标签，再去请求一个带参网址来实现跨域通信
+3. 跨域资源共享（CORS）
 
-   最大的缺陷是，只能够实现get请求
+   * 普通跨域请求，只服务端设置Access-Control-Allow-Origin即可，前端无须设置
 
-2. ==nginx代理跨域==
+   * 若要带cookie请求：前后端都需要设置
 
-   * 原理
+     * 前端设置是否带cookie
 
-3. ==跨域资源共享CORS==
+     * 后端
+
+       ```java
+       // 允许跨域访问的域名：若有端口需写全（协议+域名+端口），若没有端口末尾不用加'/'
+       response.setHeader("Access-Control-Allow-Origin", "http://www.domain1.com"); 
+       // 允许前端带认证cookie：启用此项后，上面的域名不能为'*'，必须指定具体的域名，否则浏览器会提示
+       response.setHeader("Access-Control-Allow-Credentials", "true"); 
+       // 提示OPTIONS预检时，后端需要设置的两个常用自定义头
+       response.setHeader("Access-Control-Allow-Headers", "Content-Type,X-Requested-With");
+       ```
+
+4. ==nginx代理跨域==
+
+   * 浏览器跨域访问js、css、img等常规静态资源被同源策略许可，但iconfont字体文件(eot|otf|ttf|woff|svg)例外，可在nginx的静态资源服务器中加入以下配置
+
+     ```json
+     location / {
+       add_header Access-Control-Allow-Origin *;
+     }
+     ```
+
+   * ##### ==nginx反向代理接口跨域==
+
+     * 跨域原理： 同源策略是浏览器的安全策略，不是HTTP协议的一部分。服务器端调用HTTP接口只是使用HTTP协议，不会执行JS脚本，不需要同源策略，也就不存在跨越问题
+
+     * 实现思路：通过nginx配置一个代理服务器（域名与domain1相同，端口不同）做跳板机，反向代理访问domain2接口，并且可以顺便修改cookie中domain信息，方便当前域cookie写入，实现跨域登录
+
+       ```shell
+       #proxy服务器
+       server {
+           listen       81;
+           server_name  www.domain1.com;
+       
+           location / {
+               proxy_pass   http://www.domain2.com:8080;  #反向代理
+               proxy_cookie_domain www.domain2.com www.domain1.com; #修改cookie里域名
+               index  index.html index.htm;
+       
+               # 当用webpack-dev-server等中间件代理接口访问nignx时，此时无浏览器参与，故没有同源限制，下面的跨域配置可不启用
+               add_header Access-Control-Allow-Origin http://www.domain1.com;  #当前端只跨域不带cookie时，可为*
+               add_header Access-Control-Allow-Credentials true;
+           }
+       }
+       ```
+
+5. WebSocket协议跨域
+
+   * WebSocket protocol是HTML5一种新的协议。它实现了浏览器与服务器全双工通信，同时允许跨域通讯
+
+6. 跨域资源共享CORS
 
    * 目前主流的跨域解决方案，CORS支持所有类型的HTTP请求
 
@@ -533,15 +493,6 @@ static {
      如果浏览器否定了"预检"请求，会返回一个正常的HTTP回应，但是没有任何CORS相关的头信息字段。这时，浏览器就会认定，服务器不同意预检请求，因此触发一个错误，被`XMLHttpRequest`对象的`onerror`回调函数捕获
 
      ==一旦服务器通过了"预检"请求，以后每次浏览器正常的CORS请求，就都跟简单请求一样，会有一个Origin头信息字段==。服务器的回应，也都会有一个Access-Control-Allow-Origin头信息字段
-
-> 1. 设置document.domain(一级域名相同的情况下)，调用者和页面提供者进行协调，页面提供者在其页面中加入document.domain([gupaoedu.com](http://gupaoedu.com/))，但是会影响其自己的调用，所以这种方式一般是自己开发的项目中
-> 2. HTML的script标签中有==src属性==的，只能支持Get请求、允许跨域
-> 3. ==jQuery ajax方式以jsonp类型发起跨域请求，其原理跟<script>脚本请求一样==，因此使用jsonp时也只能使用GET方式发起跨域请求。跨域请求需要服务端配合，设置callback，才能完成跨域请求
-> 4. `<script src=””>`JSONP的格式实现跨域，==JSONP==：在返回 的格式基础之上再进行封装，JSONP返回的是个js脚本（支持跨域），然后在js脚本的基础之上 加上特殊的格式eval（相当于Java的反射），通过对这个回调把里面的数据格式以字符串的形式返回到系统中来，再转换成JSON。SSO登录、页面头的引用
-> 5. ==ifram==之间交互window.postMessage方法，在ifram的window对象中相互进行一个信息的收发和通信，但是有个弊端，发送的内容只能是字符串（长度不超过255）。可以在任何域名之间进行自由的通信，没有任何限制
-> 6. 服务器后台做文章：==CORS==（安全沙箱）
->   HTTP Header中：
->   Access-Control-Allow-Origin：*（域名）;—— 这个请求允许任何域名都能够请求的，没有跨域限制、沙箱限制
 
 ## ==泛型==
 
