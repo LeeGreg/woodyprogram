@@ -27,6 +27,7 @@
       * 遍历所有`Set<BeanDefinition>`，通过反射获取其上的注解（`SocketIOEvent`、`SocketIOListener`和`SocketDisconnectListener`），通过判断，分别存入相应的Map中
   * 遍历groups（分组，目前就一个分组`common`），设置SocketIO服务端配置
     * 启动前，先把在线客户端下线
+      
       * ...
     * 根据key为group来获取各事件Map中的事件class对象`List<Class<?>>`
     * 构造`SocketIO`服务配置`Configuration`
@@ -48,16 +49,112 @@
         * 连接事件`server.addConnectListener(new SocketIOConnectListener(group));`
           * `SocketIOConnectListener实现ConnectListener`，重写`onConnect(SocketIOClient client)`
             * 从`SocketIOClient`中获取`HandshakeData（包含认证拦截时设置的一些登录数据，如username、companyCode、sid、group等）`
-            * ==当客户端连接上socket io服务时，创建对应的redis通道监听器==
+            * ==当客户端连接上socket io服务时，创建对应的redis通道监听器监听消息==
               * 根据`SOCKET_MESSAGE_BY_companyCode_username`构建redis的`ChannelTopic`
-              * 
+              * ==初始化redis容器==`RedisMessageListenerContainer`和`MessageListenerAdapter`
+              * redis消息监听容器添加通道监听`RedisMessageListenerContainer.addMessageListener(messageListenerAdapter, topic);`
+              * 建立连接后存储通道与对应消息监听器`ConcurrentHashMap<String, MessageListener> currentUserRedisMessageListeners.put(topic.getTopic(), messageListenerAdapter);`
+              * 将group、companyCode、username拼接成key，SocketIOClient为value，存入用户的当前客户端socket io连接ConcurrentHashMap中
+          
         * 断开连接事件`server.addDisconnectListener(new SocketIODisconnectListener(group));`
+        
+          * `SocketIODisconnectListener implements DisconnectListener`，重写`void onDisconnect(SocketIOClient client)`方法
+            * 从SocketIOClient中获取客户端信息
+            * 从redis中删除登录成功信息
+            * 从当前客户端socket io连接ConcurrentHashMap中删除对应SocketIOClient
+            * 然后从redis消息监听容器删除对应通道
+        
+        * 增加客户端连接事件监听
+        
+          * server.addConnectListener(connectListener);
+          * connectListener 实现ConnectListener接口，主要做一些日志记录
+          * connectListener通过class对象反射获取
+          * class对象扫描对应的注解获取
+        
+        * 增加客户端断开连接监听事件
+        
+          * server.addDisconnectListener(disconnectListener)
+          * 实现DisconnectListener接口，主要做一些日志记录
+          * onnectListener通过class对象反射获取
+          * class对象扫描对应的注解获取
+        
         * 自定义事件监听
-          * 
-      * 服务端异步启动，并添加监听
-        * `server.startAsync().addListener{new ChannelFutureListener(){...}}`
+        
+          * 遍历自定义事件class对象
+        
+          ```java
+          server.addEventListener(simpleName, String.class, new DataListener<String>() {
+            @Override
+            public void onData(SocketIOClient client, String dataStr, AckRequest ackRequest) {
+              // 1. 从client中获取客户端信息，如companyCode、username、sid
+              // 2. 构建长连接日志信息，插入日志表
+              // 3. 通过事件类class对象、事件类方法名(onMessage)、参数(SocketIOClient，data)，利用反射调用事件类中方法，获取返回值SocketCallbackData
+              // 4. 如果要求有回调ackRequest.isAckRequested，则将返回值发送给客户端
+              // 5. 根据MessageId更新长连接日志信息记录状态
+          ```
+  
+* 服务端异步启动，并添加监听
+
+  * `server.startAsync().addListener{new ChannelFutureListener(){...}}`
 
 ## SpringBoot版
+
+## 基础设施
+
+* `SocketIOData`，Socket io服务 接收消息数据临时对象
+
+  - `id`（消息ID）、`group`、`eventName`、`busObject`（业务数据JSON）、`success`、`sendTime`、`errorCode`、`errorMessage`、`username`、`companyCode`、`operator`、`operationCompany`、`clientIp`
+
+* `SocketCallbackData`，消息推送 客户端回调消息格式
+
+  * `messageId`、`success`、`busObject`、`errorCode`、`errorMessage`、`processTime`
+
+* ==初始化redis容器==
+
+  ```java
+  //注册到Spring容器中
+  public class RedisSubConfiguration {
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory redisConnectionFactory) {
+      RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+      container.setConnectionFactory(redisConnectionFactory);
+      return container;
+    }
+    @Bean
+    public MessageListenerAdapter messageListenerAdapter() {
+      MessageListenerAdapter messageListenerAdapter = new MessageListenerAdapter();
+      //设置消息监听代理：自定义代理消息处理PushMessageDelegateListenerImpl
+      // 用于服务端主动推送事件给相应的客户端
+      messageListenerAdapter.setDelegate(pushMessageDelegateListenerImpl());
+      messageListenerAdapter.setDefaultListenerMethod("handleMessage");
+      messageListenerAdapter.setSerializer(new JdkSerializationRedisSerializer());
+      return messageListenerAdapter;
+    }
+  
+    @Bean
+    public PushMessageDelegateListenerImpl pushMessageDelegateListenerImpl() {
+      return new PushMessageDelegateListenerImpl();
+    }
+  }
+  ```
+  
+  ```java
+  public interface MessageDelegate {
+  		// 消息处理
+      public void handleMessage(Serializable message, String channel);
+  }
+  public class PushMessageDelegateListenerImpl implements MessageDelegate{
+    // 1. 将message转为SocketIOData  if message instanceof SocketIOData
+    // 2. 从SocketIOData中获取group、companyCode、username，组成key，从存放用户的 当前客户端socket io连接的Map中获取SocketIOClient
+    // 3. 从SocketIOData中构建PortalSocketMsg长连接日志信息（事件名、group、companyCode、是否发送成功、IP地址）
+    // 4. 如果SocketIOClient的channel是通的，client.isChannelOpen()
+    // 4.1 将上述日志信息插入到长连接日志表
+    // 4.2 SocketIOClient推送事件并有回调  事件名 回调方法 发送数据
+    client.sendEvent(data.getEventName(), new PushMessageAckCallback(msg), JSON.toJSONString(out, SerializerFeature.WriteMapNullValue));
+    class PushMessageAckCallback extends AckCallback<String>
+      重写void onSuccess(String data)方法，根据messigeId更新上面长连接日志信息发送状态为成功
+  }
+  ```
 
 # Hessian
 

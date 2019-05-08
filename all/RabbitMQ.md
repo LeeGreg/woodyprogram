@@ -213,203 +213,86 @@ factory.setAutoStartup(true);
 
 - 跨系统的异步通信
 - 应用内的同步变成异步（应用解耦）
-  - 秒杀：自己发送给自己
   - 由于异步线程里的操作都是很耗时间的操作，也消耗系统资源
-  - 主线程依旧处理耗时低的入库操作，然后把需要处理的消息写进消息队列中，然后，独立的子系统，同时订阅消息队列，进行单独处理，处理好之后，向队列发送ACK确认，消息队列整条数据删除
+  - 比如注册时，可以将发送邮件、送积分等动作交给独立的子系统去处理，处理好之后向队列发送ACK确认
 - 流量削峰
-  - 控制队列长度，当请求来了，往队列里写入，超过队列的长度，就返回失败，给用户报一个提示等等
+  - 控制队列长度，将请求写入队列，超过队列长度则返回失败，返回给用户一个提示信息。
 - 日志处理 
-  - 个系统有大量的业务需要各种日志来保证后续的分析工作，而且实时性要求不高，用队列处理再好不过了
+  - 系统有大量的业务需要各种日志来保证后续的分析工作，而且实时性要求不高，可以用队列处理
 - 系统间同步数据
-  - 摒弃ELT（）(比如全量同步商户数据); 摒弃API(比如定时增量获取用户、获取产品，变成增量广播)
-  - ELT是利用数据库的处理能力，E=从源数据库抽取数据，L=把数据加载到目标库的临时表中，T=对临时表中的数据进行转换，然后加载到目标库目标表中
+  - ELT，将源数据库数据存入临时表进行转换，然后加载到目标库目标表中
 - 基于Pub/Sub模型实现的事件驱动
-  - ETL	HTTP API ——MQ
-  - ETL：用来描述将数据从来源端经过抽取（extract）、交互转换（transform）、加载（load）至目的端的过程
 - 利用RabbitMQ实现事务的最终一致性
-  - 用消息确认机制来保证：**只要消息发送，就能确保被消费者消费**来做到了消息最终一致性
+  - 用消息确认机制来保证：只要消息发送，就能确保被消费者消费来做到了消息最终一致性
 
 # 基本介绍
 
-是一个Erlang开发的AMQP（Advanced Message Queuing Protocol ）的开源实现
+* 是一个Erlang开发的基于AMQP（Advanced Message Queuing Protocol ）的开源消息队列中间件
+* 使用Mnesia数据库存储消息
 
 ## AMQP协议
 
-AMQP，即AdvancedMessage Queuing Protocol，一个提供统一消息服务的应用层标准高级消息队列协议，是应用层协议的一个开放标准，为面向消息的中间件设计。基于此协议的客户端与消息中间件可传递消息，并不受客户端/中间件同产品、不同的开发语言等条件的限制
+AMQP，应用层标准高级消息队列协议，是应用层协议的一个开放标准。基于此协议的客户端与消息中间件可传递消息，并不受客户端/中间件同产品、不同的开发语言等条件的限制
 
-AMQP的实现有：
-
-- RabbitMQ
-- OpenAMQ、Apache Qpid
+* AMQP的实现有：RabbitMQ、OpenAMQ
 
 ## 安装
 
-```shell
-# 成功
-# 安装socat
-yum -y install socat
-# 1. 先安装Erlang
-rpm -Uvh http://www.rabbitmq.com/releases/erlang/erlang-19.0.4-1.el7.centos.x86_64.rpm
-# 2. 安装rabbitmq-server 
-rpm -Uvh http://www.rabbitmq.com/releases/rabbitmq-server/v3.6.15/rabbitmq-server-3.6.15-1.el6.noarch.rpm
-# 查看rabbitmq-server有没有安装好  #rabbitmq-server-3.6.15-1.el6.noarch
-rpm -qa|grep rabbitmq
-# 安装维护插件
-rabbitmq-plugins enable rabbitmq_management 
-# 开启rabbit-server
-service rabbitmq-server start
-# 关掉服务
-service rabbitmq-server stop
-# 查看rabbit-server当前状态
-rabbitmqctl status
-# 重启
-service rabbitmq-server restart
-
-# 访问
-http://192.168.55.122:15672/
-# guest账户只能http://localhost:15672/ 的方式进入，需要修改配置
-# 解决办法是：
-vi /etc/rabbitmq/rabbitmq.config
-# 输入
-[{rabbit, [{loopback_users, []}]}].
-# 新建账户并赋予权限
-rabbitmqctl  add_user  username  password
-rabbitmqctl  set_user_tags  username  administrator
-# 查看创建完的账号
-rabbitmqctl list_users
-# 删除用户
-rabbitmqctl delete_user username
-# 修改密码
-rabbitmqctl  oldPassword  Username  newPassword
-# 再回到http://外网ip:15672/ 用刚才的用户名和密码登陆就能进去了
-
-# 用户角色
-1. administrator超级管理员：
-	可登陆管理控制台(启用management plugin的情况下)，可查看所有的信息，并且可以对用户，策略(policy)进行操作
-2. monitoring监控者
-	可登陆管理控制台(启用management plugin的情况下)，同时可以查看rabbitmq节点的相关信息(进程数，内存使用情况，磁盘使用情况等)
-3. policymaker策略制定者
-	可登陆管理控制台(启用management plugin的情况下), 同时可以对policy进行管理。但无法查看节点的相关信息(上图红框标识的部分)。与administrator的对比，administrator能看到这些内容。
-4. management普通管理者
-	仅可登陆管理控制台(启用management plugin的情况下)，无法看到节点信息，也无法对策略进行管理
-5. 其他
-	无法登陆管理控制台，通常就是普通的生产者和消费者
-# 设置用户角色的命令
-# User为用户名， Tag为角色名(对应于上面的administrator，monitoring，policymaker，management，或其他自定义名称)
-rabbitmqctl  set_user_tags  User  Tag
-
-# 要给新建的用户设置权限，否则项目连接不上
-
-# 设置用户权限
-# 用户权限指的是用户对exchange，queue的操作权限，包括配置权限，读写权限。配置权限会影响到exchange，queue的声明和删除。读写权限影响到从queue里取消息，向exchange发送消息以及queue和exchange的绑定(bind)操作
-# rabbitmqctl set_permissions -p  VHostPath  User  ConfP  WriteP  ReadP
-# 		Conf：一个正则表达式match哪些配置资源能够被该用户访问
-#	 	Write：一个正则表达式match哪些配置资源能够被该用户读。
-# 		read：一个正则表达式match哪些配置资源能够被该用户访问
-rabbitmqctl set_permissions -p "/" username ".*" ".*" ".*"
-# 查看(指定hostpath)所有用户的权限信息
-rabbitmqctl  list_permissions  [-p  VHostPath]
-# 查看指定用户的权限信息
-rabbitmqctl  list_user_permissions  User
-# 清除用户的权限信息
-rabbitmqctl  clear_permissions  [-p VHostPath]  User
-
-# 卸载
-[root@localhost shared_docs]# rpm -qa | grep rabbitmq-server
-rabbitmq-server-3.7.4-1.el7.noarch
-[root@localhost shared_docs]#  rpm -e rabbitmq-server
-
-```
+* 开启/停止/重启`service rabbitmq-server start/stop/restart`
+* 查看状态`rabbitmqctl status`
+* 页面访问`http://192.168.55.122:15672/`
+* 新建用户设置权限
 
 # RabbitMQ的特性
 
-RabbitMQ使用Erlang语言编写，使用Mnesia数据库存储消息。
+- 可靠性，RabbitMQ 使用如持久化、传输确认、发布确认等机制来保证可靠性，
 
-- 可靠性
+- 灵活的路由，消息通过Exchange 来路由到相应的队列，有直连、主题和广播交换机
 
-  RabbitMQ 使用一些机制来保证可靠性，如持久化、传输确认、发布确认
+- 消息集群，多个 RabbitMQ 服务器可以组成一个集群，形成一个逻辑 Broker 
 
-- 灵活的路由
+- 高可用，队列可以在集群中的机器上进行镜像，即使部分节点出问题队列仍然可用 
 
-  在消息进入队列之前，通过 Exchange 来路由消息的。对于典型的路由功能，RabbitMQ 已经提供了一些内置的 Exchange 来实现。针对更复杂的路由功能，可以将多个 Exchange 绑定在一起，也通过插件机制实现自己的 Exchange
+- 多种协议，RabbitMQ 支持多种消息队列协议，比如 AMQP、STOMP、MQTT 等等
 
-- 消息集群
+- 多语言客户端，RabbitMQ 几乎支持所有常用语言，比如 Java、.NET、Ruby、PHP、C#、JavaScript 等等
 
-  多个 RabbitMQ 服务器可以组成一个集群，形成一个逻辑 Broker 
+- 管理界面，RabbitMQ 提供了一个易用的用户界面可以用来监控和管理消息
 
-- 高可用
+- 插件机制，RabbitMQ提供了许多插件，以实现从多方面扩展，当然也可以编写自己的插件
 
-  队列可以在集群中的机器上进行镜像，使得在部分节点出问题的情况下队列仍然可用 
-
-- 多种协议
-
-  RabbitMQ 支持多种消息队列协议，比如 AMQP、STOMP、MQTT 等等
-
-- 多语言客户端
-
-  RabbitMQ 几乎支持所有常用语言，比如 Java、.NET、Ruby、PHP、C#、JavaScript 等等
-
-- 管理界面
-
-  RabbitMQ 提供了一个易用的用户界面，使得用户可以监控和管理消息、集群中的节点。
-
-- 插件机制
-
-  RabbitMQ提供了许多插件，以实现从多方面扩展，当然也可以编写自己的插件
 
 ## ==工作模型==
 
 ![image-20190105182648632](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/02.%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%93%E9%A2%98/06.%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%80%9A%E4%BF%A1/image-20190105182648632-6684008.png)
 
-- Broker
+- Broker，RabbitMQ的实体服务器，维护一条从生产者到消费者的传输线路，保证消息数据能按照指定的方式传输。
 
-  即RabbitMQ的实体服务器。提供一种传输服务，维护一条从生产者到消费者的传输线路，保证消息数据能按照指定的方式传输。
+- Message，消息，消息头可以设置routing-key、优先级、持久化、过期时间等属性，消息体则包含传输信息
 
-- Message
+- Exchange，消息交换机，指定消息按照什么规则路由到哪个队列Queue
 
-  消息，消息是不具名的，它由消息头和消息体组成。消息体是不透明的，而消息头则由一系列的可选属性组成，这些属性包括routing-key（路由键）、priority（相对于其他消息的优先权）、delivery-mode（指出该消息可能需要持久性存储）等。
+- Queue，消息队列，消息的载体，每条消息都会被投送到一个或多个队列中
 
-- Exchange
+- Binding，绑定。作用就是将Exchange和Queue按照某种路由规则绑定起来
 
-  消息交换机。指定消息按照什么规则路由到哪个队列Queue
+- Routing Key，路由关键字，Exchange根据routing Key将消息投递到相应队列
 
-- Queue
+- Vhost，虚拟主机。一个Broker可以有多个虚拟主机，用作不同用户的权限分离。一个虚拟主机持有一组Exchange、Queue和Binding。
 
-  消息队列。消息的载体，每条消息都会被投送到一个或多个队列中
+- Producer，消息生产者，主要将消息投递到对应的Exchange上
 
-- Binding
+- Consumer，消息消费者。消息的接收者
 
-  绑定。作用就是将Exchange和Queue按照某种路由规则绑定起来
+- Connection，Producer 和 Consumer 与Broker之间的TCP长连接
 
-- Routing Key
-
-  路由关键字。Exchange根据Routing Key进行消息投递。定义绑定时指定的关键字称为Binding Key
-
-- Vhost
-
-  虚拟主机。一个Broker可以有多个虚拟主机，用作不同用户的权限分离。一个虚拟主机持有一组Exchange、Queue和Binding。
-
-- Producer
-
-  消息生产者。主要将消息投递到对应的Exchange上面。一般是独立的程序。
-
-- Consumer
-
-  消息消费者。消息的接收者，一般是独立的程序
-
-- Connection
-
-  Producer 和 Consumer 与Broker之间的TCP长连接
-
-- Channel
-
-  消息通道，也称信道。在客户端的每个连接里可以建立多个Channel，每个Channel代表一个会话任务。在RabbitMQ Java Client API中，channel上定义了大量的编程接口
+- Channel，消息通道，在客户端的每个连接里可以建立多个Channel，每个Channel代表一个会话任务。在RabbitMQ Java Client API中，channel上定义了大量的编程接口
 
 - 由RoutingKey、Exchange、Queue三个才能决定一个从Exchange到Queue的唯一的线路
 
 ## Direct Exchange直连交换机
 
-发送消息到直连交换机时，只有routing key跟binding key完全匹配时，绑定的队列才能收到消息
+* 发送消息到直连交换机时，只有routing key跟binding key完全匹配时，绑定的队列才能收到消息
 
 ```java
 // 只有队列1能收到消息 
@@ -420,9 +303,8 @@ channel.basicPublish("MY_DIRECT_EXCHANGE", "key1", null, msg.getBytes());
 
 ## Topic Exchange主题交换机
 
-发送消息到主题类型的交换机时，routing key符合binding key模式的绑定的队列才能收到消息 
-
-通配符有两个，*代表匹配一个单词。#代表匹配零个或者多个单词。单词与单词之间用 . 隔开。 
+* 发送消息到主题类型的交换机时，routing key符合binding key模式的绑定的队列才能收到消息 
+  * 通配符有两个，*代表匹配一个单词。#代表匹配零个或者多个单词。单词与单词之间用 . 隔开。 
 
 ```java
 // 只有队列1能收到消息
@@ -540,12 +422,10 @@ public class Producer {
       	// String exchange, String routingKey, BasicProperties props, byte[] body 
       	// 消息属性BasicProperties：headers-消息的其他自定义参数、deliveryMode-2持久化、priority-消息的优先级、correlationId-关联ID、replyTo-回调队列、expiration-TTL消息过期时间（毫秒）
         channel.basicPublish(exchangeName, routingKey, null, messageBodyBytes);
-
         channel.close();
         conn.close();
     }
 }
-
 ```
 
 ```java
@@ -628,10 +508,9 @@ Map<String,Object> arguments = new HashMap<String,Object>();
 arguments.put("x-dead-letter-exchange","DLX_EXCHANGE");
 // 指定了这个队列的死信交换机
 channel.queueDeclare("TEST_DLX_QUEUE", false, false, false, arguments);
-// 声明死信交换机
-channel.exchangeDeclare("DLX_EXCHANGE","topic", false, false, false, null); // 声明死信队列
+// 声明死信交换机和死信队列，然后绑定
+channel.exchangeDeclare("DLX_EXCHANGE","topic", false, false, false, null); 
 channel.queueDeclare("DLX_QUEUE", false, false, false, null);
-// 绑定
 channel.queueBind("DLX_QUEUE","DLX_EXCHANGE","#");
 ```
 
@@ -639,29 +518,25 @@ channel.queueBind("DLX_QUEUE","DLX_EXCHANGE","#");
 
 **优先级队列**
 
-* 设置一个队列的最大优先级`x-max-priority:10`
-
-* 发送消息时指定消息当前的优先级`priority:5`，在队列优先级范围内
-
 * 只有消息堆积(消息的发送速度大于消费者的消费速度)的情况下优先级才有意义
 
-## ==如何实现延迟发送消息==
+* 设置一个队列的最大优先级`x-max-priority:10`
+
+* 发送消息时在队列优先级范围内指定消息当前的优先级`priority:5`
+
+## 如何实现延迟发送消息
 
 **延迟队列**
 
-* RabbitMQ本身不支持延迟队列。可以使用TTL结合DLX的方式来实现消息的延迟投递，即把DLX跟某个队列绑定，到了指定时间，消息过期后，就会从DLX路由到这个队列，消费者可以从这个队列取走消息
+* RabbitMQ本身不支持延迟队列。但是可以设置一个队列A的死信交换机，然后死信交换机与另一个队列B绑定，  当队列A的消息过期后会通过死信交换机路由到队列B，然后可以从队列B消费消息
 
 * 另一种方式是使用rabbitmq-delayed-message-exchange插件
 
 * 当然，将需要发送的信息保存在数据库，使用任务调度系统扫描然后发送也是可以实现的
 
-## ==MQ怎么实现RPC==
+## MQ怎么实现RPC
 
-**RPC**
-
-RabbitMQ实现RPC的原理:服务端处理消息后，把响应消息发送到一个响应队列，客户端再从响应队列取到结果
-
-其中的问题:Client收到消息后，怎么知道应答消息是回复哪一条消息的?所以必须有一个唯一ID来关联，就是correlationId
+* 客户端将消息发送到请求队列，服务端从请求队列中获取消息并将处理后的消息发送到响应队列，客户端再从响应队列中获取消息，通过设置消息的`correlationId`唯一ID属性来确定是同一条消息
 
 ![image-20190105200154824](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/02.%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%93%E9%A2%98/06.%E5%88%86%E5%B8%83%E5%BC%8F%E6%B6%88%E6%81%AF%E9%80%9A%E4%BF%A1/image-20190105200154824-6689714.png)
 
@@ -760,9 +635,7 @@ public class RPCServer {
 ## RabbitMQ流量控制怎么做？设置队列大小有用吗？
 
 - **服务端流控(Flow Control)**
-
-RabbitMQ 会在启动时检测机器的物理内存数值。默认当 MQ 占用 40% 以上内存时，MQ 会主动抛出一个内存警
-告并阻塞所有连接(Connections)。可以通过修改 rabbitmq.config 文件来调整内存阈值，默认值是 0.4，如下所示: [{rabbit, [{vm_memory_high_watermark, 0.4}]}].
+  - 启动时检测机器的物理内存数值，默认占用40%以上时抛出内存警告并阻塞所有连接，可通过配置文件修改默认值
 
 默认情况，如果剩余磁盘空间在 1GB 以下，RabbitMQ 主动阻塞所有的生产者。这个阈值也是可调的
 

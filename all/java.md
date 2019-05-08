@@ -1,14 +1,68 @@
 # MS
 
-*  **全局唯一有序 ID**
+* Java8
 
-  * ==UUID==
+  * 接口中增加静态方法和默认方法
+    * 默认方法：
+      * 接口中方法：返回值前用default修饰且有方法体
+      * 如果一个类实现了多个接口，且这些接口中有相同签名的默认方法，则实现类需要重写默认方法
+    * 静态方法：
+      * 属于接口，不能通过实现类实例调用，只能通过接口名调用
+      * 不能被实现类重写
+  * 函数接口
+    * @FunctionalInterface标记的接口且只有一个抽象方法
+  * 可以使用lambda表达式创建函数接口的实例`(argument) -> (body)`
+    * 简化代码；支持Stream API
+
+  * Stream API
+
+    * 不存储数据，操作源数据结构，产生并使用管道数据，实现具体的操作
+    * 基于条件的从list和filter中创建Stream，使用函数接口
+
+    ```java
+    private static int sumIterator(List<Integer> list) {
+    	Iterator<Integer> it = list.iterator();
+    	int sum = 0;
+    	while (it.hasNext()) {
+    		int num = it.next();
+    		if (num > 10) {
+    			sum += num;
+    		}
+    	}
+    	return sum;
+    }
+    
+    private static int sumStream(List<Integer> list) {
+    	return list.stream().filter(i -> i > 10).mapToInt(i -> i).sum();
+    }
+    ```
+
+  * Java Date Time API
+
+    * 不可变类，线程安全，LocalDate，LocalDateTime等
+
+  * Collection的forEach()方法，接收Consumer参数，使用lambda表达式
+
+    ```java
+    List<Integer> myList = Arrays.asList(1,2,3,4,5,6,7,8,9,11,12,12);
+    myList.forEach(t -> System.out.println("forEach anonymous class Value::"+t));
+    ```
+
+* 为什么String是不可变的？
+  * final修饰、不可变
+  * 因为字符串不可变，使字符串常量池成为可能，能够节省很多堆空间，因为不同的String变量可以引用池中的相同String变量
+  * 因为不可变，可以避免使用过程中一些敏感信息被修改，一旦被修改了就不是原来的String
+  * 因为不可变，所以在多线程环境下可共享而不用采取而外的线程同步机制
+  * 由于String是不可变的，因此它的哈希码在创建时被缓存，不需要再次计算，它的处理速度比其他HashMap键对象快
+
+*  **全局唯一有序 ID**
+* ==UUID==
     * 一组32位数的16进制数字所构成，字符过长，且一般是无序的
   * snowFlake雪花算法
     * 雪花ID生成的是一个==64位的二进制Long型正整数，按照时间自增排序，效率高==
   * redis
     * 单线程的Redis实现了一个原子操作==INCR和INCRBY==实现递增的操作
-
+  
 *  **冯诺依曼体系**
 
 1. 计算机处理的数据和指令一律用二进制数表示
@@ -37,6 +91,7 @@
   * 不同的是与赋值号“=”一起使用时，y=++a表示先将a的值增加1后，再把值赋给y；而y=a++表示先把a的值给y，a自己再增加1.
   * ==int a = 1; int b = a++;   a为2，b为1；==
   * int a = 1; int b = ++a;   === a为2，b为2
+  
 * ==a = a + b 与 a += b 的区别==(int a , char b)
 
   * 对于==同样类型==的a,b来说，结果确实没有什么区别
@@ -45,12 +100,33 @@
     * 运算过程中，低精度的类型自动向高精度类型转换；高精度的数值显示强制转换后赋值给低精度类型变量
   * +=运算中，`b + = a`结合了强制类型转换的功能，因此，不会出现编译错误
   * 而对于`b=a+b;`简单的运算，没有类型转换（`b = (char)(a+b)`），在编译过程中会报错
+  
+* ```java
+  HashSet shortSet = new HashSet();
+  for (short i = 0; i < 100; i++) {
+    shortSet.add(i);
+    // int——Integer——删除不存在的会返回false
+    shortSet.remove(i - 1);
+  }
+  // 100
+  System.out.println(shortSet.size());
+  
+  String s1 ="abc";
+  String s2 ="abc";
+  // 优先级
+  System.out.println("s1 == s2 is:" + s1 == s2); //false
+  ```
+
+* 
+
 * Java 中的编译期常量是什么？使用它又什么风险？
 
   * 公共静态不可变（==public static final== ）变量也就是我们所说的编译期常量，这里的 public 可选的。实际上这些变量在编译时会被替换掉，因为编译器知道这些变量的值，并且知道这些变量在运行时不能改变。这种方式存在的一个问题是你使用了一个内部的或第三方库中的公有编译时常量，但是==这个值后面被其他人改变了==，但是你的客户端仍然在使用老的值，甚至你已经部署了一个新的jar。为了避免这种情况，当你在更新依赖 JAR 文件时，确保==重新编译==你的程序
+  
 * Java 中怎么打印数组
 
   * Arrays.toString() 和 Arrays.deepToString() 方法来打印数组
+  
 * try {return ...} finally {}
   * 当try语句退出时肯定会执行finally语句，这确保了即使==发了一个意想不到的异常也会执行finally语句块==
   * finally的用处不仅是用来处理异常——它可以让程序员不会因为return、continue、或者break语句而忽略了==清理代码==
@@ -61,6 +137,7 @@
     * 执行jsr指令跳到finally语句里执行
     * 执行完finally语句后，返回之前保存在局部变量表里的值
   * ==规范规定了，当try和finally里都有return时，会忽略try的return，而使用finally的return==
+  
 * ==object有哪些方法-9==
   
   * clone() 、toString() 、equals(Object obj) 、hashCode() 
@@ -378,7 +455,7 @@ static {
 
 ## 跨域
 
-* 浏览器同源策略限制的一类请求场景
+* 是指一个域下的文档或脚本试图去请求另一个域下的资源，由浏览器的同源策略造成的，是一种安全策略
 
 * 同源是指，域名、协议、端口均为相同
 
@@ -758,18 +835,13 @@ String字符串变量的连接动作，在编译阶段会被转化成StringBuild
 
 ## Lambda表达式
 
-Lambda 表达式为 Java 添加了缺失的函数式编程特点，使我们能将函数当做一等公⺠看待
-
-在 Java 中，Lambda 表达式是对象，他们必须依附于一类特别的对象类型——函数式接⼝ (functional interface) 
-
-1. ==主要作用：==
-   1. 代替匿名内部类的繁琐语法
-   2. ⽀持将代码块作为方法参数
-   3. 允许使用更简洁的代码来创建只有一个抽象方法的接口(函数式接⼝)的实例
-
-* 形参列表：允许省略形参类型，如果只有一个参数，括号可以省略
-* 箭头
-* 代码块：需要返回值，省略return会自动返回这条语句的值
+* 会被编译成一个函数式接口，会使代码更加简洁
+* 作用：
+  * 代替匿名内部类的繁琐语法
+  * ⽀持将代码块作为方法参数
+  * 允许使用更加简洁的代码来创建函数式接口（只有一个抽象方法的接口，如Runnable）的实例
+* 与匿名内部类的主要区别
+  * 对于匿名类，关键词 this 解读为匿名类，⽽对于 Lambda 表达式，关键词 this 解读为写就Lambda 的外部类
 
 ```java
  //main⽅法中(匿名内部类)
@@ -791,194 +863,94 @@ p.process(t, (int[] t)->{
 })
 ```
 
-* 简介
+```java
+(argument) -> (body)
+(inta,intb)->{ returna+b;}
+() -> System.out.println("Hello World"); 
+(String s) -> { System.out.println(s); } 
+() -> 42
+() -> { return 3.1415 };
+```
 
-  Lambda 表达式是⼀种匿名函数(对 Java 而言这并不完全正确，但现在姑且这么认为)，简单地说，它是没有声明的方法，也即没有访问修饰符、返回值声明和名字 )
+```java
+// 编译器自动推断
+new Thread(
+        () -> System.out.println("hello world")
+).start();
+```
 
-  可以将其想做一种速记，在需要使用某个方法的地⽅写上它。当某个方法只使用一次，而且定义很简短，使⽤用这种速记替代之尤其有效，这样，你就不必在类中费力写声明与⽅法了
+以下是一种⾃定义的函数式接⼝：
 
-  ```java
-  (argument) -> (body)
-  (inta,intb)->{ returna+b;}
-  () -> System.out.println("Hello World"); 
-  (String s) -> { System.out.println(s); } 
-  () -> 42
-  () -> { return 3.1415 };
-  ```
+```java
+@FunctionalInterface
+public interface WorkerInterface {
+    public void doSomeWork();
+}
+```
 
-* 结构
+```java
+public class WorkerInterfaceTest {
+    public static void execute(WorkerInterface worker) {
+      worker.doSomeWork();
+    }
+    public static void main(String[] args){
+      //匿名内部类方式
+      execute(new WorkerInterface() {
+        @Override
+        public void doSomeWork() {
+          System.out.println("Worker invoked using Anonymous class");
+        } 
+      });
+      //Lambda方式更简洁
+      execute( () -> System.out.println("Worker invoked using Lambda expression") );
+   } 
+}
+```
 
-  1. 一个 Lambda 表达式可以有零个或多个参数
-  2. 参数的类型既可以明确声明，也可以根据上下文来推断。例如：(int a)与(a)效果相同 
+```java
+//Old way:
+List<Integer> list1 = Arrays.asList(1, 2, 3, 4, 5, 6, 7);
+for(Integer n: list1) {
+    System.out.println(n);
+}
+常⽤的箭头语法创建 Lambda 表达式，
+List<Integer> list2 = Arrays.asList(1, 2, 3, 4, 5, 6, 7); 
+list2.forEach(n -> System.out.println(n));
+Java 8 全新的双冒号(::)操作符将一个常规⽅法转化为 Lambda 表达式 
+//or we can use :: double colon operator in Java 8 
+list2.forEach(System.out::println);
+```
 
-  3.  所有参数需包含在圆括号内，参数之间用逗号相隔。空圆括号代表参数集为空。
+```java
+将 Lambda 表达式 x -> x*x 传给 map() 方法，该⽅法会作用于流中的所有元素 
+//Old way:
+List<Integer> list = Arrays.asList(1,2,3,4,5,6,7);
+for(Integer n : list) {
+	int x = n * n;
+    System.out.println(x);
+}
+//New way:
+List<Integer> list = Arrays.asList(1,2,3,4,5,6,7);
+list.stream().map((x) -> x*x).forEach(System.out::println);
+```
 
-  4. 当只有一个参数，且其类型可推导时，圆括号()可省略。例如：a -> return a*a 
-
-  5. Lambda 表达式的主体可包含零条或多条语句 
-  6. 如果 Lambda 表达式的主体只有⼀条语句，花括号{}可省略。匿名函数的返回类型与该主体表达式一致 
-  7. 如果 Lambda 表达式的主体包含一条以上语句，则表达式必须包含在花括号{}中(形成代码块)。匿名函数的返回类型与代码块的返回类型⼀致，若没有返回则为空 
-
-* 函数式接⼝
-
-  1. 在 Java 中，Marker(标记)类型的接⼝是一种没有方法或属性声明的接口，简单地说， marker 接口是空接⼝。相似地，==函数式接口是只包含一个抽象方法声明的接⼝==
-
-  2. java.lang.Runnable 就是⼀种函数式接口，在 Runnable 接口中只声明了⼀个⽅法 void run()， 相似地，ActionListener 接⼝也是一种函数式接口，我们使用匿名内部类来实例化函数式接⼝的对象，有Lambda 表达式，这一方式可以得到简化 
-
-  3. 每个 Lambda 表达式都能隐式地赋值给函数式接口，例如，我们可以通过 Lambda 表达式创建Runnable 接口的引⽤
-
-     Runnable r = () -> System.out.println("hello world");
-
-  4.  当不指明函数式接口时，编译器会⾃动解释这种转化
-
-     ```java
-     new Thread(
-             () -> System.out.println("hello world")
-     ).start();
-     ```
-
-     因此，在上面的代码中，编译器会自动推断：根据线程类的构造函数签名 public Thread(Runnable r) { }，将该 Lambda 表达式赋给 Runnable 接⼝
-
-     以下是一些 Lambda 表达式及其函数式接⼝：
-
-     ```java
-     Consumer<Integer>  c = (int x) -> { System.out.println(x) };
-     BiConsumer<Integer, String> b = (Integer x, String y) ->
-     System.out.println(x + " : " + y);
-     Predicate<String> p = (String s) -> { s == null };
-     ```
-
-     @FunctionalInterface 是 Java 8 新加入的⼀种接口，⽤于指明该接口类型声明是根据 Java 语言规范定义的函数式接口。Java 8 还声明了一些 Lambda 表达式可以使⽤的函数式接口，当你注释的接口不是有效的函数式接口时，可以使用 @FunctionalInterface 解决编译层⾯的错误
-
-     以下是一种⾃定义的函数式接⼝：
-
-     ```java
-     @FunctionalInterface
-     public interface WorkerInterface {
-        public void doSomeWork();
-     }
-     ```
-
-     函数式接口定义好后，可以在 API 中使用它，同时利用 Lambda 表达式 创建自定义的函数式接口并与 Lambda 表达式一起使用。execute() 方法现在可以将 Lambda 表达式作为参数 
-
-     ```java
-     @FunctionalInterface
-     public interface WorkerInterface {
-         public void doSomeWork();
-     }
-     ```
-
-     ```java
-     public class WorkerInterfaceTest {
-         public static void execute(WorkerInterface worker) {
-             worker.doSomeWork();
-     }
-     public static void main(String[] args){
-         execute(new WorkerInterface() {
-              @Override
-                 public void doSomeWork() {
-                     System.out.println("Worker invoked using Anonymous class");
-     			} 
-         });
-         execute( () -> System.out.println("Worker invoked using Lambda expression") );
-       } 
-     }
-     ```
-
-* 举例
-
-  ```java
-  线程可以通过以下⽅方法初始化
-  //旧⽅方法:
-  new Thread(new Runnable() {
-  @Override
-      public void run() {
-          System.out.println("Hello from thread");
-      }
-  }).start();
-  //新⽅法: 
-  new Thread(
-          () -> System.out.println("Hello from thread")
-  ).start();
-  ```
-
-  ```java
-  //Old way:
-  List<Integer> list1 = Arrays.asList(1, 2, 3, 4, 5, 6, 7);
-  for(Integer n: list1) {
-      System.out.println(n);
-  }
-  常⽤的箭头语法创建 Lambda 表达式，
-  List<Integer> list2 = Arrays.asList(1, 2, 3, 4, 5, 6, 7); 
-  list2.forEach(n -> System.out.println(n));
-  Java 8 全新的双冒号(::)操作符将一个常规⽅法转化为 Lambda 表达式 
-  //or we can use :: double colon operator in Java 8 
-  list2.forEach(System.out::println);
-  ```
-
-  ⽤断言(Predicate)函数式接口创建一个测试，并打印所有通过测试的元素，这样，就可以使用Lambda 表达式规定一些逻辑
-
-  ```java
-  List<Integer> list = Arrays.asList(1, 2, 3, 4, 5, 6, 7);
-  System.out.println("Print all numbers:");
-  evaluate(list, (n)->true);
-  System.out.println("Print no numbers:");
-  evaluate(list, (n)->false);
-  System.out.println("Print even numbers:");
-  evaluate(list, (n)-> n%2 == 0 );
-  System.out.println("Print odd numbers:");
-  evaluate(list, (n)-> n%2 == 1 );
-  System.out.println("Print numbers greater than 5:");
-  
-  evaluate(list, (n)-> n > 5 );
-  public static void evaluate(List<Integer> list, Predicate<Integer>
-  predicate) {
-      for(Integer n : list) {
-          if(predicate.test(n)) {
-          	System.out.println(n + " ");
-  		} 
-  	}  
-  }
-  ```
-
-  ```java
-  将 Lambda 表达式 x -> x*x 传给 map() 方法，该⽅法会作用于流中的所有元素 
-  //Old way:
-  List<Integer> list = Arrays.asList(1,2,3,4,5,6,7);
-  for(Integer n : list) {
-  	int x = n * n;
-      System.out.println(x);
-  }
-  //New way:
-  List<Integer> list = Arrays.asList(1,2,3,4,5,6,7);
-  list.stream().map((x) -> x*x).forEach(System.out::println);
-  ```
-
-  ```java
-  计算给定数值中每个元素平⽅后的总和
-  是 MapReduce 的⼀个初级例⼦
-  使⽤ map() 给每个元素求平方，再使用 reduce() 将所有元素计⼊一个数值:
-  //Old way:
-  List<Integer> list = Arrays.asList(1,2,3,4,5,6,7);
-  int sum = 0;
-  for(Integer n : list) {
-  	int x = n * n;
-  	sum = sum + x; 
-  }
-  System.out.println(sum);
-  //New way:
-  List<Integer> list = Arrays.asList(1,2,3,4,5,6,7);
-  int sum = list.stream().map(x -> x*x).reduce((x,y) -> x + y).get();
-  System.out.println(sum);
-  ```
-
-* ==与匿名类的区别==
-
-  使⽤匿名类与 Lambda 表达式的一⼤区别在于关键词的使⽤。
-
-  ==对于匿名类，关键词 this 解读为匿名类，⽽对于 Lambda 表达式，关键词 this 解读为写就Lambda 的外部类==
-
-  Lambda 表达式与匿名类的另一不同在于两者的编译方法。Java 编译器编译 Lambda 表达式并将他们转化为类里面的私有函数，它使用 Java 7 中新加的 invokedynamic 指令动态绑定该⽅法
+```java
+计算给定数值中每个元素平⽅后的总和
+是 MapReduce 的⼀个初级例⼦
+使⽤ map() 给每个元素求平方，再使用 reduce() 将所有元素计⼊一个数值:
+//Old way:
+List<Integer> list = Arrays.asList(1,2,3,4,5,6,7);
+int sum = 0;
+for(Integer n : list) {
+	int x = n * n;
+	sum = sum + x; 
+}
+System.out.println(sum);
+//New way:
+List<Integer> list = Arrays.asList(1,2,3,4,5,6,7);
+int sum = list.stream().map(x -> x*x).reduce((x,y) -> x + y).get();
+System.out.println(sum);
+```
 
 ## 枚举类
 
@@ -1548,84 +1520,6 @@ Exception异常类有两个主要的子类：IOException 类和 RuntimeException
   * RuntimeException
   * ==如果想写一个运行时异常类，那么需要继承 RuntimeException 类==
 
-# ==动态代理==
-
-## JDK动态代理
-
-* ==JDK中所要进行动态代理的类必须要实现一个接口，只能对该类所实现接口中定义的方法进行代理`InvocationHandler`==
-* 原理是在运行期间创建一个接口的实现类来完成对目标对象的代理
-  * 通过反射机制生成代理类的字节码文件，调用具体方法前调用InvokeHandler来处理
-
-```java
-1. 被代理对象实现某个接口A 
-2. 代理类实现 InvocationHandler
-3. 代理类添加被代理对象属性
-4. 添加操作
-5. 返回代理对象
-6. 代理类获取代理对象
-public class JdkProxy implements InvocationHandler {
-	//private Object proxied;  //Object类型
-    private JdkSon target;   //被代理对象，实现接口A
-    public  Object getInstance(JdkSon target) {
-        this.target = target;
-        Class<? extends JdkSon> clazz = target.getClass();
-        //创建动态代理
-        //类加载器，代理实现的接口列表(不是类或抽象类)、InvocationHandler接口的实现
-        return Proxy.newProxyInstance(clazz.getClassLoader(), clazz.getInterfaces(), this);
-    }
-
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        System.out.println("jdkProxy before....");  //添加操作
-        //执行被代理的操作，然后使用Method.invoke()将请求转发给被代理对象，并传入必须的参数
-        method.invoke(this.target, args);
-        System.out.println("jdkProxy after");
-        return null;
-    }
-}
-//动态代理可以将所有调用重定向到调用处理器，因此通常会向调用处理器的构造器传递给一个"实际"对象的引用，从而使得调用处理器在执行其中介任务时，可以将请求转发。
-Person person = (Person)new JdkProxy().getInstance(new JdkSon());  //返回接口类型A
-```
-
-## cglib动态代理
-
-为没有实现接口的类提供代理，为JDK的动态代理提供了很好的补充
-
-* **CGLIB原理**：==动态生成一个要代理类的子类，子类重写要代理的类的所有不是final的方法。在子类中采用方法拦截的技术拦截所有父类方法的调用，顺势织入横切逻辑。`MethodInterceptor`==
-* 它比使用java反射的JDK动态代理要快
-* CGLIB底层：使用字节码处理框架ASM，来转换字节码并生成新的类
-* **CGLIB缺点**：对于final方法，无法进行代理
-
-```java
-1. 代理类实现 MethodInterceptor 接口
-2. 添加操作
-3. 返回代理对象
-4. 代理类获取代理对象
-public class CglibProxy implements MethodInterceptor {
-    public Object getInstance(Class<?> clazz) {
-    //Enhancer允许为非接口类型创建一个Java代理。Enhancer动态创建了给定类型的子类但是拦截了所有的方法。和Proxy不一样的是，不管是接口还是类他都能正常工作
-        Enhancer enhancer = new Enhancer();
-        enhancer.setSuperclass(clazz); //被代理对象
-        enhancer.setCallback(this);
-        return enhancer.create();
-    }
-
-    //Object为由CGLib动态生成的代理类实例
-    //Method为上文中实体类所调用的被代理的方法引用
-    //Object[]为参数值列表
-    //MethodProxy为生成的代理类对方法的代理引用
-    @Override
-    public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
-        System.out.println("Hi, before");
-        methodProxy.invokeSuper(o, objects);
-        System.out.println("Hi, after");
-        return null;
-    }
-}
-
-Dog dogCglib = (Dog)new CglibProxy().getInstance(Dog.class); // 代理对象
-```
-
 # Servlet
 
 * 有一个servlet提供对外服务，10个请求下创建了几个servlet实列
@@ -2051,7 +1945,7 @@ ServletConfig getServletConfig()
 ## JDK，JRE 和 JVM 的联系和区别
 
 * JVM 代表 Java 虚拟机，将编译后的字节码文件，转换为特定的机器代码，提供内存回收和安全机制，它的责任是运行 Java 应用，独立于操作系统和硬件，是java语言一次编译到处运行的原因
-* JRE 代表 Java 运行时环境，是运行 Java 引用所必须的，包含jvm
+* JRE 代表 Java 运行时环境，是运行 Java程序所必须的，包含jvm和一些依赖，能够
 * JDK 代表 Java 开发工具，包含 Java 编译器、 JRE
 * JIT 代表即时编译，当代码执行的次数超过一定的阈值时，会将 Java 字节码转换为本地代码，如，主要的热点代码会被准换为本地代码，这样有利大幅度提高 Java 应用的性能
 
@@ -2088,6 +1982,8 @@ ServletConfig getServletConfig()
   * replace既可以==支持字符的替换，也支持字符串的替换==
   * replaceAll的参数是regex，即==基于规则表达式的替换==，比如：可以通过replaceAll("\d", "*")把一个字符串所有的数字符都换成星号
   * ==都是全部替换==，即把源字符串中的某一字符或字符串全部换成指定的字符或字符串
+* Path是操作系统环境变量，ClassPath是Class文件路径
+* 接口不能实现其他接口，可以继承其他接口
 
 # 简单算法
 
@@ -2103,29 +1999,33 @@ public class LRUCache2 {
         this.capacity = capacity;
     }
 
+    private int get(int key) {
+        if (!cacheMap.containsKey(key)) {
+            return -1;
+        }
+
+       // 不带（Integer）则是根据下标删除，可能会导致数组越界异常
+        recentlyList.remove((Integer) key);
+        recentlyList.add(key);
+
+        return cacheMap.get(key);
+    }
+
     private void put(int key, int value) {
         if (cacheMap.containsKey(key)) {
            // 不带（Integer）则是根据下标删除，可能会导致数组越界异常
             recentlyList.remove((Integer) key);
         }
+
         if (cacheMap.size() == capacity) {
-           // List没有removeFirst方法
             cacheMap.remove(recentlyList.removeFirst());
         }
+
         cacheMap.put(key, value);
         recentlyList.add(key);
+
     }
-  
-    private int get(int key) {
-        if (!cacheMap.containsKey(key)) {
-            return -1;
-        }
-       // 不带（Integer）则是根据下标删除，可能会导致数组越界异常
-        recentlyList.remove((Integer) key);
-        recentlyList.add(key);
-        return cacheMap.get(key);
-    }
-  
+
     public static void main(String[] args) {
         LRUCache2 cache = new LRUCache2(2);
         cache.put(1, 1);
@@ -2263,13 +2163,6 @@ public static int halfSearch(int[] a, int left, int right, int target) {
 
 ```java
 //非递归
-// 前提是数组已排序
-// 最小值下标、最大值下标
-// while循环(最小值下标 < 最大值下标)
-// 取中间值下标与目标值比较：
-// 如果大于目标值，则最大值下标-1；
-// 如果小于目标值，则最小值下标+1，
-// 否则返回中间值下标
 public static int halfSearch2(int []a, int target) {
     int i = 0;
     int j = a.length - 1;
@@ -2292,40 +2185,38 @@ public static int halfSearch2(int []a, int target) {
 ## 斐波拉契数列
 
 ```java
-//1、1、2、3、5、8、13、21、34 ...
-// 返回斐波那契数第n个值,n从1开始
-public static int fibM(int n) {
-  if(n < 0) {
-    return -1;
-  }
-  if(n ==1 || n == 2) {
-    return 1;
-  } else {
-    return fibM(n-1) + fibM(n-2);
-  }
+//0、1、1、2、3、5、8、13、21、34 ...
+// 返回斐波那契数第n个值,n从0开始
+public static int getFib(int n){
+    if(n < 0){
+        return -1;
+    }else if(n == 0){
+        return 0;
+    }else if(n == 1 || n ==2){
+        return 1;
+    }else{
+        return getFib(n - 1) + getFib(n - 2);
+    }
 }
 ```
 
 ```java
-public static int fibN(int n) {
-	if(n < 0) {
-    return -1;
-  }
-  if(n == 1 || n == 2) {
-    return 1;
-  }
-  //        int a = 3, b = 5, c = 0;
-  //不是递归，从第一个开始
-  int a = 1, b = 1, c = 0;
-  for(int i=3; i <= n; i++) {
-    c = a + b;
-    // a = b + c;
-    // b = c + a;
-    //依次向前移动
-    a = b;
-    b = c;
-  }
-  return c;
+public static int getFib2(int n){
+    if(n < 0){
+        return -1;
+    }else if(n == 0){
+        return 0;
+    }else if (n == 1 || n == 2){
+        return 1;
+    }else{
+        int c = 0, a = 1, b = 1;
+        for(int i = 3; i <= n; i++){
+            c = a + b;
+            a = b;
+            b = c;
+        }
+        return c;
+    }
 }
 ```
 
