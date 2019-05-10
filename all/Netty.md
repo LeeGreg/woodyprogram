@@ -6,22 +6,23 @@
 
 # Netty简介
 
-- Netty 是一款异步事件驱动的网络应用程序框架和工具用于简化网络编程，例如TCP和UDP套接字服务器，也是一个异步NIO客户端-服务端框架，主要用于开发Java网络应用程序（如协议服务器和客户端）
-  - 统一的 API，支持阻塞和非阻塞传输（封装了JDK底层BIO和NIO模型，提供高度可用的API）
-  - 自带编码解码器解决拆包粘包问题，用户只用关心业务逻辑
-  - 精心设计的Reactor线程模型支持高并发海量连接
-  - 自带协议栈，无需用户关心（HTTP协议、WebSocket协议、自定义协议）
-  - 链接逻辑组件以支持复用
+* Netty 是一款异步事件驱动的网络应用程序框架，主要用于开发Java网络应用程序
+  * 统一的 API，支持阻塞和非阻塞传输（封装了JDK底层BIO和NIO模型，提供高度可用的API）
+  * 自带编码解码器解决拆包粘包问题，用户只用关心业务逻辑
+  * 精心设计的Reactor线程模型支持高并发海量连接
+  * 自带协议栈，无需用户关心（HTTP协议、WebSocket协议、自定义协议）
+  * 链接逻辑组件以支持复用
+
 - NIO，非阻塞IO/异步IO，是计算机操作系统对输入输出的一种处理方式：
   - 发起IO请求的线程不等IO操作完成，就继续执行随后的代码，IO结果用其他方式通知发起IO请求的程序
 - BIO，阻塞IO/同步IO，
-  - 发起IO请求的线程不从正在调用的IO操作函数返回（即被阻塞），直至IO操作完成
-- 作为一个异步 NIO 框架，Netty 的所有 IO 操作都是异步非阻塞的，通过 FutureListener机制，用户可以方便的主动获取或者通过通知机制获得 IO 操作结果
+  - 发起IO请求的线程被阻塞直至IO操作完成后返回
+- 作为一个异步非阻塞框架，Netty 的所有 IO 操作都是异步非阻塞的，通过 FutureListener机制，用户可以方便的主动获取或者通过通知机制获得 IO 操作结果
 - 使用场景
   1. 互联⽹网领域 ：构建高性能RPC框架基础通信框架，如Dubbo
   2. 大数据领域、游戏行业、企业软件、通信行业
 - Reacotr设计模式
-  - 定义：是一种处理服务请求并发提交到一个或者多个服务处理程序的事件设计模式
+  - 定义：将并发服务请求提交到一个或多个服务处理程序的事件设计模式
     - 当请求抵达后，服务处理程序使用解多路分配策略，然后同步地派发这些请求至相关的请求处理程序
     - 单线程的，但是可以在多线程环境中存在
   - 结构
@@ -38,17 +39,15 @@
 
 # Netty架构图
 
-![image-20181215102335618](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181215102335618-4840615.png)
-
-- Core:核⼼部分，是底层的网络通⽤抽象和部分实现
-  - Extensible Event Model ：可拓展的事件模型。Netty 是基于事件模型的网络应⽤框架
-  - Universal Communication API ：通用的通信 API 层。Netty 定义了一套抽象的通用通信层的 API 
-  - Zero-Copy-Capable Rich Byte Buffer ：⽀持零拷贝特性的 Byte Buffer 实现
-- Transport Services：传输( 通信 )服务，具体的网络传输的定义与实现
+- 核⼼部分，是底层的网络通⽤抽象和部分实现
+  - 可拓展的事件模型。Netty 是基于事件模型的网络应⽤框架
+  - 通用的通信 API 层。Netty 定义了一套抽象的通用通信层的 API 
+  - ⽀持零拷贝特性的 Byte Buffer 实现
+- 传输服务，具体的网络传输的定义与实现
   - Socket & Datagram ：TCP 和 UDP 的传输实现
   - HTTP Tunnel ：HTTP 通道的传输实现
   - In-VM Piple ：JVM 内部的传输实现
-- Protocol Support ：协议支持。
+- 协议支持。
   - Netty 对于一些通⽤协议的编解码实现。例如:HTTP、WebSocket、Redis、DNS 等等
 
 ![image-20190420115756469](/Users/dingyuanjie/Library/Application Support/typora-user-images/image-20190420115756469.png)
@@ -69,16 +68,20 @@
   2. ⼀个 EventLoop 在它的生命周期内，只能与⼀个 Thread 绑定，所有由 EventLoop 处理的 I/O 事件都将在它专有的 Thread 上被处理，从而保证线程安全
   3. 一个 Channel 在它的生命周期内只能注册到一个 EventLoop 上
   4. ⼀个 EventLoop 可被分配至⼀个或多个 Channel
-  5. 在这种设计中，一个给定 Channel 的 I/O 操作都是由相同的 Thread 执行，实际上消除了对于同步的需要 
+  5. 在这种设计中，一个给定 Channel 的 I/O 操作都是由相同的 Thread 执行，实际上消除了对于同步的需要
 
+  ==补充完流程，流程中添加上所有组件==
+  
+  ==补充完流程，流程中添加上所有组件==
+  
+  ==补充完流程，流程汇总添加所有组件== 
+  
 - 回调-逻辑
 
-  - 一个回调其实就是一个方法，一个指向已经被提供给另外一个方法的方法的引用
-
-  - 这使得后者（ 指接受回调的方法）可以在适当的时候调用前者。在操作完成后通知相关方
+  - 在操作完成后通知相关方
 
     ```java
-    //被回调触发的 ChannelHandler
+  //被回调触发的 ChannelHandler
     public class ConnectHandler extends ChannelInboundHandlerAdapter { 
         //当一个新的连接已经被建立时channelActive(ChannelHandler Context)将会被调用
       @Override
@@ -87,7 +90,7 @@
       }
     }
     ```
-
+  
 - Future-通知
 
   - Future 提供了另一种在操作完成时通知应用程序的方式。
@@ -98,18 +101,18 @@
 
       - ChannelFuture— 异步通知（Netty 中所有的 I/O 操作都是异步非阻塞的）
       
-      - ==Netty 提供了ChannelFuture接口，其addListener()方法注册了一个ChannelFutureListener，以
-        便在某个操作完成时调用(无论是否成功)得到通知——监听器的回调方法operationComplete()==
+      - Netty 提供了ChannelFuture接口，其addListener()方法注册了一个ChannelFutureListener，以
+        便在某个操作完成时调用(无论是否成功)得到通知——监听器的回调方法operationComplete()
       
-      - 可以将 ChannelFuture 看作是将来要执行的操作的结果的占位符。
-      
-      - 它究竟什么时候被执行则可能取决于若干的因素，因此不可能准确地预测，但是可以肯定的是它将会被执行。此外，所有属于同一个 Channel 的操作都被保证其将以它们被调用的顺序被执行
-      
+        - 可以将 ChannelFuture 看作是将来要执行的操作的结果的占位符。
+        - 不能确定执行，但是肯定会被执行
+        - 所有属于同一个 Channel 的操作将按顺序执行
+        
       - 由ChannelFutureListener提供的通知机制消除了手动检查对应的操作是否完成的必要
       
-      - 每个 Netty 的==出站 I/O 操作==都将返回一个 ChannelFuture（因为是异步通知，所以都不会阻塞）
+        - 线程不用阻塞以等待对应的操作完成，所以它可以同时做其他的工作
       
-      - 线程不用阻塞以等待对应的操作完成，所以它可以同时做其他的工作，从而更加有效地利用资源
+      - 每个 Netty 的出站 I/O 操作都将返回一个 ChannelFuture（因为是异步通知，所以都不会阻塞）
       
         ```java
         //回调
@@ -141,19 +144,20 @@
 
     - 这能够基于已经发生的事件来触发适当的动作：记录日志、数据转换、流控制、应用程序逻辑
 
-  - ==Netty 是一个网络编程框架，所有事件是按照它们与入站或出站数据流的相关性进行分类的==
+  - Netty 是一个网络编程框架，所有事件是按照它们与入站或出站数据流的相关性进行分类的
   
     - 可能由`入站数据`或者相关的状态更改而触发的事件包括：
-      1. ==连接已被激活或者连接失活==
-      2. ==数据读取==
-      3. 用户事件
-      4. 错误事件
+      1. 连接已被激活或者连接失活
+      2. 数据读取
+      3. 用户事件、错误事件
     - `出站事件`是未来将会触发的某个动作的操作结果
-    1. ==打开或者关闭到远程节点的连接==
-      2. ==将数据写到或者冲刷到套接字==
-
-  - ==每个事件都可以被分发给 ChannelHandler 类中的某个用户实现的方法，将事件驱动范式直接转换为应用程序构件块==
-
+  
+      1. 打开或者关闭到远程节点的连接
+  
+    2. 将数据写到或者冲刷到套接字
+  
+- 每个事件都可以被分发给 ChannelHandler 类中的某个用户实现的方法，将事件驱动范式直接转换为应用程序构件块
+  
     ![image-20181025102529305](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181025102529305.png)
   
     - 在内部，ChannelHandler 自己也使用了事件和 Future，使得它们也成为了应用程序将使用的相同抽象的消费者
@@ -166,21 +170,23 @@
 
 - 在 netty 中每个EventLoopGroup 本身是一个线程池，其中包含了自定义个数的 NioEventLoop，每个NioEventLoop 中会管理自己的一个 selector 选择器和监控选择器就绪事件的线程
 
-- ==在Netty 中客户端持有一个 EventLoopGroup 用来处理网络 IO操作，在服务器端持有两个 EventLoopGroup，其中 boss组是专门用来接收客户端发来的 TCP 链接请求的，worker组是专门用来具体处理完成三次握手的链接套接字的网络IO 请求的==
+- 在Netty 中客户端持有一个 EventLoopGroup 用来处理网络 IO操作
 
-- 当 Channel 是客户端通道 NioSocketChannel 时候，会注册 NioSocketChannel 管理的 SocketChannel 实例到自己关联的 NioEventLoop 的 selector 选择器上，然后NioEventLoop 对应的线程会通过 select 命令监控感兴趣的网络读写事件。
+  - 当 Channel 是客户端通道 NioSocketChannel 时候，会注册到自己关联的 NioEventLoop 的 selector 选择器上，然后NioEventLoop 对应的线程会通过 select 命令监控感兴趣的网络读写事件。
 
-- 当Channel是服务端通道NioServerSocketChannel 时候，NioServerSocketChannel本身会被注册到 boss EventLoopGroup 里面的某一个NioEventLoop 管理的 selector 选择器上，而完成三次握手的链接套接字是被注册到了 workerEventLoopGroup 里面的某一个 NioEventLoop 管理的 selector 选择器上
+- 在服务器端持有两个 EventLoopGroup，其中 boss组是专门用来接收客户端发来的 TCP 链接请求的，worker组是专门用来具体处理完成三次握手的链接套接字的网络IO 请求的
 
-- 需要注意是==多个 Channel 可以注册到同一个 NioEventLoop管理的 selector 选择器上，这时候 NioEventLoop 对应的单个线程就可以处理多个 Channel 的就绪事件;但是每个Channel 只能注册到一个固定的 NioEventLoop 管理的selector 选择器上==
+  - 当Channel是服务端通道NioServerSocketChannel 时候，NioServerSocketChannel本身会被注册到 boss EventLoopGroup 里面的某一个NioEventLoop 管理的 selector 选择器上，而完成三次握手的链接套接字是被注册到了 workerEventLoopGroup 里面的某一个 NioEventLoop 管理的 selector 选择器上
+
+- 需要注意是，多个 Channel 可以注册到同一个 NioEventLoop管理的 selector 选择器上，这时候 NioEventLoop 对应的单个线程就可以处理多个 Channel 的就绪事件；但是每个Channel 只能注册到一个固定的 NioEventLoop 管理的selector 选择器上
 
 - `线程模型`指定了操作系统、编程语言、框架或者应用程序的上下文中的线程管理的关键方面
 
 - 基本的线程池化模式可以描述为：
 
-  1. 从池的空闲线程列表中选择一个 Thread，并且指派它去运行一个已提交的任务(一个Runnable 的实现);
-  2. 当任务完成时，将该 Thread 返回给该列表，使其可被重用
-  3. 虽然池化和重用线程相对于简单地为每个任务都创建和销毁线程是一种进步，但是它并不能消除由上下文切换所带来的开销，其将随着线程数量的增加很快变得明显，并且在高负载下愈演愈烈
+  1. 从池的空闲线程列表中选择一个 Thread去运行一个已提交的任务(一个Runnable 的实现);
+  2. 任务完成时将该 Thread 返回给该列表，使其可被重用
+  3. 虽然池化和重用线程可以避免频繁创建和销毁线程，但不能消除线程上下文切换的开销
 
 - EventLoop接口
 
@@ -201,11 +207,11 @@
 
   - 根据配置和可用核心的不同，可能会创建多个 EventLoop 实例用以优化资源的使用，并且单个EventLoop 可能会被指派用于服务多个 Channel 
 
-  - ==事件和任务是以先进先出(FIFO)的顺序执行的==。这样可以通过保证字节内容总是按正确的顺序被处理，消除潜在的数据损坏的可能性
+  - 事件和任务是以先进先出(FIFO)的顺序执行的。这样可以通过保证字节内容总是按正确的顺序被处理，消除潜在的数据损坏的可能性
 
-  - ==由 I/O 操作触发的事件将流经安装了一个或者多个ChannelHandler 的 ChannelPipeline。传播这些事件的方法调用可以随后被 ChannelHandler 所拦截，并且可以按需地处理事件==
+  - 由 I/O 操作触发的事件将流经安装了一个或者多个ChannelHandler 的 ChannelPipeline。传播这些事件的方法调用可以随后被 ChannelHandler 所拦截，并且可以按需地处理事件
 
-  - ==在Netty 4 中，所有的I/O操作和事件都由已经被分配给了EventLoop的那个Thread来处理== 
+  - 在Netty 4 中，所有的I/O操作和事件都由已经被分配给了EventLoop的那个Thread来处理
 
 - 任务调度
 
