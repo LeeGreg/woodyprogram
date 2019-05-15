@@ -25,8 +25,8 @@
 ## 基础设施自动化
 
 * 在微服务架构中， 务必从一开始就构建起 “ 待续交付” 平台来支撑整个实施过程， 该平台需要两大内容， 缺一不可：
-  * 自动化测试:每次部署前的强心剂， 尽可能地获得对正在运行的软件的信心
-  * 自动化部署:解放烦琐枯燥的重复操作以及对多环境的配置管理
+  * 自动化测试：每次部署前的强心剂， 尽可能地获得对正在运行的软件的信心
+  * 自动化部署：解放烦琐枯燥的重复操作以及对多环境的配置管理
 
 ## 容错设计
 
@@ -34,7 +34,7 @@
 
 # SpringCloud
 
-* SpringCloud是一个基于SpringBoot实现的微服务架构开发 工具。 它为微服务架构中涉及的 配置管理、 服务治理、 断路器、 智能路由、 微代理、 控制总线、 全局锁、 决策竞选、分布式会话和集群状态管理等操作提供了 一 种简单的开发方式
+* SpringCloud是一个基于SpringBoot实现的微服务架构开发工具。 它为微服务架构中涉及的 配置管理、 服务治理、 断路器、 智能路由、 微代理、 控制总线、 全局锁、 决策竞选、分布式会话和集群状态管理等操作提供了 一 种简单的开发方式
 
 ## 子项目
 
@@ -175,8 +175,6 @@
 
 * 项目构建的 build部分， 引入了Spring Boot的Maven插件， 该插件非常实用，可以帮助我们方便地启停应用，这样在开发时就不用每次去找主类或是打包成jar来运行微服务，只需要通过mvn spring-boot:run 命令就可以快速启动SpringBoot应用
 
-## RESTful
-
 ## 启动
 
 * 作为一个 Java 应用程序， 可以直接通过运行拥有 `main` 函数的类来启动
@@ -298,9 +296,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class HelloServiceApplicationTests {
 	private MockMvc mvc;
 	@Before
-    public void setUp() {
-        mvc = MockMvcBuilders.standaloneSetup(new HelloController()).build();
-    }
+  public void setUp() {
+    mvc = MockMvcBuilders.standaloneSetup(new HelloController()).build();
+  }
 	@Test
 	public void contextLoads() throws Exception {
         mvc.perform(MockMvcRequestBuilders.get("/hello").accept(MediaType.APPLICATION_JSON))
