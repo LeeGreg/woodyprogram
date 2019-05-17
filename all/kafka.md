@@ -5,6 +5,12 @@
 - 什么是kafka？
 
   - 是一款分布式消息订阅和发布系统，具有高性能、高吞吐量的特点而被广泛应用于大数据传输场景
+    - 消息持久化：以时间复杂度为 0(1)的方式提供消息持久化能力， 即使对 TB 级以上的数据也能保证常数时间复杂度的访问性能
+    - 高吞吐：在廉价的商用机器上也能支持单机每秒10万条以上的吞吐量。
+    - 分布式 : 支待消息分区以及分布式消费， 并保证分区内的消息顺序。 
+    - 跨平台 : 支待不同技术平台的客户端(如Java、 PHP、 Python 等)。 
+    - 实时性：支待实时数据处理和离线数据处理 。
+    - 伸缩性：支持水平扩展。 
 
 - 能干什么？
   - 由于 kafka 具有更好的吞吐量、内置分区、冗余及容错性的优点(kafka 每秒可以处理几十万消息)，让 kafka 成为了一个很好的大规模消息处理应用的解决方案 
@@ -15,9 +21,18 @@
 
 ## Kafka 本身的架构
 
+* 基本概念 
+  - Broker：Kafka集群包含一个或多个服务器（Broker）
+  - Topic：逻辑上同RabbitMQ的Queue队列相似，每条发布到Kafka集群的消息都必须有一 个Topic
+    - 物理上不同Topic的消息分开存储 ，逻辑上一个Topic的消息虽然保存于一个或多个Broker上，但用户只需指定消息的Topic即可生产或消费数据而不必关心数据存于何处
+  - Parttion：Partition是物理概念上的分区，为了提供系统吞吐率，在物理上每个Topic 会分成一个或多个Parttion，每个Partition对应一个文件夹(存储对应分区的消息内容和索引文件)。 
+  - Producer：消息生产者，负责生产消息并发送到Kafka Broker 
+  - Consumer：消息消费者，向Kafka Broker读取消息并处理的客户端
+  - ConsumerGroup：每个Consumer属于一个特定的组(可为每个Consumer指定属于一个组，若不指定则属于默认组)，组可以用来实现一条消息被组内多个成员消费等功能。
+
 一个典型的 kafka 集群包含：
 
-- 若干 Producer、若干个 Broker(kafka 支持水平扩展)、若干个 ConsumerGroup、以及一个 zookeeper 集群
+- 若干 Producer、若干个 Broker(服务器，kafka 支持水平扩展)、若干个 ConsumerGroup、以及一个 zookeeper 集群
   - kafka 通过 zookeeper 管理集群配置及服务协同
 
 * Producer使用push模式将消息发布到broker，consumer通过监听使用pull模式从broker订阅并消费消息

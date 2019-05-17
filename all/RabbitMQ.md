@@ -43,13 +43,16 @@
 **5、SpringBoot中，bean还没有初始好，消费者就开始监听取消息了，导致空指针异常，怎么让消费者在容器启动完毕后才开始监听?**
 
 * RabbitMQ中有一个`auto_startup`参数，可以控制是否在容器启动时就启动监听。
-  * `spring.rabbitmq.listener.auto-startup=true 默认是true`
-
+  
+* `spring.rabbitmq.listener.auto-startup=true 默认是true`
+  
 * 自定义容器，容器可以应用到消费者：
+  
   * `factory.setAutoStartup(true); 默认true`
 * 消费者单独设置([Spring AMQP 2.0以后的版本才有](https://github.com/spring-projects/spring-amqp/issues/669)):
-  * `@RabbitListener( queues = "${com.gupaoedu.thirdqueue}" ,autoStartup = "false")`
-
+  
+* `@RabbitListener( queues = "${com.gupaoedu.thirdqueue}" ,autoStartup = "false")`
+  
 * 另外可以参考一下动态管理监听的方法:
 
   [浅谈spring-boot-rabbitmq动态管理的方法](https://www.jb51.net/article/131708.htm)
@@ -57,7 +60,7 @@
 
 **6、持久化的队列和非持久化的交换机可以绑定吗?**
 
-* 可以
+* 可以（待确定）
 
 **7、使用了消息队列会有什么缺点**
 
@@ -107,6 +110,12 @@
 ## AMQP协议
 
 AMQP，应用层标准高级消息队列协议，是应用层协议的一个开放标准。基于此协议的客户端与消息中间件可传递消息，并不受客户端/中间件同产品、不同的开发语言等条件的限制
+
+* 定义了以下这些特性 
+  * 消息方向 、消息队列、消息路由（包括点到点和-发布订阅模式）、可靠性和安全性
+* AMQP与JMS不同，JMS定义了一个API和一组消息收发必须实现的行为，而AMQP是一个线路级协议
+  - 线路级协议描述的是通过网络发送的数据传输格式
+  - 任何符合该数据格式的消息发送和接收工具都能互相兼容和进行操作，能轻易实现跨技木平台的架构方案
 
 * AMQP的实现有：RabbitMQ、OpenAMQ
 
@@ -347,6 +356,15 @@ public class Consumer {
 ```
 
 # 进阶知识
+
+## 消息投递到队列过程
+
+1. 客户端连接到消息队列服务器， 打开一 个Channel 
+2. 客户端声明一个Exchange, 并设置相关属性
+3. 客户端声明一个Queue, 并设置相关属性
+4. 客户端使用Routing Key, 在Exchange和Queue之间建立好绑定关系
+5. 客户端投递消息到Exchange
+6. Exchange接收到消息后，根据消息的Key和已经设置的Binding,进行消息路由，将消息投递到一个或多个Queue里
 
 ## 怎么自动删除没人消费的消息
 
