@@ -2,7 +2,8 @@
 
 ## 是什么
 
-* ==Spring 框架是一个为 Java 应用程序的开发提供了综合、广泛的基础性支持的 java企业级应用的开源开发框架，帮助开发者解决了开发中基础性的问题，使得开发人员可以专注于应用程序的开发==
+* Spring 框架是一个为 Java 应用程序的开发提供了综合、广泛的基础性支持的 java企业级应用的开源开发框架，帮助开发者解决了开发中基础性的问题，使得开发人员可以专注于应用程序的开发
+* 狭义的是指Spring Framework，广义是指庞大的生态系统，如SpringBoot、SpringCloud、Spring Security、SpringData等
 
 ## 配置Spring方式
 
@@ -659,11 +660,22 @@ sbd.setSource(resource);
 * ==**创建的Bean对象相对于其他Bean对象的请求可见范围**==，通过属性==scope==来设置bean的作用域范围：
   - singleton：单例模式(默认的)，这种范围确保不管接受到多少个请求，每个容器中只有一个共享的 bean 的实例，无论有多少个Bean引用它，始终指向同一对象。单例的模式由 bean factory 自身来维护。`xml scope="singleton"` `@Scope((ConfigurableBeanFactory.SCOPE_PROTOTYPE))`
   - prototype：原型模式，与单例范围相反，每次通过Spring容器获取prototype定义的bean时，容器都将创建一个新的Bean实例，每个Bean实例都有自己的属性和状态
-  - request：在一次Http请求中，容器会返回该Bean的同一实例。而对不同的Http请求则会产生新的Bean，而且该bean仅在当前Http Request内有效。
-  - session：在一次Http Session中，容器会返回该Bean的同一实例。而对不同的Session请求则会创建新的实例，该bean实例仅在当前Session内有效。
-  - global Session：在一个全局的Http Session中，容器会返回该Bean的同一个实例，仅在使用portlet context时有效。  与session大体相同，但仅在**portlet**应用中使用（Portlets是一种Web组件－就像servlets－是专为将合成页面里的内容聚集在一起而设计的）。**Portlet规范定义了全局session的概念。**请求的bean被组成所有portlet的自portlet所共享。如果不是在portlet这种应用下，**globalSession则等价于session作用域**。
+  - request：每个HTTP请求创建单独的Bean实例
+  - session：Bean实例的作用域是Session范围。
+  - global Session：用于Portlet容器，因为每个Portlet有单独的Session，GlobalSession提供一个全局性的HTTP Session
 
 ## ==Bean的生命周期==
+
+* 可以分为创建和销毁两个过程
+  * 创建Bean会经过一系列的步骤，主要包括:
+    * 实例化Bean对象、设置Bean属性
+    * 如果通过各种Aware接口声明了依赖关系，则会注入Bean对容器基础设施层面的依赖。具体包括BeanNameAware、BeanFactoryAware和ApplicationContextAware，分别会注入Bean ID、Bean Factory或者ApplicationContext
+    * 调用BeanPostProcessor的前置初始化方法postProcessBeforeInitialization
+    * 如果实现了InitializingBean接口，则会调用afterPropertiesSet方法
+    * 调用Bean自身定义的init方法
+    * 调用BeanPostProcessor的后置初始化方法postProcessAfterInitialization
+    * 创建过程完毕
+  * Spring Bean的销毁过程会依次调用DisposableBean的destroy方法和Bean自身定制的destroy方法
 
 * 在一个 bean 实例被初始化时，需要执行一系列的初始化操作以达到可用的状态，同样的，当一个 bean 不在被调用时需要进行相关的析构操作，并从 bean 容器中移除
 

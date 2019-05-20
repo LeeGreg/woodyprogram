@@ -205,6 +205,7 @@
   * 通过协议：先解析存储消息体长度的字节来确定创建多大的缓冲区
 
 * * 分配Buffer，如`ByteBuffer buf = ByteBuffer.allocate(48);`
+
 * 写入Buffer
     * 从Channel写入Buffer，如`int bytesRead = inChannel.read(buf); `
     * Buffer自己写入`buf.put(127);    `
@@ -301,13 +302,16 @@
 
   * 为加快 I/O 速度，使用一种特殊方式为其分配内存的缓冲区
   * 需要调用` allocateDirect()`方法，而不是 allocate()方法，使用方式与普通缓冲区并无区别
+  * Direct Bufer创建和销毁过程中，都会比一般的堆内Bufer增加部分开销，所以通常都建议用于长期使用、数据较大的场景
 
 * 内存映射文件 I/O
+
+  * MappedByteBufer将文件按照指定大小直接映射为内存区域，当程序访问这个内存区域时将直接操作这块儿文件数据，省去了将数据从内核空间向用户空间传输的损耗。本质上也是种Direct Bufer
 
   * 是一种读和写文件数据的方法，它可以比常规的基于流或者基于通道的 I/O 快的多
 
   * 是通过使文件中的数据出现为内存数组的内容来完成的，这其初听起来似乎不过就是将整个文件读到内存中，但是事实上并不是这样。一般来说，只有文件中实际读取或者写入的部分才会映射到内存中
-
+  
     ```java
     RandomAccessFile raf = new RandomAccessFile( "e:\\test.txt", "rw" );  
     	FileChannel fc = raf.getChannel();    
@@ -490,18 +494,19 @@
 
     * 在非阻塞模式中，一次可以从流中读取0个或者多个字节
     * 通过Selector来避免检查流读取0个字节
-      * 一个或多个SelectableChannel实例注册到Selector，通过调用Selector的select()或selectNow()将返回有数据可读的SelectableChannel实例
-
-    * 当从SelectableChannel中读取数据时不能确定读取了多少数据，可能得到部分、完整、超过完整的数据，所以需要
-
+      
+* 一个或多个SelectableChannel实例注册到Selector，通过调用Selector的select()或selectNow()将返回有数据可读的SelectableChannel实例
+      
+* 当从SelectableChannel中读取数据时不能确定读取了多少数据，可能得到部分、完整、超过完整的数据，所以需要
+    
       * 检查是否读取了完整数据
-      * 如果只读取了部分数据，则需存储该数据直到下部分数据到来
-
+  * 如果只读取了部分数据，则需存储该数据直到下部分数据到来
+    
         1. 尽可能复制少的数据，数据越多性能越低
-      2. 将完整的数据存入到一个连续的字节序列中使其容易处理
-
-    * 一些协议消息格式使用TLV(Type, Length, Value)格式编码，当消息到达时，消息的总长度存储在消息的开头，这样就可以立即知道为整个消息分配多少内存
-
+  2. 将完整的数据存入到一个连续的字节序列中使其容易处理
+    
+* 一些协议消息格式使用TLV(Type, Length, Value)格式编码，当消息到达时，消息的总长度存储在消息的开头，这样就可以立即知道为整个消息分配多少内存
+    
     * 写入部分数据
       * write(ByteBuffer)返回写入的字节数
       * 确保只有具有要写入消息的Channel实例才能实际注册到Selector

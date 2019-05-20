@@ -3,6 +3,15 @@
 - 默认情况下，Netty服务端会启动多个线程？何时启动？
 - Netty如何解决空轮询bug问题？
 - Netty如何保证异步串行无锁化？
+- 对比Java标准NIO类库，你知道Netty是如何实现更高性能的吗?
+  - Netty在基础的NIO等类库之上进行了很多改进
+    - 更加优雅的Reactor模式实现、灵活的线程模型、利用EventLoop等创新性的机制，可以非常高效地管理成百上千的Channel
+    - 充分利用了Java的Zero-Copy机制，降低内存分配和回收的开销
+      - 例如使用池化的Direct Bufer等技术，在提高IO性能的同时，减少了对象的创建和销毁
+      - 利用反射等技术直接操纵SelectionKey，使用数组而不是Java容器等
+    - 在通信协议、序列化等其他角度的优化
+
+![image-20190519115323107](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190519115323107.png)
 
 # Netty简介
 
@@ -337,6 +346,7 @@
         * 没有则执行其他Task
         * 有则处理所有的状态变化
       * 在选择器运行的同一线程中执行其他任务
+    
     
   
   ![image-20181031225619763](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181031225619763.png)
@@ -1426,8 +1436,8 @@
       }
       ...
   }
-  ```
-  
+```
+
 - 空闲的连接和超时
 
   - `IdleStateHandler`当连接空闲时间太长时，将会触发一个IdleStateEvent 事件。
