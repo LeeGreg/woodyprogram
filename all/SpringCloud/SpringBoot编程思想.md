@@ -914,7 +914,7 @@
     * Listener—ServletContext#addListener—无
   * ServletContext配置方法为Web应用提供了运行时装配的能力，还需在适当的时机加以装配
 * 运行时插拔
-  * ServletContext配置方法仅能在ServletContextListener#contextInitialized或ServletContextListener#onStartup方法中被调用
+  * ServletContext配置方法仅能在ServletContextListener#contextInitialized或ServletContainerInitializer#onStartup方法中被调用
   * ServletContextListener的职责，用于监听Servlet上下文（ServletContext）的声明周期事件，包括初始化事件（由ServletContextListener#contextInitialized方法监听）和销毁事件
   * Servlet和Filte对外提供服务之前，必然经过Servlet上下文初始化事件
   * 当容器或应用启动时，ServletContainerInitializer#onStartup(Set<Class<?>>, ServletContext)方法将被调用，同时通过@HandlesTypes#value()属性方法来指定关心的类型。该方法调用早于ServletContextListener#contextInitialized(ServletContextEvent)方法
@@ -931,7 +931,7 @@
   * AbstractContextLoaderInitializer装配原理
     * 在Spring Web MVC中，DispatcherServlet有专属的WebApplicationContext，它继承了来自Root WebApplicationContext的所有Bean，以便@Controller等组件依赖注入
     * 在传统的Servlet应用场景下，Spring Web MVC的Root WebApplicationContext由ContextLoaderListener装载（通常配置在web.xml文件中）
-    * ContextLoaderListener是标准的ServletContextListener实现，监听ServletContext声明周期。当Web应用启动时，首先，Servlet容器调用ServletContextListener实现类的默认构造器，随后contextInitialized(ServletContextEvent)方法被调用。反之，当Web应用关闭时，Servlet容器调用其contextDestroyed(ServletContextEvent)方法
+    * ContextLoaderListener是标准的ServletContextListener实现，监听ServletContext生命周期。当Web应用启动时，首先，Servlet容器调用ServletContextListener实现类的默认构造器，随后contextInitialized(ServletContextEvent)方法被调用。反之，当Web应用关闭时，Servlet容器调用其contextDestroyed(ServletContextEvent)方法
     * 当Web应用运行在Servlet3.0+环境中时，以上web.xml部署ContextLoaderListener的方式可替换为实现抽象类AbstractContextLoaderInitializer来完成（不推荐），通常情况下，子类只需要实现createRootApplicationContext()方法。ContextLoaderListener不允许执行重复注册到ServletContext，当多个ContextLoaderListener监听contextInitialized时，其父类ContextLoader禁止Root WebApplicationContext重复关联ServletContext
   * AbstractAnnotationConfigDispatcherServletInitializer装配原理
     * 实现该抽象类（推荐）
@@ -972,7 +972,7 @@
     * 接口A，接口B、C实现A，在B上@Profile("java8")、C上@Profile("java7")
     * 设置ConfigurableEnvironment.setActiveProfiles("java8")，ConfigurableEnvironment.setDefaultProfiles("java7")
 
-* ==@Conditional条件装配==
+* @Conditional条件装配
 
   * 与配置条件装配Profile（偏向于静态激活和配置）职责相似，都是加载匹配的Bean，不同的是@Conditional（关注运行时动态选择）具备更大的弹性
 
@@ -1098,7 +1098,7 @@
 ## SpringBoot条件化自动装配
 
 * Class条件注解
-  * @ConditionalOnClass（当指定类存在时）和@ConditionalOnMissingClass（当指定类缺失时）
+  * @ConditionalOnClass（当指定类存在于Class Path）和@ConditionalOnMissingClass（当指定类缺失于Class Path）
 * Bean条件注解
   * @ConditionalOnBean和@ConditionalOnMissingBean基于BeanDefinition进行名称或类型的匹配
     * @ConditionalOnClass(XXX.class)，XXX必须存在于Class Path
@@ -1107,7 +1107,7 @@
   * `@ConditionalOnProperty(prefix="formatter", name="enabled", havingValue="true", matchIfMissing=true)`
     * `matchIfMissing=true`表明当属性配置不存在时，同样视为匹配，可以使其为false来不装配
     * Spring Environment的属性`formatter.enable=true`时才会自动装配
-      * 内部化配置：SPringApplicationBuilder.properties("formatter.enable=true");
+      * 内部化配置：SpringApplicationBuilder.properties("formatter.enable=true");
       * 外部化配置：application.properties中
 * Resource条件注解
   * @ConditionalOnResource属性方法resources()指示只有资源必须存在时条件方可成立
@@ -1152,7 +1152,7 @@
     * 推断Web应用类型
 
       * 应用类型可在SpringApplication构造后及run方法之前，再通过setWebApplicationType(WebApplicationType)方法调整，由于当前Spring应用上下文尚未准备，所以实现采用的是检查当前ClassLoader下基准Class的存在性判断（通过ClassLoader判断核心类是否存在来推断Web应用类型）
-      * 利用ClassUtils#isPresent(String,ClassLoader)方法依次判断DispatcherHanderl、ConfigurableWebApplicationContext、Servlet和DispatcherServlet的存在性组合情况，从而推断Web应用类型
+      * 利用ClassUtils#isPresent(String,ClassLoader)方法依次判断DispatcherHandler、ConfigurableWebApplicationContext、Servlet和DispatcherServlet的存在性组合情况，从而推断Web应用类型
         * 当DispatcherHandler存在，并且DispatcherServlet不存在时，即SpringBoot仅依赖WebFlux存在时，WebApplicationType.REACTIVE
         * 当Servlet和ConfigurableWebApplicationContext均不存在时为非Web应用，即WebApplicationType.NONE
         * 当Spring WebFlux和Spring WebMVC同时存在时，为WebApplicationType.SERVLET
@@ -1178,7 +1178,7 @@
           try {
             StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
             for(StackElement stackElement : stackTrace) {
-              if("main".equals(stackTraceElement.getMethodNmae())) {
+              if("main".equals(stackTraceElement.getMethodName())) {
                 return Class.forName(stackTraceElement.getClassName());
               }
             }
@@ -1269,7 +1269,7 @@
               * SimpleApplicationEventMulticaster接口
                 * 主要承担两种职责：关联（注册）ApplicationListener和广播ApplicationEvent
                 * 默认情况下，无论在传统的Spring应用中，还是在SpringBoot使用场景中，均充当同步广播事件对象的角色，开发者只需关注ApplicationEvent类型及对应的ApplicationListener实现即可
-            * Spring内建==事件==
+            * Spring内建事件
               * RequestHandledEvent
               * ContextRefreshedEvent：Spring应用上下文就绪事件
                 * 当ConfigurableApplicationContext#refresh()方法执行到finishRefresh()方法时，Spring应用上下文发布ContextRefreshedEvent
@@ -1283,13 +1283,10 @@
               * Spring事件的API表述为ApplicationEvent，继承于Java规约的抽象类EventObject，并需要显示地调用父类构造器传递事件源参数。以上四种Spring内建事件均继承于抽象类ApplicationContextEvent（Spring上下文事件），并将ApplicationContext作为事件源
             * 自定义Spring事件
               * 需扩展ApplicationEvent，然后由ApplicationEventPublisher#publishEvent()方法发布
-            * Spring事件==监听==
+            * Spring事件监听
               * Spring事件/监听机制围绕ApplicationEvent、ApplicationListener和ApplicationEventMulticaster三者展开
               * ApplicationListener监听Spring内建事件
                 * AbstractApplicationContext提供发布ApplicationEvent和关联ApplicationListener实现的机制，并且任意Spring Framework内建ConfigurableApplicationContext实现类均继承AbstractApplicationContext的事件/监听行为，如`context.addApplicationListener(event->System.out.println("触发事件："+event.getClass().getSimpleName()));`，`context.refresh()`，`context.stop()`，`context.start()`，`context.close()`
-              * ApplicationListener监听自定义Spring泛型事件
-                * 即使在closee()方法执行后，仍可以发布Spring事件
-                * 事件需要实现ResolvableTypeProvider接口，通过该接口暴露其泛型元信息
               * ApplicationListener监听实现原理
                 * Spring事件通过调用SimpleApplicationEventMulticaster#multicastEvent方法广播，根据ApplicationEvent具体类型查找匹配的ApplicationListener列表，然后逐一同步或异步地调用ApplicationListener#onApplicationEvent(ApplicationEvent)方法，实现ApplicationListener事件监听
               * 注解驱动Spring事件监听@EventListener
@@ -1300,21 +1297,21 @@
                 * @EventListener方法执行顺序
                   * 通过Ordered接口和标注@Order注解来实现监听次序
                 * @EventListener方法监听泛型
-            * Spring==事件广播器==
+            * Spring事件广播器
               * ApplicationEventPublisher#publishEvent方法
                 * 由AbstractApplicationContext实现
               * ApplicationEventMulticaster#multicastEvent
                 * 由SimpleApplicationEventMulticaster实现，是ApplicationEvent、ApplicationListener和ConfigurableApplicationContext之间连接的纽带
-
+          
           | 监听类型               | 访问性 | 顺序控制       | 返回类型   | 参数数量 | 参数类型               | 泛型事件 |
           | ---------------------- | ------ | -------------- | ---------- | -------- | ---------------------- | -------- |
-          | @EventListener同步方法 | public | @Order         | 任意       | 0或1     | 事件类型或泛型参数类型 | 支持     |
+| @EventListener同步方法 | public | @Order         | 任意       | 0或1     | 事件类型或泛型参数类型 | 支持     |
           | @EventListener异步方法 | public | Order          | 非原生类型 | 0或1     | 事件类型或泛型参数类型 | 支持     |
           | ApplicationListener    | public | Order或Ordered | void       | 1        | 事件类型               | 不支持   |
-
+          
           * SpringBoot事件的发布者则是SpringApplication.initialMulticaster属性(SimpleApplicationEventMulticaster类型)，并且SimpleApplicationEventMulticaster也来自Spring Framework
             * SpringBoot事件/监听机制同样基于ApplicationEventMulticaster、ApplicationEvent和ApplicationListener实现
-            * SpringBoot内建事件监听器
+  * SpringBoot内建事件监听器
               * 在SpringBoot场景中，无论Spring事件监听器，还是SpringBoot事件监听器，均配置在META-INF/spring.factories中，并以org.springframework.context.ApplicationListener作为属性名称，属性值为ApplicationListener的实现类
               * 最重要的SpringBoot内建事件监听器：
                 * ConfigFileApplicationListener
@@ -1323,6 +1320,7 @@
                 * LoggingApplicationListener
                   * 监听事件：ApplicationStartingEvent或ApplicationEnvironmentPreparedEvent或ApplicationPreparedEvent或ContextClosedEvent或ApplicationFailedEvent
                   * 用于SpringBoot日志系统的初始化（日志框架识别，日志配置文件加载等）
+          
             * SpringBoot事件
               * SpringBoot事件类型继承Spring事件类型ApplicationEvent，并且也是SpringApplicationEvent的子类
               * 大多数Spring内建事件为Spring应用上下文事件，即ApplicationContextEvent，其事件源为ApplicationContext。而SpringBoot事件源则是SpringApplication，其内建事件根据EventPublishingRunListener的生命周期回调方法依次发布。ApplicationStartingEvent、ApplicationEnvironmentPreparedEvent、ApplicationPreparedEvent、ApplicationStartedEvent、ApplicationReadyEvent和ApplicationFailedEvent，其中ApplicationReadyEvent和ApplicationFailedEvent在Spring应用上下文初始化后发布，即在ContextRefreshedEvent之后发布
@@ -1332,28 +1330,28 @@
                 * 二是通过方法SpringApplication#addListeners(ApplicationListener…)或SpringApplicationBuilder#listeners(ApplicationListener…)显示地装配
             * SpringBoot事件广播器
               * 同样来源于Spring Framework的实现类SimpleApplicationEventMulticaster，其广播行为与Spring事件广播毫无差别，只不过SpringBoot中发布的事件类型是特定的
-            * SpringBoot事件/监听机制继承于Spring事件/监听机制，其事件类型继承于SpringApplicationEvent，事件监听器仍通过ApplicationListener实现，而广播器实现SimpleApplicationEventMulticaster将它们关联起来
-
+          * SpringBoot事件/监听机制继承于Spring事件/监听机制，其事件类型继承于SpringApplicationEvent，事件监听器仍通过ApplicationListener实现，而广播器实现SimpleApplicationEventMulticaster将它们关联起来
+          
       * 装配ApplicationArguments
-
-        * 当执行SpringApplicationRunListeners#starting()方法后，SpringApplication运行进入装配ApplicationArguments逻辑，其实现类为DefaultApplicationArguments，一个用于简化SpringBoot应用启动参数的封装接口，它的底层实现基于Spring Framework中的命令行配置源SimpleCommandLinePropertySource
-        * 例如命令行参数"—name=woody"将被SimpleCommandLinePropertySource解析为"name:woody"的键值属性
-
+      
+  * 当执行SpringApplicationRunListeners#starting()方法后，SpringApplication运行进入装配ApplicationArguments逻辑，其实现类为DefaultApplicationArguments，一个用于简化SpringBoot应用启动参数的封装接口，它的底层实现基于Spring Framework中的命令行配置源SimpleCommandLinePropertySource
+      * 例如命令行参数"—name=woody"将被SimpleCommandLinePropertySource解析为"name:woody"的键值属性
+  
     * 准备ConfigurableEnvironment
-
-    * Banner
-
-    * 创建Spring应用上下文（ConfigurableApplicationContext）
-
-      * SpringApplication通过createApplicationContext()方法创建Spring应用上下文
+  
+* Banner
+  
+* 创建Spring应用上下文（ConfigurableApplicationContext）
+  
+  * SpringApplication通过createApplicationContext()方法创建Spring应用上下文
         * 默认情况下，根据SpringApplication构造阶段所推断的Web应用类型进行ConfigurableApplicationContext的创建
-        * 通过setApplicationContextClass(Class)方法或SpringApplicationBuilder#contextClass(Class)方法，根据指定ConfigurableApplicationContext类型创建Spring应用上下文
-
+    * 通过setApplicationContextClass(Class)方法或SpringApplicationBuilder#contextClass(Class)方法，根据指定ConfigurableApplicationContext类型创建Spring应用上下文
+    
     * Spring应用上下文运行前准备
-
-      * 由SpringApplication#prepareContext方法完成
+    
+  * 由SpringApplication#prepareContext方法完成
         * Spring应用上下文准备阶段
-          * 从prepareContext方法开始，到SpringApplicationRunListeners#contextPrepared
+      * 从prepareContext方法开始，到SpringApplicationRunListeners#contextPrepared
           * 设置Spring应用上下文ConfigurableEnvironment，即context.setEnvironment(environment)
           * Spring应用上下文后置处理
             * 根据SpringApplication#postProcessApplicationContext(ConfigurableApplicationContext)方法的命名而来，允许子类覆盖该实现，可能增加额外需要的附加功能
@@ -1369,9 +1367,9 @@
             * 加载Spring应用上下文配置源
               * load(ApplicationContext,Object[])方法将承担加载Spring应用上下文配置源的职责，该方法将Spring应用上下文Bean装载的任务交给了BeanDefinitionLoader
             * 回调SpringApplicationRunListener#contextLoaded方法
-
+    
     * SpringBootExceptionReporter集合
-
+  
 * ApplicationContext启动阶段
 
   * 由refreshContext(ConfigurableApplicationContext)方法实现
