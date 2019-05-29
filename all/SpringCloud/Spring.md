@@ -35,7 +35,7 @@
 
   * 被@Configuration 所注解的类则表示这个类的主要目的是作为 bean 定义的资源
 
-  * 被@Configuration 声明的类可以通过在同一个类的内部调用@bean 方法来设置嵌入 bean 的依赖关系
+  * 被@Configuration 声明的类可以通过在同一个类的内部调用@Bean 方法来设置嵌入 bean 的依赖关系
 
   * 由@Bean 注解的方法将会实例化、配置和初始化一个新对象，这个对象将由 Spring 的 IOC 容器来管理
 
@@ -396,7 +396,7 @@
 
 ## 事件
 
-* 如果一个bean实现了 ApplicationListener 接口，当相应的ApplicationEvent被发布以后，bean会自动被通知
+* 如果一个`bean`实现了 `ApplicationListener` 接口，当相应的`ApplicationEvent`被发布以后，`bean`会自动被通知
 
   ```java
   public class AllApplicationEventListener implements ApplicationListener<ApplicationEvent> { 
@@ -408,19 +408,19 @@
   ```
 
 * Spring 提供了以下 5 种标准的事件  
-  1. 上下文更新事件(ContextRefreshedEvent)：该事件会在 ApplicationContext 被初始化或者更新时发布。也可以在调用 ConfigurableApplicationContext 接口中的 refresh()方法时被触发 
-  2. 上下文开始事件(ContextStartedEvent)：当容器调用 ConfigurableApplicationContext 的 Start()方法开始/重新开始容器时触发该事件 
-  3. 上下文停止事件(ContextStoppedEvent)：当容器调用 ConfigurableApplicationContext 的 Stop()方法停止容器时触发该事件 
-  4. 上下文关闭事件(ContextClosedEvent)：当 ApplicationContext 被关闭时触发该事件。容器被关闭时，其管理的所有单例 Bean 都被销毁  
-  5. 请求处理事件(RequestHandledEvent)：在 Web 应用中，当一个 http 请求(request)结束触发该事件 
+  1. 上下文更新事件(`ContextRefreshedEvent`)：该事件会在`ApplicationContext `被初始化或者更新时发布。也可以在调用 `ConfigurableApplicationContext` 接口中的 `refresh()`方法时被触发 
+  2. 上下文开始事件(`ContextStartedEvent`)：当容器调用 `ConfigurableApplicationContext` 的 `Start()`方法开始/重新开始容器时触发该事件 
+  3. 上下文停止事件(`ContextStoppedEvent`)：当容器调用 `ConfigurableApplicationContext` 的 `Stop()`方法停止容器时触发该事件 
+  4. 上下文关闭事件(`ContextClosedEvent`)：当 `ApplicationContext` 被关闭时触发该事件。容器被关闭时，其管理的所有单例 Bean 都被销毁  
+  5. 请求处理事件(`RequestHandledEvent`)：在 `Web` 应用中，当一个` http `请求(`request`)结束触发该事件 
 
 ### 自定义事件
 
-1. 事件类继承ApplicationContextEvent
+1. 事件类继承`ApplicationContextEvent`
 
-2. 创建事件监听器监听事件类：监听器实现ApplicationListener<事件类>
+2. 创建事件监听器监听事件类：监听器实现`ApplicationListener`<事件类>
 
-3. 通过 ApplicationContext 接口的 publishEvent()方法来发布自定义事件
+3. 通过`ApplicationContext` 接口的 `publishEvent()`方法来发布自定义事件
 
    ```java
    //1. 事件类
@@ -523,15 +523,15 @@
 
 ## 资源访问
 
-* Resource接口，提供底层资源访问能力，有对应不同资源类型的实现类
-  * ClassPathResource：类路径下的资源（src/main/resources下的）
-  * FileSystemResource：以文件系统绝对路径的方式进行访问，如D:/conf/bean.xml
-  * ServletContextResource：以相对于Web应用根目录的方式进行访问
-* classpath：只会在第一个加载xxx包路径下查找，而classpath*:会扫描所有这些JAR包及路径下出现的xxx包路径
+* `Resource`接口，提供底层资源访问能力，有对应不同资源类型的实现类
+  * `ClassPathResource`：类路径下的资源（`src/main/resources`下的）
+  * `FileSystemResource`：以文件系统绝对路径的方式进行访问，如`D:/conf/bean.xml`
+  * `ServletContextResource`：以相对于`Web`应用根目录的方式进行访问
+* `classpath：`只会在第一个加载xxx包路径下查找，而`classpath*:`会扫描所有这些JAR包及路径下出现的xxx包路径
 * 资源加载器
-  * ResourceLoader接口：仅有一个getResource(String location)方法，可以根据一个资源地址加载文件资源，不支持Ant风格
-  * ResourcePatternResolver扩展了ResourceLoader接口，支持Ant风格
-  * Spring提供的标准实现类：PathMatchingResourcePatternResolver
+  * `ResourceLoader`接口：仅有一个`getResource(String location)`方法，可以根据一个资源地址加载文件资源，不支持`Ant`风格
+  * `ResourcePatternResolver`扩展了`ResourceLoader`接口，支持`Ant`风格
+  * `Spring`提供的标准实现类：`PathMatchingResourcePatternResolver`
 
 ```java
 //basePackage：com.tkrng.community.manage
@@ -552,90 +552,95 @@ sbd.setSource(resource);
 
 ## Bean的作用域
 
-* 通过属性scope来设置bean的作用域范围
-  - singleton：单例模式(默认的)，每个容器中只有一个共享的 bean 的实例
-  - prototype：原型模式，每次通过Spring容器获取bean时，容器都将创建一个新的Bean实例
-  - request：每个HTTP请求创建单独的Bean实例
-  - session：Bean实例的作用域是Session范围。
-  - global Session：用于Portlet容器，因为每个Portlet有单独的Session，GlobalSession提供一个全局性的HTTP Session
+* 通过属性`scope`来设置`bean`的作用域范围
+  - `singleton`：单例模式(默认的)，每个容器中只有一个共享的 `bean `的实例
+  - `prototype`：原型模式，每次通过`Spring`容器获取`bean`时，容器都将创建一个新的`Bean`实例
+  - `request`：每个`HTTP`请求创建单独的`Bean`实例
+  - `session`：Bean实例的作用域是`Session`范围。
+  - `global Session`：用于Portlet容器，因为每个Portlet有单独的Session，GlobalSession提供一个全局性的HTTP Session
 
 ## Bean的生命周期
 
-* Spring bean factory 负责管理在 Spring 容器中被创建的 bean 的生命周期 
-
-* 可以分为创建和销毁两个过程
-  * 创建Bean会经过一系列的步骤，主要包括:
-    * 实例化Bean对象：Spring根据配置情况调用Bean构造函数或工厂方法对Bean进行实例化
-    * 设置Bean属性，Spring将值和Bean的引用注入进Bean对应的属性中
-    * Bean实现 Aware接口后，容器会把Spring上下文注入Bean
-      * 例如实现BeanFactoryAware的Bean在初始后，Spring容器将会注入BeanFactory的实例
-      * 而实现ApplicationContextAware的Bean，在Bean被初始后，将会被注入 ApplicationContext的实例等
-      * 如果通过各种Aware接口声明了依赖关系，则会注入Bean对容器基础设施层面的依赖。具体包括BeanNameAware、BeanFactoryAware和ApplicationContextAware，分别会注入Bean ID、Bean Factory或者ApplicationContext
-    * 如果BeanFactory装配了BeanPostProcessor后置处理器
-      * 调用BeanPostProcessor的前置初始化方法postProcessBeforeInitialization
-    * 当前正在初始化的bean对象会被传递进来，可以对这个bean作任何处理
-    * 如果Bean实现了InitializingBean接口，则会调用afterPropertiesSet方法
-      * 不会把当前bean对象传进来，只能增加一些额外的逻辑
-    * 调用Bean自身定义的init方法
-    * 调用BeanPostProcessor的后置初始化方法postProcessAfterInitialization
-      * 当前正在初始化的bean对象会被传递进来，可以对这个bean作任何处理
+* `Spring bean factory` 负责管理在 `Spring` 容器中被创建的 `bean` 的生命周期 
+* 通过`Bean`的`init-method`和`destroy-method`属性配置方式为`Bean`指定初始化和销毁方法对`Bean`生命周期的控制效果和通过实现`InitializingBean`和`DisposableBean`接口的效果完全相同，也可达到框架解耦目的
+* `ApplicationContext`和`BeanFactory中的Bean`的生命周期类似，不同的是如果`Bean`实现了`ApplicationContextAware`接口则会增加一个调用该接口`setApplicationContext()`步骤
+* `ApplicationContext中Bean`可以分为创建和销毁两个过程，通过`getBean()`调用某一个`Bean`时
+  * 创建`Bean`会经过一系列的步骤，主要包括:
+    * 如果容器注册了`InstantiationAwareBeanPostProcessor`接口，则调用接口`postProcessBeforeInstantiation()`方法
+    * `Spring`实例化`Bean`对象：`Spring`根据配置情况调用`Bean`构造函数或工厂方法对`Bean`进行实例化
+    * 如果容器注册了`InstantiationAwareBeanPostProcessor`接口，则调用接口`postProcessAfterInstantiation()`方法
+    * 如果容器注册了`InstantiationAwareBeanPostProcessor`接口，则调用接口`postProcessPropertyValues()`方法
+    * 设置`Bean`属性，`Spring`将值和`Bean`的引用注入进`Bean`对应的属性中
+    * 如果`Bean`实现`BeanNameAware`接口，则调用`setBeanName()`接口方法将`Bean`的名称设置到`Bean`中
+    * 如果`Bean`实现`BeanFactoryAware的Bean`接口，则调用`setBeanFactory()`接口方法将`BeanFactory`容器实例设置到`Bean`中。
+    * 如果`Bean`实现`ApplicationContextAware`接口，则调用`setApplicationContext()`接口方法将`ApplicationContext`容器实例设置到`Bean`中。    
+    * 如果`BeanFactory`装配了`BeanPostProcessor`后置处理器
+      * 调用`BeanPostProcessor`的前置初始化方法`postProcessBeforeInitialization(Object bean, String beanName)`对当前`Bean`进行加工操作，返回加工处理后的Bean
+    * 如果`Bean`实现了`InitializingBean`接口，则会调用`afterPropertiesSet`方法
+      * 不会把当前`bean`对象传进来，只能增加一些额外的逻辑
+    * 调用`Bean`自身定义的`init`初始化方法
+    * 调用`BeanPostProcessor`的后置初始化方法`postProcessAfterInitialization`
+      * 当前正在初始化的`bean`对象会被传递进来，可以对这个`bean`作任何处理
+    * 如果Bean指定的作用范围为`prototype`，则将Bean返回给调用者，Spring不再管理这个Bean的生命周期
+    * 如果Bean指定的作用范围为`singleton`（默认），将`Bean`放入`Spring IOC`容器的缓存池中，并将`Bean`引用返回给调用者，`Spring`继续对这些`Bean`进行后续的生命管理
     * 创建过程完毕
-  * Spring Bean的销毁过程会依次调用DisposableBean的destroy方法和Bean自身定制的destroy方法
-  
-* Bean的完整生命周期经历了各种方法调用，这些方法可以划分为以下几类：
-
-  * Bean自身方法：如调用Bean构造函数实例化Bean、调用setter设置Bean的属性值及通过`<bean>`的init-method和destroy-method所指定的方法
-  * Bean级生命周期接口方法：如BeanNameAware、BeanFactoryAware、InitializingBean和DisposableBean，这些接口方法由Bean类直接实现
-  * 容器级生命周期接口方法：InstantiationAwareBeanPostProcessor和BeanPostProcessor两个接口——后置处理器，不由Bean本身实现，实现类以容器附加装置的形式注册到Spring容器中，并通过接口反射为Spring容器扫描识别。
-    * 当Spring容器创建任何Bean的时候，这些后置处理器都会发挥作用——影响时全局性的，不过可以合理编写后置处理器对要改造的Bean进行加工处理
-  * 工厂后置处理器接口方法：AspectJWeavingEnabler、CustomeAutowireConfiguer、ConfigurationClassPostProcessor等，也是容器级的，在应用上下文装配配置文件后立即调用
+  * 对于`singleton`的`Bean`，容器关闭时，如果`Bean`实现了`DisposableBean`接口则调用接口`destroy`方法（在此可以编写释放资源、记录日志等操作）；调用`Bean`自身的`destroy`方法完成`Bean`资源的释放等操作
+* `Bean`的完整生命周期经历了各种方法调用，这些方法可以划分为以下几类：
+* `Bean`自身方法：如调用`Bean`构造函数实例化`Bean`、调用`setter`设置`Bean`的属性值及通过`<bean>`的`init-method`和`destroy-method`所指定的方法
+  * `Bean`级生命周期接口方法：如`BeanNameAware`、`BeanFactoryAware`、`ApplicationContextAware`、`InitializingBean`和`DisposableBean`，这些接口方法由`Bean`类直接实现
+  * 容器级生命周期接口方法：`InstantiationAwareBeanPostProcessor`和`BeanPostProcessor`两个接口——后置处理器
+    * 当`Spring`容器创建任何`Bean`的时候，这些后置处理器都会发挥作用——影响时全局性的，不过可以合理编写后置处理器对要改造的`Bean`进行加工处理
+  * 工厂后置处理器接口方法：`AspectJWeavingEnabler`、`CustomeAutowireConfiguer`、`ConfigurationClassPostProcessor`等，也是容器级的，在应用上下文装配配置文件后立即调用
 
 
 ## Spring MVC
 
 * 基于项目开发的设计模式，用来解决用户和后台交互问题
-  - Model：将传输数据封装成一个完整的载体
-  - View：视图，用来展示或者输出的模块（HTML、JSP、JSON、String、Swing、xml...）
-  - Controller：控制交互一个中间组件，由它来根据用户请求分发不同任务从而得到不同的结果
-* Spring MVC
+  - `Model`：将传输数据封装成一个完整的载体
+  - `View`：视图，用来展示或者输出的模块（`HTML`、`JSP`、`JSON`、`String`、`xml`...）
+  - `Controller`：控制交互一个中间组件，由它来根据用户请求分发不同任务从而得到不同的结果
+* `Spring MVC`
+  
   - 只是MVC设计模式的应用典范，给MVC的实现定制了一套标准
-  - M：支持将url参数自动封装成一个Object或者Map
-  - V：自己只有一个默认的template、支持扩展、自定义View，而且能够自定义介些
-  - C：把限制放宽了，任何一个类，都有可能是一个Controller
-
-* Spring MVC原理
-  * Servlet是j2ee的标准，Spring MVC是对于Servlet的再包装，使得更易容，更专注于业务开发
-
-    * 因为单纯的使用Servlet，需要考虑线程安全，请求分发，权限控制等等方面的问题
-    * 在Spring MVC的配置中，如果将Servlet的配置与MVC的配置写在一起，有没有contexloaderListener无所谓的
-
-  * 配置阶段
-
+  - M：支持将url参数自动封装成一个`Object`或者`Map`
+  - V：自己只有一个默认的`template`、支持扩展、自定义View，而且能够自定义
+- C：把限制放宽了，任何一个类，都有可能是一个`Controller`
+  
+* `Spring MVC`原理
+  
+* `Servlet`是`j2ee`的标准，`Spring MVC`是对于`Servlet`的再包装，使得更易容，更专注于业务开发
+  
+    * 因为单纯的使用`Servlet`，需要考虑线程安全，请求分发，权限控制等等方面的问题
+  * 在`Spring MVC`的配置中，如果将`Servlet`的配置与`MVC`的配置写在一起，有没有`contexloaderListener`无所谓的
+  
+* 配置阶段
+  
     * `web.xml`
-      * 配置DispatcherServlet，作为SpringMVC的启动入口
-      * 配置init-param，固定属性名字contextConfigLocation，指定application.xml路径，通常会配置成classpath:application.xml
-      * 配置servlet-pattern，配置一个请求路径的规则，通常会配置成/*
-
-  * 初始化阶段
-
-    * `	ApplicationContext`实例化，通过onRefresh()调用`DispatchServlet`的initStrategies()——有九种策略，针对每个用户请求都会经过一些处理的策略之后，最终才能有结果输出，每种策略可以自定义干预，但是最终返回ModelAndView
-
-  * 请求处理阶
-
-    ![image-20190519215044972](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190519215044972.png)
-
-  1. DispatcherServlet接收请求后查询一个或多个处理映射器来确定将请求发送给相应的控制器。（处理映射器会根据请求所携带的URL信息来进行决策）
-  2. 控制器接受请求并根据请求的类型（Get/Post）调用相应的服务方法完成业务逻辑后，将产生的模型数据和用于渲染输出的视图逻辑名返回给DispatcherServlet
-  3. DispatcherServlet通过视图解析器来将逻辑视图名匹配为一个特定的视图实现，视图将使用模型数据渲染输出
+      * 配置`DispatcherServlet`，作为`SpringMVC`的启动入口
+      * 配置`init-param`，固定属性名字`contextConfigLocation`，指定`application.xml`路径，通常会配置成`classpath:application.xml`
+    * 配置`servlet-pattern`，配置一个请求路径的规则，通常会配置成`/*`
+  
+* 初始化阶段
+  
+  * `	ApplicationContext`实例化，通过`onRefresh()`调用`DispatchServlet`的`initStrategies()`——有九种策略，针对每个用户请求都会经过一些处理的策略之后，最终才能有结果输出，每种策略可以自定义干预，但是最终返回`ModelAndView`
+  
+* 请求处理阶
+  
+  ![image-20190519215044972](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190519215044972.png)
+  
+  1. `DispatcherServlet`接收请求后查询一个或多个处理映射器来确定将请求发送给相应的控制器
+     * 处理映射器会根据请求所携带的URL信息来进行决策
+  2. 控制器接受请求并根据请求的类型（`Get/Post`）调用相应的服务方法完成业务逻辑后，将产生的模型数据和用于渲染输出的视图逻辑名返回给`DispatcherServlet`
+  3. `DispatcherServlet`通过视图解析器来将逻辑视图名匹配为一个特定的视图实现，视图将使用模型数据渲染输出
   4. 输出会通过响应对象传递给客户端
 
 ## BeanFactory
 
-* 一般称BeanFactory为IOC容器，是Spring框架的基础设施，面向Spring本身，是类的通用工厂，可以创建并管理各种类的对象
+* 一般称`BeanFactory`为`IOC`容器，是`Spring`框架的基础设施，面向`Spring`本身，是类的通用工厂，可以创建并管理各种类的对象
 
-  * 是工厂模式的一个实现，提供了控制反转功能，用来把应用的配置和依赖从正真的应用代码中分离
+  * 是工厂模式的一个实现，提供了控制反转功能，让调用类对某一接口实现类的依赖关系由第三方容器注入，以移除调用类对某一接口实现类的依赖
 
-* 最常用的BeanFactory 实现是XmlBeanFactory 类
+* 最常用的`BeanFactory` 实现是`XmlBeanFactory` 类
 
   ```java
   public static void main(String[] args){
@@ -652,11 +657,11 @@ sbd.setSource(resource);
 
 ## FactoryBean
 
-* 通过实现该工厂类接口定制实例化Bean的逻辑
+* 通过实现该工厂类接口定制实例化`Bean`的逻辑
 
-  * 隐藏了实例化一些复杂Bean的细节，给上层应用带来了便利
+  * 隐藏了实例化一些复杂`Bean`的细节，给上层应用带来了便利
 
-* 当配置文件中Bean的class属性配置的实现类是FactoryBean时，通过getBean()方法返回的不是FactoryBean本身，而是FactoryBean#getObject()方法所返回的对象，相当于FactoryBean#getObject()代理了getBean()
+* 当配置文件中`Bean`的`class`属性配置的实现类是`FactoryBean`时，通过`getBean()`方法返回的不是`FactoryBean`本身，而是`FactoryBean#getObject()`方法所返回的对象，相当于`FactoryBean#getObject()`代理了`getBean()`
 
   ```java
   public class PersonFactoryBean implements FactoryBean<Person> {
@@ -700,33 +705,33 @@ sbd.setSource(resource);
 
 ## ApplicationContext
 
-* 应用上下文，由BeanFactory派生而来
+* 应用上下文，由`BeanFactory`派生而来
 
-* 面向使用Spring框架开发者，几乎所有的应用场合都可以直接使用ApplicationContext，而非底层的BeanFactory
+* 面向使用`Spring`框架开发者，几乎所有的应用场合都可以直接使用`ApplicationContext`，而非底层的`BeanFactory`
 
-  * ClassPathXmlApplicationContext：从类路径加载配置文件
-  * FileSystemXmlApplicationContext：从文件系统中装载配置文件
-  * AnnotationConfigApplicationContext：基于注解类配置
+  * `ClassPathXmlApplicationContext`：从类路径加载配置文件
+  * `FileSystemXmlApplicationContext`：从文件系统中装载配置文件
+  * `AnnotationConfigApplicationContext`：基于注解类配置
 
-* ApplicationContext在初始化应用上下文时就实例化所有单实例的Bean
+* `ApplicationContext`在初始化应用上下文时就实例化所有单实例的`Bean`
 
-* WebApplicationContext
+* `WebApplicationContext`
 
-  - 允许从相对于Web根目录的路径中装载配置文件完成初始化工作
+  - 允许从相对于`Web`根目录的路径中装载配置文件完成初始化工作
 
-  - 从WebApplicationContext中可以获取ServletConext的引用，整个Web应用上下文对象将作为属性放置到ServletContext中，以便Web应用环境可以访问 Spring应用上下文
+  - 从`WebApplicationContext`中可以获取`ServletConext`的引用，整个`Web`应用上下文对象将作为属性放置到`ServletContext`中，以便Web应用环境可以访问 `Spring`应用上下文
 
-  - WebApplicationContextUtils.getWebApplicationContext(ServletConfig sc)，可以从ServletConfig中获取WebApplicationContext实例
+    - `WebApplicationContextUtils.getWebApplicationContext(ServletConfig sc)`，可以从`ServletConfig`中获取`WebApplicationContext`实例
 
   - 初始化：
 
-    - WebApplicationContext需要ServletConfig实例，它必须在拥有Web容器的前提下才能完成启动工作
+    - `WebApplicationContext`需要`ServletConfig`实例，它必须在拥有Web容器的前提下才能完成启动工作
 
-    - 可以在web.xml中
+    - 可以在`web.xml`中
 
-      - 配置自启动的Servlet（ContextLoadServlet）
-      - 或定义Web容器监听器（ServletContextListener）
-      - 借助二者中的任何一个，就可以完成启动SpringWeb应用上下文的工作
+      - 配置自启动的`Servlet`（`ContextLoadServlet`）
+      - 或定义Web容器监听器（`ServletContextListener`）
+      - 借助二者中的任何一个，就可以完成启动`SpringWeb`应用上下文的工作
       
       ```xml
       <context-param>
@@ -753,89 +758,105 @@ sbd.setSource(resource);
       </listener>
       ```
 
-* BeanFactory 和 ApplicationContext 有什么区别?  
+* `BeanFactory` 和 `ApplicationContext` 有什么区别?  
 
-  * BeanFactory 可以理解为含有 bean 集合的工厂类
-
-    * BeanFactory 包含了种 bean 的定义，以便在接收到客户端请求时将对应的 bean 实例化
-  * BeanFactory 还能在实例化对象的时生成协作类之间的关系。此举将 bean 自身与 bean 客户端的配置中解放出来
-    
-* BeanFactory 还包含了 bean 生命周期的控制，调用客户端的初始化方法(initialization Methods)和销毁方法(destruction Methods)
-    
-* 从表面上看，ApplicationContext 如同 BeanFactory 一样具有 bean 定义、bean 关联关系的设置， 根据请求分发 bean 的功能。但 ApplicationContext 在此基础上还提供了其他的功能
+  * `BeanFactory`负责读取`Bean`配置文档，管理`Bean`的加载，实例化，维护`Bean`之间的依赖关系，负责`Bean`的生命周期
+* `ApplicationContext`由`BeanFactory`派生而来，还提供了以下的功能
+    * 利用`MessageSource`进行国际化
+      * 由于`ApplicationContext`扩展`MessageResource`接口，因而具有消息处理的能力(i18N)
+    * 事件机制(Event) 
+        * 当`ApplicationContext`中发布一个`ApplicationEvent`事件时，所有扩展了`ApplicationListener`的`Bean`都将会接受到这个事件，并进行相应处理
+    * 底层资源的访问
+        * `ApplicationContext`扩展了`ResourceLoader`(资源加载器)接口，从而可加载多个`Resource`，而`BeanFactory`是没有扩展`ResourceLoader  `
+    * 对Web应用的支持
+  * 其它区别 
+      * `BeanFactroy`采用延迟加载形式来注入`Bean`，即只有在使用到某个`Bean`时(调用`getBean()`)，才对该`Bean`进行加载实例化
+      * `ApplicationContext`则相反，它是在容器启动时，一次性创建了所有作用范围为单例且非延迟加载的`Bean`。这样，在容器启动时就可以发现`Spring`中存在的配置错误
+          * 如果`Bean`的`scope`是`singleton`的，并且`lazy-init`为`true`（默认为`false`），则该`Bean`的实例化是在第一次使用该`Bean`的时候进行实例化
   
-    * 提供了支持国际化的文本消息 
-    * 统一的资源文件读取方式  
-  * 已在监听器中注册的 bean 的事件
+* 三种较常见的`ApplicationContext` 实现方式：
   
-* 三种较常见的 ApplicationContext 实现方式：
+  - `ClassPathXmlApplicationContext`：从 `classpath` 的 `XML` 配置文件中读取上下文，并生成上下文定义。应用程序上下文从程序环境变量中取得
   
-  - ClassPathXmlApplicationContext：从 classpath 的 XML 配置文件中读取上下文，并生成上下文定义。应用程序上下文从程序环境变量中取得
+      `ApplicationContext context = new ClassPathXmlApplicationContext(“application.xml”);`
+      
+  - `FileSystemXmlApplicationContext`：由文件系统中的 XML 配置文件读取上下文
   
-      ```java
-      ApplicationContext context = newClassPathXmlApplicationContext(“application.xml”);
-    ```
+  - `XmlWebApplicationContext`：由 Web 应用的 XML 文件读取上下文
   
-  - FileSystemXmlApplicationContext：由文件系统中的 XML 配置文件读取上下文
-  
-    - XmlWebApplicationContext：由 Web 应用的 XML 文件读取上下文
+      ```xml
+      <listener>
+      	<listener-class>
+        	org.springframework.web.context.ContextLoaderListener
+        </listener-class>
+      </listener>
+      或
+      <servlet>
+      <servlet-name>context</servlet-name>
+      <servlet-class>org.springframework.web.context.ContextLoaderServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+      </servlet>
+      都默认配置文件为WEB-INF/applicationContext.xml，也可使用context-param指定配置文件
+      <context-param>
+      	<param-name>contextConfigLocation</param-name>
+      	<param-value>/WEB-INF/myApplicationContext.xml</param-value>
+      </context-param>
+      ```
 
 ## Spring IOC
 
-* Spring IOC 负责创建对象，管理对象（通过依赖注入DI），装配对象，配置对象，并且管理这些对象的整个生命周期
+* Spring IOC 负责创建、装配并管理对象的整个生命周期
 * 控制反转或依赖注入
-  * 让调用类对某一接口实现类的依赖关系由第三方（容器）注入，以移除调用类对某一接口实现类的依赖
+  * 让调用类对某一接口实现类的依赖关系由第三方容器注入，以移除调用类对某一接口实现类的依赖
 
 * 初始化过程
-  1. BeanDifinition的Resource定位
-     * 指的是BeanDifinition的资源定位，它由ResourceLoader通过统一的Resource接口来完成，这个Resource对各种形式的BeanDifinition的使用都提供了统一的接口
-  2. BeanDifinition的载入与解析
-     * 把用户定义好的Bean表示成Ioc容器内部的数据结构，而这个容器内部的数据结构就是BeanDifinition
-     * 具体来说，BeanDifinition实际上就是POJO对象在IOC容器中的抽象，通过这个BeanDifinition定义的数据结构，使IOC容器能够方便的对POJO对象也就是Bean进行管理
-  3. BeanDifinition在Ioc容器中的注册
-     * 通过调用BeanDifinitionRegistry接口来实现
-     * 这个注册过程把载入过程中解析得到的BeanDifinition向Ioc容器进行注册
+  1. `BeanDifinition`的`Resource`定位
+     * 指的是`BeanDifinition`的资源定位，它由`ResourceLoader`通过统一的`Resource`接口来完成，这个`Resource`对各种形式的`BeanDifinition`的使用都提供了统一的接口
+  2. `BeanDifinition`的载入与解析
+     * 把用户定义好的`Bean`表示成`Ioc`容器内部的数据结构，而这个容器内部的数据结构就是`BeanDifinition`
+       * 具体来说，`BeanDifinition`实际上就是POJO对象在IOC容器中的抽象，通过这个`BeanDifinition`定义的数据结构，使IOC容器能够方便的对POJO对象也就是Bean进行管理
+  3. `BeanDifinition`在Ioc容器中的注册
+     * 通过调用`BeanDifinitionRegistry`接口来实现
+       * 把载入过程中解析得到的`BeanDifinition`向Ioc容器进行注册
 
-* IOC容器的初始化过程，一般不包含Bean依赖注入的实现
-* 在Ioc的设计中，Bean定义的载入和依赖注入是俩个独立的过程
-  * 依赖注入一般发生在应用第一次通过getBean向容器索取Bean的时候。（使用预实例化的配置除外）
+* `IOC`容器的初始化过程，一般不包含Bean依赖注入的实现
+  * 在Ioc的设计中，`Bean`定义的载入和依赖注入是俩个独立的过程
+  * 依赖注入一般发生在应用第一次通过`getBean`向容器索取`Bean`的时候。（使用预实例化的配置除外）
 
 ## Spring AOP
 
-* 面向切面的编程，是一种编程技术，是OOP（面向对象编程）的补充和完善
-  * OOP的执行是一种从上往下的流程，并没有从左到右的关系。因此在OOP编程中，会有大量的重复代码
-  * 而AOP则是将这些与业务无关的重复代码抽取出来，然后再嵌入到业务代码当中
-    * 常见的应用有：权限管理、日志、事务管理等
+* 面向切面的编程，是一种编程技术，是`OOP`（面向对象编程）的补充和完善
+  * `OOP`的执行是一种从上往下的流程，并没有从左到右的关系。因此在`OOP`编程中，会有大量的重复代码
+  * 而`AOP`则是将这些与业务无关的重复代码抽取出来，然后再嵌入到业务代码当中
 * 应用场景
-  * 性能检测、访问控制、事务管理及日志记录
-* Spring AOP 使用动态代理技术在运行期为目标Bean织入增强的代码
+  * 事务管理及日志记录、性能检测、访问控制
+* `Spring AOP` 使用动态代理技术在运行期为目标`Bean`织入增强的代码
 * AOP：解耦（专人干专事）Aspect切面，如何切——规则。所谓面向切面编程，就是面向规则编程
   * 切面-两面，事务管理的切面由Spring提供实现，业务相关的切面由自己实现
   * 切点-能够满足虚拟切面规则的所有入口
   * 通知-满足条件回调
-
 * 实现方式
   * Spring AOP实现用的是动态代理的方式（jdk、cglib）
-  * Spring AOP通过Pointcut（切点）指定在那些类的那些方法上织入横切逻辑
-  * 通过Advice（增强）描述横切逻辑和方法的具体织入点（方法前、方法后、方法的两端等）
-  * Spring通过Advisor（切面）将Pointcut和Advice组装起来。
-  * 有了Advisor的信息，Spring就可以利用JDK或CGLib动态代理技术采用统一的方式为目标Bean创建织入切面的代理对象
+  * Spring AOP
+    * 通过Pointcut（切点）指定在那些类的哪些方法上织入横切逻辑
+    * 通过Advice（增强）描述横切逻辑和方法的具体织入点（方法前、方法后、方法的两端等）
+    * 通过Advisor（切面）将Pointcut和Advice组装起来。
+      * 有了Advisor的信息，Spring就可利用JDK或CGLib动态代理技术采用统一的方式为目标Bean创建织入切面的代理对象
 * Annation方式实现
 * XML方式实现
+  * 云对讲`spring-aop.xml`
 
 ## 事务
 
 * 事务：访问并可能更新数据库中各种数据项的一个程序执行单元
 
-* 特点：是恢复和并发控制的基本单位
+  * 特点：是恢复和并发控制的基本单位
+  * 都是对`Connection`进行操作，这个类就是Java客户端和数据库服务通信的桥梁，也就是一个包装类，就是一个`TCP`连接，底层就是`Socket`
+    * `DataSource`是`Connection `的扩展，动态切换，事务的统一管理
 
-* 都是对Connection进行操作，这个类就是Java客户端和数据库服务通信的桥梁，也就是一个包装类，就是一个TCP连接，底层就是Socket
+* `service`层把异常抛出去，事务才会回滚；如果`try-catch`不抛出去，那事务不会回滚
 
-* service层把异常抛出去，事务才会回滚；如果try-catch不抛出去，那事务不会回滚
-
-* DataSource是Connection 的扩展，动态切换，事务的统一管理
-
-* 事务特性：ACID
+* 事务特性：`ACID`
 
 * 事务安全问题：脏读、不可重复读、幻读
 
@@ -846,63 +867,108 @@ sbd.setSource(resource);
 * 事务传播特性
 
   - **PROPAGATION_REQUIRED**
-    - 0，默认，当前有事务就用当前的，没有就⽤新的
+    - 0，required，默认，当前有事务就用当前的，没有就创建新的
   - **PROPAGATION_SUPPORTS**
-    - 1，事务可有可无，不是必须的
+    - 1，supports，事务可有可无，不是必须的
   - **PROPAGATION_MANDATORY**
-    - 2，当前⼀定要有事务，不然就抛异常
+    - 2，mandatory，当前⼀定要有事务，不然就抛异常
   - **PROPAGATION_REQUIRES_NEW**
-    - 3，无论是否有事务，都起个新的事务。两个事务没有关联
+    - 3，requires_new，无论是否有事务，都起个新的事务。两个事务没有关联
   - **PROPAGATION_NOT_SUPPORTED**
-    - 4，不支持事务，按非事务方式运⾏
+    - 4，not_supported，不支持事务，按非事务方式运⾏
   - **PROPAGATION_NEVER**
-    - 5，不支持事务，如果有事务则抛异常
+    - 5，never，不支持事务，如果有事务则抛异常
   - **PROPAGATION_NESTED**
-    - 6，当前有事务就在当前事务⾥再起一个事务。两个事务有关联。外部事务回滚，内嵌事务也会回滚
+    - 6，nested，当前有事务就在当前事务⾥再起一个事务
+      - 两个事务有关联。外部事务回滚，内嵌事务也会回滚
+      - 只有通过外部的事务提交，才能引起内部事务的提交
+
+* Spring事务管理接口
+
+  * `PlatformTransactionManager`：事务管理器，按照给定的事务规则来执行提交或者回滚操作
+    * Spring并不直接管理事务，而是提供了多种事务管理器，将事务管理的职责委托给相关平台框架来实现
+    * 通过这个`PlatformTransactionManager`接口，Spring为各个平台如JDBC、MyBatis、Hibernate等都提供了对应的事务管理器，但是具体的实现就是各个平台自己的事情
+      * Spring JDBC和MyBatis，`DataSourceTransactionManager`
+  * `TransactionDefinition`：事务定义信息(事务隔离级别、传播行为、超时、只读、回滚规则)
+  * `TransactionStatus`：事务运行状态
 
 * 注解配置声明式事务
-  * 通过@Transactional对需要事务增强的Bean接口、实现类或方法进行标注
-
+  
+* `使用基于注解的AOP事务管理`
+    * `<tx:annotation-driven transaction-manager="transactionManager"/>`
+  * `transaction-manager`，指定到现有的`PlatformTransactionManager` Bean的引用，通知会使用该引用
+      * `mode`：指定`Spring`事务管理框架创建通知Bean的方式，proxy，默认值，表示通知对象是个JDK代理；aspectj表示Spring AOP会使用AspectJ创建代理
+  * `order`：指定创建的切面的顺序。只要目标对象有多个通知就可以使用该属性
+      * `proxy-target-class`：该属性如果为true就表示想要代理目标类而不是Bean所实现的所有接口。`default="false"`
+  * 通过`@Transactional`对需要事务增强的`Bean`接口、实现类或方法进行标注
   * 在容器中配置基于注解的事务增强驱动，即可启用基于注解的声明式事务
-
   * 注解不会被继承，所以一般在具体业务上标注
-
   * 属性：
-    * propagation，事务传播行为
-    * isolation，事务隔离级别
-    * timeout，超时时间，int，秒
-    * rollbackFor，一组异常类，遇到时进行回滚
-
+  * `propagation`，事务传播行为
+    * `isolation`，事务隔离级别
+    * `timeout`，超时时间，int，秒
+    * `rollbackFor`，一组异常类，遇到时进行回滚
+    * `isReadOnly`：是否只读
+  
   ```xml
   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">  
       <property name="dataSource" ref="dataSource"></property>  
-  </bean>  
+</bean>  
   <!--对标注@Transactional注解的Bean进行加工处理，以织入事务管理切面-->        
   <tx:annotation-driven  transaction-manager="transactionManager" proxy-target-class="true"/>
   //为true，Spring通过创建子类来代理业务类，需要在类路径中添加CGLib.jar类库；为false，则使用基于接口的代理
   ```
-
+  
   ```shell
   update member set age = age - 1 where name = 'tom'
   1. 执行SELECT，将满足条件的记录找出来
   2. 把找出来的记录放到内存中   --锁
-  3. 进行数据检查，数据是否有效、合法
+3. 进行数据检查，数据是否有效、合法
   4. 数据操作没有任何异常的话，更新原始表，写日志（根据日志回滚）
   5. 更新状态返回状态码
-  6. 内存中该数据消失s
+  6. 内存中该数据消失
   ```
-
+  
 * 不同数据源的事务如何处理
-  * 原理：在Spring中，事务是不支持跨数据源，即一个事务不能操作两个数据库
-  * DataSouce是Connection，当创建语句集的时候开启事务
+  * 原理：在`Spring`中，事务是不支持跨数据源，即一个事务不能操作两个数据库
+  * `DataSouce`是`Connection`，当创建语句集的时候开启事务
   * 解决：使用中间件，做一些消息同步，利用分布式锁去实现分布式事务
+  
+* 无论业务层有什么异常，日志照常记录，那就不能沿用业务层的事务，而是需要新启一个事务
+
+  * Sping的声明式事务就是靠AOP来实现的，一般事务都在业务层中启用
+
+  ```java
+  //定义一个切点，这里指com.lidehang.remote包下所有的类的方法
+  @Pointcut("execution(public * com.lidehang.remote..*.*(..))")
+  public void remote(){}
+  
+  //@Transactional也是声明式事务，本身就是AOP实现的，在AOP的代码中使用不起作用。所以就只能使用spring的编程式事务了，需要引入TransactionTemplate
+  @Autowired
+  private TransactionTemplate transactionTemplate;
+  
+  @AfterReturning(returning = "ret", pointcut = "remote()")
+  public void doAfterReturning(JoinPoint joinPoint,Object ret) throws Throwable {
+  	//声明式事务在切面中不起作用，需使用编程式事务
+  	//设置传播行为：总是新启一个事务，如果存在原事务，就挂起原事务
+  		transactionTemplate.setPropagationBehavior(
+    						TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+  		transactionTemplate.execute(new TransactionCallback<T>() {
+  				@Override
+          public T doInTransaction(TransactionStatus arg0) {
+              //一些切面逻辑，包含了数据库操作
+  							...
+  				}
+  		});
+  }
+  ```
 
 ## ORM
 
 * ORM-对象关系映射，将已持久化的数据内容转换为一个Java对象，用Java对象来描述对象与对象之间的关系和数据内容
-* Hibernate：全自动挡，不需要写一句SQL语句，烧油（牺牲性能）
-* MyBatis：手自一体（半自动），支持单表映射，多表关联需要配置，轻量级一些
-* SpringJDBC：手动挡，包括SQL语句，映射都是要自己实现的（最省油的）
+* `Hibernate`：全自动挡，不需要写一句SQL语句，烧油（牺牲性能）
+* `MyBatis`：手自一体（半自动），支持单表映射，多表关联需要配置，轻量级一些
+* `SpringJDBC`：手动挡，包括SQL语句，映射都是要自己实现的（最省油的）
 
 ```java
 //规范

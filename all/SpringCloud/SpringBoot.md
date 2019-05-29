@@ -1,8 +1,10 @@
 # Spring Framework
 
 * 为Java应用程序开发提供了基础性支持，使得开发人员可以专注于应用程序的业务开发
-* IOC/DI：控制反转或依赖注入，让调用类对某一接口实现类的依赖关系由第三方（容器）注入，以移除调用类对某一接口实现类的依赖
+* IOC/DI：控制反转或依赖注入，让调用类对某一接口实现类的依赖关系由第三方容器注入，以移除调用类对某一接口实现类的依赖
 * AOP：面向切面编程
+  * 使用动态代理技术在运行期为目标`Bean`织入增强的代码
+  * 将这些与业务无关的重复代码抽取出来，然后再嵌入到业务代码当中
 * 优点：对事务的抽象-AOP、Spring Web MVC
 * 局限：自身并非容器，不得不随Java EE容器启动而装载
 
@@ -12,7 +14,7 @@
   * Spring Framework是SpringBoot的核心，Java规范才是它们的基石
   * SpringBoot 2.0 — Spring Framework 5.0 — Java8
 
-* 搭配SpringBoot starter技术引入相关的依赖，结合SpringBoot自动装配，利用SpringBoot和SpringFramework的生命周期，使用嵌入式的Web容器，利用外部化配置影响SpringApplication的行为，通过SpringApplication API引导应用，SpringBoot Actuator提供运维-为生产准备特性
+* 搭配`SpringBoot starter`技术引入相关的依赖，结合`SpringBoot`自动装配，利用`SpringBoot`和`SpringFramework`的生命周期，使用嵌入式的Web容器，利用外部化配置影响`SpringApplication`的行为，通过`SpringApplication API`引导应用，`SpringBoot Actuator`提供运维-为生产准备特性
 
 * 特性
   * 创建独立的Spring应用
@@ -38,11 +40,11 @@
 
 ## 独立的Spring应用
 
-* 在大多数SpringBoot应用场景中，程序使用SpringApplication API引导应用，其中又结合嵌入式Web容器，对外提供HTTP服务
+* 在大多数`SpringBoot`应用场景中，程序使用`SpringApplication API`引导应用，其中又结合嵌入式Web容器，对外提供HTTP服务
 
-* Spring Web应用
+* `Spring Web`应用
 
-  * 传统的Servlet、Spring Web MVC、Reactive Web（SpringBoot 2.0）
+  * 传统的`Servlet`、`Spring Web MVC``、Reactive Web`（SpringBoot 2.0）
   * 在SpringApplication API上增加setWebApplicationType方法显示设置Web应用的枚举类型
   * 采用嵌入式容器，属于Spring应用上下文中的组件Beans，独立于外部容器，对应用生命周期拥有完全自主的控制（方便快捷的启动方式，可以提升开发和部署效率），这些组件和其他组件均由自动装配特性组装成Spring Bean定义（BeanDefinition），随Spring应用上下文启动而注册并初始化，而驱动Spring应用上下文启动的核心组件则是Spring Boot核心API SpringApplication
     * 外置容器需要启动脚本将其引导，随其生命周期回调执行Spring上下文的初始化
@@ -63,12 +65,12 @@
 
 * 启动
 
-  * 在Java启动命令中，通过-D命令行参数设置Java的系统属性：System.getProperties()
-  * Spring Boot默认的应用外部配置文件`application.properties
+  * 在`Java`启动命令中，通过`-D`命令行参数设置`Java`的系统属性：`System.getProperties()`
+  * `Spring Boot`默认的应用外部配置文件`application.properties`
   * 开发阶段运行方式：`mvn spring-boot:run`
   * 生产环境运行方式：`java -jar target/xxx.jar`
 
-* SpringBoot Loader
+* `SpringBoot Loader`
 
   * java -jar命令引导的是标准可执行JAR文件
 
@@ -84,7 +86,7 @@
 
   * `JarLauncher`装载并执行SpringBoot应用引导类，同时会将当前SpringBoot应用依赖的JAR文件作为引导类的类库依赖，所以`JarLauncher`能够引导，反之直接启动引导类会因未指定`Class Path`而启动不了
 
-    * `JarLauncher`实际上是同进程内调用Start-Class类（即SpringBoot应用引导类）的main(String[])方法，并且在启动前准备好Class Path
+    * `JarLauncher`实际上是同进程内调用`Start-Class`类（即SpringBoot应用引导类）的main(String[])方法，并且在启动前准备好`Class Path`
 
   * WarLauncher与JarLauncher主要区别在于：项目类文件和JAR Class Path路径的不同
 
@@ -143,7 +145,7 @@
 
 * 自动装配存在前提
   * 取决于应用的Class Path下添加的JAR文件依赖，而且并非一定装载，需要条件
-    * SpringBoot自动装配的对象是SpringBean，例如通过XML配置文件或Java编码等方式组装Bean
+    * SpringBoot自动装配的对象是Spring Bean，例如通过XML配置文件或Java编码等方式组装Bean
   
 * 激活
   * `@EnableAutoConfiguration`和@`SpringBootApplication`，二选一标注`在@Configuration`类上
@@ -226,6 +228,23 @@
     * @Indexed
 
       * Spring Framework5.0引入，在代码编译时，向@Component和派生注解添加索引，从而减少运行时性能消耗
+    
+    * 通过@EnableAutoConfiguration启用自动装配
+    
+      * SpringFactoriesLoader#loadFactoryNames()会加载classpath下所有JAR文件里面的META-INF/spring.factories文件
+    
+        * SpringFactoriesLoader的实现类似于SPI（Service Provider Interface），为某个接口寻找服务实现的机制
+    
+          * 比如有个接口，想运行时动态的给它添加实现，只需要添加一个实现
+    
+          1. 服务提供者提供了接口的一种具体实现，在jar包的META-INF/services目录下创建一个以“接口全限定名”为命名的文件，内容为实现类的全限定名
+          2. 接口实现类所在的jar包放在主程序的classpath中
+          3. 主程序通过java.util.ServiceLoder动态装载实现模块，它通过扫描META-INF/services目录下的配置文件找到实现类的全限定名，把类加载到JVM
+          4. SPI的实现类必须携带一个不带参数的构造方法
+    
+      * EnableAutoConfigurationImportSelector类会去读取spring.factories下key为EnableAutoConfiguration对应的全限定名的值，即要自动注册的那些AutoConfiguration Bean
+    
+      * 根据AutoConfiguration Bean上的@ConditionalOnClass等条件，再进一步判断是否加载
 
 ## 生产特性
 
@@ -252,7 +271,7 @@
     * Bean的@Value注入
     * Spring Environment 读取
     * @ConfigurationProperties绑定到结构化对象
-  * 17种内建PropertySource顺序
+  * 17种内建PropertySource顺序（高-低）
     * @TestPropertySource、@SpringBootTest
     * 命令行参数
     * ServletConfig init参数、ServletContext init参数
@@ -443,7 +462,7 @@
 
 ## Spring注解驱动设计模式
 
-* Spring @Enable模块驱动
+* `Spring` `@Enable`模块驱动
 
   * 模块是指具备相同领域的功能组件集合，组合所形成的一个独立单元
     * 如Web MVC模块、AspectJ代理模块、Caching缓存模块、JMX（Java管理扩展）模块、Async（异步处理）模块等
@@ -452,6 +471,8 @@
     - @EnableMvc、@EnableTransactionManagement、@EnableCaching、@EnableMBeanExport、@EnableAsync、@EnableWebFlux、@EnableAspectJAutoProxy
   * Spring Boot
     - @EnableAutoConfiguration、EnableManagementContext(Actuator管理模块)、@EnableConfigurationProperties(配置属性绑定模块)、@EnableOAuth2Sso(OAuth2单点登录模块)
+      - @ConfigurationProperties注解把properties配置文件转化为Bean
+      - @EnableConfigurationProperties注解使@ConfigurationProperties注解生效
   * Spring Cloud
     - @EnableEurekaServer、@EnableConfigServer、@EnableFeignClients、@EnableZuulProxy、@EnableCircuitBreaker
 
@@ -677,7 +698,7 @@
       * 设置`Default Profile`：`spring.profiles.default`
     * 应用
       * 接口A，接口B、C实现A，在B上`@Profile("java8")`、C上`@Profile("java7")`
-      * 设置`ConfigurableEnvironment.setActiveProfiles("java8")`，ConfigurableEnvironment.setDefaultProfiles("java7")
+      * 设置`ConfigurableEnvironment.setActiveProfiles("java8")`，`ConfigurableEnvironment.setDefaultProfiles("java7")`
 
   * `@Conditional`条件装配
 
