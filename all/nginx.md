@@ -480,9 +480,9 @@ server{
 
 ### 缓存
 
-* 当一个客户端请求web服务器, 请求的内容可以从以下几个地方获取：服务器、浏览器缓存中或缓存服务器中
+* 当一个客户端请求web服务器, 请求的内容可以从以下几个地方获取：浏览器缓存中、缓存服务器、服务器中
 
-* Nginx可以通过expires设置缓存，比如我们可以针对图片做缓存，因为图片这类信息基本上不会改变
+* Nginx可以通过expires设置缓存，比如可针对图片做缓存，因为图片这类信息基本上不会改变
 
 * `content-encoding:gzip`
 
@@ -559,7 +559,7 @@ server{
   * 后来实现了`VRRP`协议的功能，基于VRRP协议来实现的LVS服务高可用方案，可以利用其来避免单点故障
     * VRRP，虚拟路由冗余协议，就是把两台或多态路由器设备虚拟成一个设备，实现主备高可用
     * 一个LVS服务会有多台服务器运行Keepalived，一台为主服务器（MASTER）(只有主服务器提供服务)，另外为备份服务器（BACKUP），但是对外表现为一个虚拟IP，主服务器会发送特定的消息给备份服务器，当备份服务器收不到这个消息的时候，即主服务器宕机的时候， 备份服务器就会接管虚拟IP，继续提供服务，从而保证了高可用性
-* Keepalived是实现前端高可用，常用的前端高可用的组合有，LVS+Keepalived、==Nginx+Keepalived==、HAproxy+Keepalived
+* Keepalived是实现前端高可用，常用的前端高可用的组合有，LVS+Keepalived、Nginx+Keepalived、HAproxy+Keepalived
 * Keepalived 软件起初是专为 LVS 负载均衡软件设计的，用来管理并监控 LVS 集群系统中各个服务节点的状态，后来又加入了可以实现高可用的 VRRP 功能。因此，Keepalived 除了能够管理 LVS 软件外，还可以作为其他服务(例如:Nginx、Haproxy、MySQL 等)的高可用解决方案软件
 * LVS 是 Linux Virtual Server 的缩写，也就是 Linux 虚拟服务器，它是工作在四层的负载均衡，类似于 Haproxy, 主要用于实现对服务器集群的负载均衡
 * 关于四层负载，osi 网络层次模型的 7 层模型(应用层、表示层、会话层、传输层、网络层、数据链路层、物理层)；四层负载就是基于传输层，也就是ip+端口的负载；而七层负载就是需要基于 URL 等应用层的信息来做负载，同时还有二层负载(基于 MAC)、三层负载(IP)
@@ -567,7 +567,7 @@ server{
   * 七层负载有:Nginx、HAproxy; 在软件层面，Nginx/LVS/HAProxy 是使用得比较广泛的三种负载均衡软件
 * 对于中小型的 Web 应用，可以使用 Nginx、大型网站或者重要的服务并且服务比较多的时候，可以考虑使用 LVS
 
-* 应用（==nginx+keepalived==）
+* 应用（nginx+keepalived）
   * 安装nginx、keepalived
   * keepalived配置：
     * 主从配置文件都配置：

@@ -49,7 +49,7 @@
 ## 简介
 
 - 定义：
-  - 是单线程、基于内存存取的存储系统，可用作数据库、缓存和消息中间件，支持字符串、列表、集合、有序集合、哈希等常见数据结构类型
+  - 是单线程、基于内存存取的存储系统，可用作数据库、缓存和消息中间件，支持字符串、List列表、Set集合、有序Set集合、哈希等常见数据结构类型
   - redis的全称是remotedictionary server(远程字典服务器)，它以字典结构存储数据（key-value），并允许其他应用通过TCP协议读写字典中的内容
 - 高性能原因：
   - 基于内存操作
@@ -220,7 +220,7 @@
 
   - 常用的操作是向列表两端添加元素或者获得列表的某一个片段
 
-  - 内部使用双向链表实现，所以向列表两端添加元素的时间复杂度为O(1), 获取越接近两端的元素速度就越快
+  - 内部使用双向链表，所以向列表两端添加元素的时间复杂度为O(1), 获取越接近两端的元素速度就越快
 
   - 应⽤场景：
 
@@ -236,8 +236,8 @@
     lpush mylist hello
     rpush mylist world
     # 取数据(移除数据，同时返回被移除数据的值)
-    lpop mylist —— hello
     lpop mylist —— world
+    lpop mylist —— hello
     # 都取出来了，mylist为空
     lrange mylist 0 -1
     # 获得列表的长度
@@ -372,7 +372,7 @@ persist key
       1. 随机测试20个带有timeout信息的key
       2. 删除其中已经过期的key;
       3. 如果超过25%的key被删除，则重复执行整个流程
-         这是一个简单的概率算法(trivial probabilistic algorithm)，基于假设我们随机抽取的key代表了全部的key空间
+         这是一个简单的概率算法(trivial probabilistic algorithm)，基于假设随机抽取的key代表了全部的key空间
 
 ## 订阅发布
 
@@ -447,7 +447,7 @@ persist key
 
 ### AOF
 
-* 将每次执行的命令记录下来。``append-only-file`、`appendonly.aof`
+* 将每次执行的命令记录下来。`append-only-file`、`appendonly.aof`
   * redis.conf中打开AOP：`appendonly yes`
   * AOF文件的保存位置和RDB文件的位置相同，都是通过dir参数设置的，默认的文件名是apendonly.aof. 
 
@@ -469,7 +469,7 @@ persist key
   # aof文件重写配置
   # 当目前的AOF文件大小超过上一次重写时的AOF文件大小的百分之多少时会 再次进行重写，如果之前没有重写过，则以启动时AOF文件大小为依据
   auto-aof-rewrite-percentage 100 
-  # 限制了允许重写的最小AOF文件大小，通常在AOF文件很小的情况下即使其中有很多冗余的命令我们也并不太关心
+  # 限制了允许重写的最小AOF文件大小，通常在AOF文件很小的情况下即使其中有很多冗余的命令也并不太关心
   auto-aof-rewrite-min-size 64mb
   ```
 
@@ -585,7 +585,7 @@ persist key
 
     ```shell
     eval "return redis.call('get','gupao')" 0
-    eval "return redis.call('set',KEYS[1],ARGV[1])" 1 mic val
+    eval "return redis.call('set',KEYS[1],ARGV[1])" 1 gupao val
     ```
 
 - `EVALSHA`命令
@@ -596,7 +596,7 @@ persist key
   2. 执行EVALSHA命令时Redis会根据提供的摘要从脚本缓存中查找对应的脚本内容，如果找到了就执行脚本，否则 返回“NOSCRIPT No matching script,Please use EVAL”
   
     ```shell
-  # # 在调用eval命令之前，先执行evalsha命令，如果提示脚本不存在，则再调用eval命令
+    # 在调用eval命令之前，先执行evalsha命令，如果提示脚本不存在，则再调用eval命令
     script load "return redis.call('get','lua1')"  #将脚本加入缓存并生成sha1命令
     evalsha "a5a402e90df3eaeca2ff03d56d99982e05cf6574" 0
     ```
@@ -905,6 +905,8 @@ end
 - redis中有⼀个`setNx`命令，这个命令只有在key不存在的情况下为key设置值，设置成功返回1，失败返回0，所以可以利用这个特性来实现分布式锁的操作
 
 - 获得锁、释放锁、超时时间（到期自动释放锁）、判断是否重入
+
+- `https://www.jianshu.com/p/1add6858f687`
 
 - Jedis
 

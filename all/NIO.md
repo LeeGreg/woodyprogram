@@ -56,9 +56,9 @@
 
 * `SocketChannel`(TCP)
 
-* `ServerSocketChannel`(能够像web服务器一样监听tcp连接，对于每个连接都创建一个SocketChannel)
+* `ServerSocketChannel`(能够像web服务器一样监听tcp连接，对于每个连接都创建一个`SocketChannel`)
 
-* Channel能够读写，流只能够读或者写；Channel能够异步读写；
+* `Channel`能够读写，流只能够读或者写；Channel能够异步读写；
 
 * `FileChannel`
 
@@ -219,11 +219,11 @@
     * 读取完数据之后，写入数据之前调用
       * `clear()`把所有状态设置为初始值，将`position`设置为0，`limit`设置为`capacity`
       * `compact()`保留未读取数据到最前，`position`为最后一个未读取数据后一位置，`limit`设置为`capacity`
-  * Buffer.mark()和Buffer.reset()
-    * mark()标记position位置，后面调用reset()可将position设置为mark()标记时位置
-  * Buffer.equals()和Buffer.compareTo()
-    * equals()相同条件：类型相同、剩余未读数据数量相等、剩余未读数据equal为true
-    * compareTo()，小于另一个条件：
+  * `Buffer.mark()`和`Buffer.reset()`
+    * `mark()`标记`position`位置，后面调用`reset()`可将`position`设置为`mark()`标记时位置
+  * `Buffer.equals()`和`Buffer.compareTo()`
+    * `equals()`相同条件：类型相同、剩余未读数据数量相等、剩余未读数据`equal`为`true`
+    * `compareTo()`，小于另一个条件：
       * 甲Buffer第一个元素和乙Buffer的某个元素相等，则甲小于乙
       * 所有元素相等，但是甲Buffer先消耗完
   
@@ -314,20 +314,20 @@
   
     ```java
     RandomAccessFile raf = new RandomAccessFile( "e:\\test.txt", "rw" );  
-    	FileChannel fc = raf.getChannel();    
-    	//把缓冲区跟文件系统进行一个映射关联
-    	//只要操作缓冲区里面的内容，文件内容也会跟着改变
-    	MappedByteBuffer mbb = fc.map( FileChannel.MapMode.READ_WRITE,start, size );       
-    	mbb.put( 0, (byte)97 );  
-    	mbb.put( 1023, (byte)122 );  
-     raf.close(); 
+    FileChannel fc = raf.getChannel();    
+    //把缓冲区跟文件系统进行一个映射关联
+    //只要操作缓冲区里面的内容，文件内容也会跟着改变
+    MappedByteBuffer mbb = fc.map( FileChannel.MapMode.READ_WRITE,start, size );       
+    mbb.put( 0, (byte)97 );  
+    mbb.put( 1023, (byte)122 );  
+    raf.close(); 
     ```
 
 ## Selector
 
 * 是一个组件，能够注册、检查多个Channel，通过事件通知判断哪些Channel已经准备好读取和写入，使得单个线程能够管理多个Channel，因此能够管理多个网络连接
   * channel注册到selector，然后调用selector的select()方法阻塞直到某个已注册channel的事件准备好，一旦select()方法返回，该线程能够处理这些事件，例如连接事件、数据到达事件
-  * 当有读或写等任何注册的事件发生时，可以从` Selector `中获得相应的`SelectionKey`，同时从 `SelectionKey`中可以找到发生的事件和该事件所发生的具体的`SelectableChannel`，以获得客户端发送过来的数据
+  * 当有读或写等任何注册的事件发生时，可从` Selector `中获得相应的`SelectionKey`，同时从 `SelectionKey`中可找到发生的事件和该事件所发生的具体的`SelectableChannel`，以获得客户端发送过来的数据
   * 使用较少的线程便可以处理许多连接，因此也减少了内存管理和上下文切换所带来开销
   * 当没有 I/O 操作需要处理的时候，线程也可以被用于其他任务
 * 适用于打开很多channel，但是只是传输少量数据
@@ -390,27 +390,23 @@
 
     * The Channel
 
-      ```java
-      Channel  channel  = selectionKey.channel();
-      ```
-
+      `Channel  channel  = selectionKey.channel();`
+      
     * The Selector
 
-      ```java
-      Selector selector = selectionKey.selector(); 
-      ```
-
+      `Selector selector = selectionKey.selector(); `
+  
     * An attached object (optional)
-
+    
       * 可以通过在SelectionKey中附件一个对象来识别一个给定的Channel，或者在Channel上附件一些信息（如Buffer、对象）
 
       ```java
-      selectionKey.attach(theObject);
+  selectionKey.attach(theObject);
       Object attachedObj = selectionKey.attachment();
-      // Channel注册时即附加一些信息
+  // Channel注册时即附加一些信息
       SelectionKey key = channel.register(selector, SelectionKey.OP_READ, theObject);
       ```
-
+  
 * 通过Selector选择Channel
 
   * 通过调用selector()，返回已经准备好的Channel，并且对该Channel的某些事件(connect, accept, read or write)感兴趣
@@ -494,19 +490,20 @@
 
     * 在非阻塞模式中，一次可以从流中读取0个或者多个字节
     * 通过Selector来避免检查流读取0个字节
-      
+  
 * 一个或多个SelectableChannel实例注册到Selector，通过调用Selector的select()或selectNow()将返回有数据可读的SelectableChannel实例
-      
+  
 * 当从SelectableChannel中读取数据时不能确定读取了多少数据，可能得到部分、完整、超过完整的数据，所以需要
-    
-      * 检查是否读取了完整数据
+  
+  *  检查是否读取了完整数据
+  
   * 如果只读取了部分数据，则需存储该数据直到下部分数据到来
-    
-        1. 尽可能复制少的数据，数据越多性能越低
+  1.  尽可能复制少的数据，数据越多性能越低
+  
   2. 将完整的数据存入到一个连续的字节序列中使其容易处理
-    
+  
 * 一些协议消息格式使用TLV(Type, Length, Value)格式编码，当消息到达时，消息的总长度存储在消息的开头，这样就可以立即知道为整个消息分配多少内存
-    
+  
     * 写入部分数据
       * write(ByteBuffer)返回写入的字节数
       * 确保只有具有要写入消息的Channel实例才能实际注册到Selector

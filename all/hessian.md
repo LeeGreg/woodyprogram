@@ -2,11 +2,12 @@
 
 ## 服务端
 
-* 创建服务接口，实现接口并配置成`Bean`
-  * 服务`Bean`的`name`以"/"开头，`class`属性为`HessianServiceExporter`，`service`属性为接口实现`Bean`的名称，`serviceInterface`属性为接口的全限定名称
+* `web.xml`中配置`DispatchServlet`，设置映射路径`/api/service/*`
 * 配置`Bean`，`BeanNameUrlHandlerMapping`
   * `Spring`会自动对`name`以"/"开始的`Bean`进行Url映射
-* `web.xml`中配置`DispatchServlet`，设置映射路径`/api/service/*`
+
+* 创建服务接口，实现接口并配置成`Bean`
+  * 服务`Bean`的`name`以"/"开头，`class`属性为`HessianServiceExporter`，`service`属性为接口实现`Bean`的名称，`serviceInterface`属性为接口的全限定名称
 
 ## 客户端
 

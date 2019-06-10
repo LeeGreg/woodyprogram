@@ -1,23 +1,27 @@
 # Spring Cloud Stream：消息驱动的微服务
 
-* Spring Cloud Stream 是一个用来为微服务应用构建消息驱动能力的框架
-  * 基于Spring Boot 来创建独立的、可用于生产的 Spring 应用程序
-  * 通过使用 Spring Integration来连接消息代理中间件以实现消息事件驱动
-  * 为一些供应商的消息中间件产品提供了个性化的自动化配置实现，并引入发布订阅、消费组及分区这三个核心概念
+* `Spring Cloud Stream` 是一个用来为微服务应用构建消息驱动能力的框架
+  * 基于`Spring Boot` 来创建独立的、可用于生产的 `Spring` 应用程序
+  * 通过使用 `Spring Integration`来连接消息代理中间件以实现消息事件驱动
+  * 为消息中间件产品提供了个性化的自动化配置实现，并引入发布订阅、消费组及分区这三个核心概念
     * 目前只支持RabbitMQ和Kafka消息中间件的自动化配置
-* 简单地说， Spring Cloud Stream 本质上就是整合了 Spring Boot 和 Spring Integration，实现了一套轻量级的消息驱动的微服务框架
+* 简单地说， `Spring Cloud Stream` 本质上就是整合了 `Spring Boot` 和 `Spring Integration`，实现了一套轻量级的消息驱动的微服务框架
+  * 其中`Spring Integration`被用作消息驱动的微服务的引擎
+    * 事件驱动和消息传递
 
 ## 使用
 
-* 通过使用RabbitMQ 来接收消息并将消息打印到日志中
+* 通过使用`RabbitMQ`来接收消息并将消息打印到日志中
 
-* `stream-hello`工程，引入`web`，`stream-rabbit`依赖（Spring Cloud Stream对RabbitMQ支待的封装， 其中包含了对 RabbitMQ的自动化配置等内容，等价于spring-cloud-stream-binder-rabbit 依赖  ）
+* `stream-hello`工程，引入`web`，`stream-rabbit`依赖
+
+  * `Spring Cloud Stream`对`RabbitMQ`支待的封装，其中包含了对`RabbitMQ`的自动化配置等内容，等价于`spring-cloud-stream-binder-rabbit` 依赖  
 
 * 主类不需要加额外注解
 
-  * `EnableBinding`指定一个或多个定义了`@Input`或`@Output`注解的接口，以此实现对消息通道（Channel) 的绑定
+  * `EnableBinding`指定一个或多个定义了`@Input`或`@Output`注解的接口，以此实现对消息通道的绑定
   * 默认实现
-    * `@EnableBinding(Sink.class)`绑定了`Sink`接口，通过@Input注解默认实现输入消息通道名为input的绑定
+    * `@EnableBinding(Sink.class)`绑定了`Sink`接口，通过`@Input`注解默认实现输入消息通道名为`input`的绑定
       * 还默认实现了绑定`output`通道的`Source`接口
       * 还有结合了`Sink`和 `Source`的`Processor`接口
       * 实际使用时也可通过@Input和@Output注解来定义绑定消息通道的接口
@@ -55,7 +59,7 @@
 * Spring Cloud Stream应用模型的结构图
 
   * Spring Cloud Stream构建的应用与消息中间件之间是通过绑定器Binder相关联
-    * 绑定器使得不同消息中间件的实现细节对应用程序来说是透明的，对应用程序而言起到了隔离作用
+    * 绑定器使不同消息中间件的实现细节对应用程序来说是透明的，对应用程序而言起到了隔离作用
       * 对于每个Spring Cloud Stream的应用程序，不需知晓消息中间件的通信细节，只需使用绑定器提供的消息通道Channel来使用消息中间件实现业务逻辑
       * 绑定器作为消息通道和消息中间件之间的通信桥梁 
 
@@ -73,9 +77,9 @@
 
 * 发布-订阅模式
 
-  * Spring Cloud Stream中的消息通信方式遵循了发布-订阅模式
-    * 投递到消息中间件的消息会通过共享的Topic进行广播，消费者在订阅的主题中收到消息并触发自身的业务逻辑处理
-      * 这里Topic是用来代表发布共享消息给消费者的地方，在RabbitMQ中，它对应Exchange，而在Kakfa中则对应Kafka中的Topic 
+  * `Spring Cloud Stream`中的消息通信方式遵循了发布-订阅模式
+    * 投递到消息中间件的消息会通过共享的`Topic`进行广播，消费者在订阅的主题中收到消息并触发自身的业务逻辑处理
+      * 这里`Topic`是用来代表发布共享消息给消费者的地方，在`RabbitMQ`中，它对应`Exchange`，而在`Kakfa`中则对应`Kafka`中的`Topic` 
   * 通过RabbitMQ的Channel发布消息给应用程序消费
     * 而实际上SpringCloudStream应用启动的时候，在RabbitMQ的Exchange中也创建了一个名为input的Exchange交换器
       * 由于binder的隔离作用， 应用程序并无法感知它的存在，应用程序只需指向Binder的输入或是输出通道
@@ -89,13 +93,13 @@
   * 能够在多实例的清况下，保障每个消息只被组内的一个实例消费
 
   * 如果在同一个主题上的应用需要启动多个实例的时候，可以通过`spring.cloud.
-    stream.bindings.input.group`属性为应用指定一 个组名，这样这个应用的多个实例在接收到消息的时候， 只会有一个成员真正收到消息并进行处理
+    stream.bindings.input.group`属性为应用指定一个组名，这样这个应用的多个实例在接收到消息的时候， 只会有一个成员真正收到消息并进行处理
 
     ```java
     //先实现一个消费者应用SinkReceiver,实现greetings主题上的输入通道绑定
     @EnableBinding(value = {Sink.class}) 
     public class SinkReceiver {
-    	private static Logger logger = LoggerFac七ory.getLogger(SinkReceiver.class); 		
+    	private static Logger logger = LoggerFactory.getLogger(SinkReceiver.class); 		
       @StreamListener(Sink.INPUT)
     	public void receive(User user) {
         logger.info("Received: " + user) ;
@@ -165,7 +169,7 @@
     # 设置当前实例的索引号，从0开始，最大值为-1
     # 试验时需要启动多个实例，可以通过运行参数来为不同实例设置不同的索引值
     spring.cloud.stream.instanceindex=O
-  ```
+    ```
     
     ```properties
     # 在生产者应用SinkSender中， 对配置文件也做一些修改
@@ -312,9 +316,9 @@
   * 都实现了对输入消息通道的监听
   
     * 但`@StearnListener`相比`@ServiceActivator`更为强大， 因为它还内置了一 系列的消息转换功能
-      
+    
   * 当消息到达的时候，输入通道的监听器需要对该字符串做一定的转化， 将JSON或XML转换成具体的对象， 然后再做后续的处理
-      
+    
     * 由于@ServiceActivator本身不具备对消息的转换能力
   
       * 所以当代表User对象的JSON字符串到达后，它自身无法将其转换成User对象，需通过@Transformer 注解帮助将字符串类型的消息转换成 User 对象， 并将转换结果传递给@ServiceActivator 的处理方法做后续的消费
@@ -330,7 +334,7 @@
       @EnableBinding(value = {Sink.class})
     public class SinkReceiver {
       	private static Logger logger = LoggerFactory.getLogger(SinkReceiver.class);
-    	@StrearnListener(Sink.INPUT)
+    	  @StrearnListener(Sink.INPUT)
       	public void receive(User user) { 
         logger.info("Received: "+ user);
         }
@@ -395,18 +399,14 @@
     * 而对于自身就支待头信息的消息中间件， SpringCloud Stream构建的服务可以接收并处理来自非Spring Cloud Stream构建但包含符合规范头信息的应用程序发出的消息 。
     * SpringCloud Stream允许使用`spring.cloud.strearn.bindngs.<channelName>.content-type`属性以声明式的配置方式为绑定的输入和输出通道设置消息内容的类型  
     * 目前， Spring Cloud Stream中自带支持 了以下几种常用的消息类型转换 
-      * JSON与POJO的互相转换
+      * JSON字符串与POJO的互相转换
       * Object（必须可序列化）与 byte[]的互相转换
       * String与byte[]的互相转换
       * Object向纯文本的转换：Object需要实现toString()方法
-      * JSON与org.springfrarnework.tuple.Tuple的互相转换
-      * 上面所指的 JSON类型可以表现为一个 byte类型的数组，也可以是一个包含有效 JSON内容的字符串 。 另外， Object对象可以由JSON、 byte数组或者字符串转换而来，但是在转换为JSON的时候总是以字符串的形式返回 
     * MIME类型
       * 在SpringCloudStream中定义的 content-type属性采用了 Media Type, 即Internet MediaType （互联网媒体类型)， 也被称为MIME类型
       * 常见的有`application/json`、 `text/plain;charset=UTF-8 `
-      * MIME类型对于标示如何转换为String或byte[]非常有用。并还可使用MIME类型格式来表示Java类型，只需使用带有类型参数的一般类型 : `application/x-java-object` 
-        * 比如，可使用`application/x-java­ object;type= java.util.Map`来表示传输的是一个`java.unit.Map`对象 ，或使用`application/x-java-object;type= core.didispace.User`来表示传输的是一个`core.didispace.User`对象
-      * 还提供自定义的MIME类型，比如通过`application/x-spring-tuple`来指定Spring的 Tuple类型 
+      * MIME类型对于标示如何转换为String或byte[]非常有用
     *  默认提供一些开箱即用的类型转换器
       * POJO——JSON String——application/json
       * POJO——String(toString())——text/plain,java.lang.String
@@ -446,7 +446,7 @@
   * 当应用程序对输入和输出通道进行绑定的时候， 实际上就是通过该接口的实现来完成的
 
     * 向消息通道发送数据的生产者调用 bindProducer 方法来绑定输出通道
-    * 从消息通道接收数据的消费者调用 bindConsumer 方法来绑定输入通道时
+    * 从消息通道接收数据的消费者调用 bindConsumer 方法来绑定输入通道
     
   * 一个典型的Binder 绑定器实现一般包含以下内容
 
@@ -501,10 +501,17 @@
     spring.cloud.stream.bindings.input.binder=rabbitl
     spring.cloud.stream.bindings.output.binder=rabbit2
     
-    spring.cloud.stream.binders.rabbitl.type=rabbit spring.cloud.stream.binders.rabbitl.environment.spring.rabbitmq.host=l92.168.0.101 spring.cloud.stream.binders.rabbitl.envirorunent.spring.rabbitmq.port=5672 spring.cloud.stream.binders.rabbitl.envirorunent.spring.rabbitmq.username=springcloud spring.cloud.stream.binders.rabbitl.envirorunent.spring.rabbitmq.password=123456
+    spring.cloud.stream.binders.rabbitl.type=rabbit 
+    spring.cloud.stream.binders.rabbitl.environment.spring.rabbitmq.host=l92.168.0.101 
+    spring.cloud.stream.binders.rabbitl.envirorunent.spring.rabbitmq.port=5672 
+    spring.cloud.stream.binders.rabbitl.envirorunent.spring.rabbitmq.username=springcloud
+    spring.cloud.stream.binders.rabbitl.envirorunent.spring.rabbitmq.password=123456
     
     spring.cloud.stream.binders.rabbit2.type=rabbit
-    spring.cloud.stream.binders.rabbit2.environment.spring.rabbitmq.host=192.168.0.102 spring.cloud.stream.binders.rabbit2.environment.spring.rabbitmq.port=5672 spring.cloud.stream.binders.rabbit2.environment.spring.rabbitmq.username=springcloud spring.cloud.stream.binders.rabbit2.environment.spring.rabbitmq.password=123456
+    spring.cloud.stream.binders.rabbit2.environment.spring.rabbitmq.host=192.168.0.102 
+    spring.cloud.stream.binders.rabbit2.environment.spring.rabbitmq.port=5672 
+    spring.cloud.stream.binders.rabbit2.environment.spring.rabbitmq.username=springcloud 
+    spring.cloud.stream.binders.rabbit2.environment.spring.rabbitmq.password=123456
     ```
     * 当采用显式配置方式时会自动禁用默认的绑定器配置
         * 所以当定义了显式配置别名后， 对于这些绑定器的配置需要通过`spring.cloud.stream.binders.<configurationName>`属性来进行设置
@@ -543,10 +550,10 @@
 
     * `<channelName>`代表在绑定接口中定义的通道名称，比如，`Sink`中的`input`、`Source` 中的`output` 
 
-  * 由于绑定通道分为输入通道和输出通道， 所以在绑定通道的配置中包含了三类面向不同通道类型的配置：
+  * 由于绑定通道分为输入通道和输出通道，所以在绑定通道的配置中包含了三类面向不同通道类型的配置：
 
     * 通用配置（通过`spring.cloud.stream.bindings.<channelName>. `前缀来进行设置）
-      * `destination`，配置消息通道绑定在消息中间件中的目标名称，比如RabbitMQ的Exchange或Kafka的Topic。
+      * `destination`，配置消息通道绑定在消息中间件中的目标名称，比如`RabbitMQ`的`Exchange`或`Kafka`的`Topic`
         *  如果配置的绑定通道是一个消费者(输入通道)， 那么它可以绑定多个目标，这些目标名称通过逗号来分隔。 如果没有设置该属性， 将使用通道名 
       * `group`，设置绑定通道的消费组，该参数主要作用于输入通道，以保证同一消息组中的消息只会有一个消费实例接收和处理 
       * `contentType`，设置绑定通道的消息类型
@@ -555,19 +562,19 @@
       * 仅对输入通道的绑定有效
       * `concurrency=1`，输入通道消费者的并发数
       * `partitioned=false`，来自消息生产者的数据是否采用了分区
-      * `headerMode=embeddedHeaders`，当设置为 raw的时候将禁用对消息头的解析，该属性只有在使用不支持消息头功能的中间件时有效， 因为Spring Cloud Stream默认会解析嵌入的头部信息 
+      * `headerMode=embeddedHeaders`，当设置为 raw的时候将禁用对消息头的解析，该属性只有在使用不支持消息头功能的中间件时有效， 因为`Spring Cloud Stream`默认会解析嵌入的头部信息 
       * `maxAttempts=3`，对输入通道消息处理的最大重试次数
       * `backOffinitialinterval=1000`，重试消息处理的初始间隔时间
       * `backOffMaxinterval=10000`，重试消息处理的最大间隔时间
       * `backOffMultiplier=2.0`，重试消息处理时间间隔的递增乘数
-    * 生产者配置（`spring.cloud.stream. bindings.<channelName>.producer.`格式作为前缀 ）
+    * 生产者配置（`spring.cloud.stream.bindings.<channelName>.producer.`格式作为前缀 ）
       * 仅对输出通道的绑定有效
-      * `partitionKeyExpression=null`，该参数用来配置输出通道数据分区键的SpEL表达式
+      * `partitionKeyExpression=null`，该参数用来配置输出通道数据分区键的`SpEL`表达式
         * 当设置该属性之后，将对当前绑定通道的输出数据进行分区处理
-        * 同时， partionCount参数必须大于1才能生效。 该参数与partitionKeyExtractorClass 参数互斥，不能同时设置 
+        * 同时， partionCount参数必须大于1才能生效。 该参数与`partitionKeyExtractorClass`参数互斥，不能同时设置 
       * `parttitionKeyExtractorClass=null`，配置分区键提取策略接口`PartitionKeyExractorStrategy`的实现
     * `partitionSelectorClass=null`，指定分区选择器接口`PartitionSelectorStrategy`的实现
-      * `partitionSelectorExpression=null`，配置自定义分区选择器的SpEl表达式
+      * `partitionSelectorExpression=null`，配置自定义分区选择器的`SpEl`表达式
     * `partitionCount=1`，当分区功能开启时，配置消息数据的分区数，如果消息生产者已经配置了分区键的生成策略，那么它的值必须大于1
   
 * 绑定器配置
@@ -576,51 +583,52 @@
   
       * 通用配置
   
-        * RabbitMQ绑定器默认使用了Spring Boot的 ConnectionFactory
-        * RabbitMQ绑定器支持在SpirngBoot中的配置选项以`spring.rabbitmq. `为前缀
-        * 在SpringCloud Stream对RabbitMQ实现的绑定器中都以`spring.cloud.stream. rabbit.binder.`为前缀
+        * `RabbitMQ`绑定器默认使用了`Spring Boot`的`ConnectionFactory`	
+        * `RabbitMQ`绑定器支持在`SpirngBoot`中的配置选项以`spring.rabbitmq. `为前缀
+        * 在`SpringCloud Stream对RabbitMQ`实现的绑定器中都以`spring.cloud.stream. rabbit.binder.`为前缀
         * 属性可以在`org.springframework. cloud.stream.binder.rabbit.config.RabbitBinderConfigurationProperties `中找到 
         * `adminAddresses`，配置RabbitMQ管理插件的URL
       * `nodes`，配置`RabbitMQ`的节点名称
-        * `compressionLevel`，绑定通道的压缩级别
+        
+      * `compressionLevel`，绑定通道的压缩级别
       
-    * 消费者配置
-  
-      * 仅对RabbitMQ输入通道的绑定有效，以`spring.cloud.stream.rabbit.bindings.<channelName>.consumer. `格式作为前缀 
-  
-      * `acknowledgeMode=AUTO`，用来设置消息的确认模式
-  
-      * `autoBindDlq=false`，是否自动声明DLQ (Dead-Letter-Queue), 并绑定到 
-  
-        DLX (Dead-Letter-Exchange) 上 
-  
-      * `durableSubscription=true`，订阅是否被持久化，该参数仅在group被设置的时候有效 
-  
-      * `maxConcurrency=1`，消费者的最大并发数
-  
-      * `prefetch=1`，预取数量，它表示在 一次会话中从消息中间件中获取的消息数量
-  
-        * 该值越大消息处理越快，但是会导致非顺序处理的风险 
-  
-      * `prefix`，用来设置统一的目标和队列名称前缀
-  
-      * `recoveryinterval=5000`，用来设置恢复连接的尝试时间间隔， 以毫秒为单位 
-  
-      * `requeueRejected=true`，消息传递失败时重传
-  
-      * `requestHeaderPatterns`，需要被传递的请求头信息 
-  
-      * `replyHeaderPatterns`，需要被传递的响应头信息 
-  
-      * `republishToDlq`，默认情况下，消息在重试也失败之后会被拒绝 
-  
-      * `transacted=false`，是否启用`channel- transacted`, 即是否在消息中使用事务 
-  
-      * `txSize=1`，设置`transaction-size`的数量，`当acknowledge-Mode`被设置为AUTO时， 容器会在处理txSize数目消息之后才开始应答 
+  * 消费者配置
+    
+    * 仅对`RabbitMQ`输入通道的绑定有效，以`spring.cloud.stream.rabbit.bindings.<channelName>.consumer. `格式作为前缀 
+    
+    * `acknowledgeMode=AUTO`，用来设置消息的确认模式
+    
+    * `autoBindDlq=false`，是否自动声明DLQ (Dead-Letter-Queue), 并绑定到 
+    
+      DLX (Dead-Letter-Exchange) 上 
+    
+    * `durableSubscription=true`，订阅是否被持久化，该参数仅在group被设置的时候有效 
+    
+    * `maxConcurrency=1`，消费者的最大并发数
+    
+    * `prefetch=1`，预取数量，它表示在 一次会话中从消息中间件中获取的消息数量
+    
+      * 该值越大消息处理越快，但是会导致非顺序处理的风险 
+    
+    * `prefix`，用来设置统一的目标和队列名称前缀
+    
+    * `recoveryinterval=5000`，用来设置恢复连接的尝试时间间隔， 以毫秒为单位 
+    
+    * `requeueRejected=true`，消息传递失败时重传
+    
+    * `requestHeaderPatterns`，需要被传递的请求头信息 
+    
+    * `replyHeaderPatterns`，需要被传递的响应头信息 
+    
+    * `republishToDlq`，默认情况下，消息在重试也失败之后会被拒绝 
+    
+    * `transacted=false`，是否启用`channel-transacted`, 即是否在消息中使用事务 
+    
+      * `txSize=1`，设置`transaction-size`的数量，`当acknowledge-Mode`被设置为`AUTO`时， 容器会在处理`txSize`数目消息之后才开始应答 
     
     * 生产者配置
     
-        * 仅对 RabbitMQ 输出通道的绑定有效，以 `spring.cloud.stream.rabbit.endings.<channelName>.producer. `格式作为前缀
+        * 仅对`RabbitMQ` 输出通道的绑定有效，以 `spring.cloud.stream.rabbit.endings.<channelName>.producer. `格式作为前缀
         * `autoBindDlq=false`，是否自动声明DLQ CDead-Letter-Queue), 并绑定到DLX (Dead-Letter-Exchange)上 
         * `batchingEnabled=false`，是否启用消息批处理
         * `batchSize=100`，当批处理开启时，用来设置缓存的批处理消息数量
@@ -628,7 +636,7 @@
         * `batchTimeout=5000`，批处理超时时间
         * `compress=false`，消息发送时是否启用压缩
       * `deliveryMode=PERSISTENT`，消息发送模式
-        * `prefix`，用来设置统一 的目标前缀
+      * `prefix`，用来设置统一的目标前缀
       * `requestHeaderPatterns`，需要被传递的请求头信息
       * `replyHeaderPatterns`，需要被传递的响应头信息
     
@@ -650,15 +658,15 @@
         * `autoAddPartitions=false`，绑定器会根据已经配置的主题分区来实现，如果目标主题的分区数小于预期值， 那么绑定器会启动失败。 如果该参数设置为true, 绑定器将在需要的时候自动创建新的分区 
         * `socketBufferSize=2097152`，设置Kafka的Socket缓存大小
       * 消费者配置
-        * 仅对Kafka输入通道的绑定有效，以`spring.cloud.stream. kafka.bindings.<channelName>.consumer.`格式作为前缀 
-        * `autoCommitOffset=true`，否在处理消息时自动提交offset。如果设置为false, 在消息头中会加入AKC 头信息以实现延迟确认 
+        * 仅对Kafka输入通道的绑定有效，以`spring.cloud.stream.kafka.bindings.<channelName>.consumer.`格式作为前缀 
+        * `autoCommitOffset=true`，是否在处理消息时自动提交offset。如果设置为false, 在消息头中会加入AKC 头信息以实现延迟确认 
         * `autoCommitOnError`，只在`autoCommitOffset`设置为`true` 时才有效。 当设置为false的时候， 引起错误的消息不会自动提交offset, 仅提交成功消息的offset。 如果设置为true, 不论消息是否成功，都会自动提交。当不设置该值 时，它实际上具有与`enableDlq`相同的配置值 
         * `recoveryInterval=5000`，尝试恢复连接的时间间隔， 以毫秒为单位
-        * `resetOffsets=false`，是否使用提供的startOffset值 来重置 消费者的offset值
+        * `resetOffsets=false`，是否使用提供的startOffset值来重置消费者的offset值
         * `startOffset=null`，用来设置新建组的起始 offset, 该值也会在 resetOffsets开始时被使用 
         * `enableDlq=false`，设置为true 时，将为消费者启用DLQ行为，引起错误的消息将被发送到名为`error.<destination>.<group>`的主题中去 
       * 生产者配置
-        * 仅对Kafka输出通道的绑定有效，以`spring.cloud.stream. kafka.bindings.<channelName>.producer.`格式作为前缀 
+        * 仅对Kafka输出通道的绑定有效，以`spring.cloud.stream.kafka.bindings.<channelName>.producer.`格式作为前缀 
         * `bufferSize=16384`，Kafka批量发送前的缓存数据上限， 以字节为单位
-        * `sync=false`，设置 Kafka 消息生产者的发送模式， 默认为 false，即采用async配置，允许批量发送数据。当设权为true 时，将采用sync配置， 消息将不会被批献发送， 而是一条一条地发送 
-        * `batchTimeout=0`，消息生产者批量发送时，为了积累更多发送数据而设置的等待时间。 通常情况下，生产者基本不会等待， 而是直接发送所有在前一批次发送时积累的消息数据。 当设置一个非o值时，可以以延迟为代价来增加系统的吞吐量 
+        * `sync=false`，设置 Kafka 消息生产者的发送模式， 默认为 false，即采用async配置，允许批量发送数据。当设权为true 时，将采用sync配置，消息将不会被批献发送，而是一条一条地发送 
+        * `batchTimeout=0`，消息生产者批量发送时，为了积累更多发送数据而设置的等待时间。 通常情况下，生产者基本不会等待， 而是直接发送所有在前一批次发送时积累的消息数据。 当设置一个非0值时，可以以延迟为代价来增加系统的吞吐量 

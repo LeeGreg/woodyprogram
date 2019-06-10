@@ -10,17 +10,16 @@
 
 # SpringBoot
 
-* 为快速启动且最小化配置的Spring应用而设计
+* 为快速启动且最小化配置的Spring应用而设计，可用于构建微服务的基础框架
   * Spring Framework是SpringBoot的核心，Java规范才是它们的基石
   * SpringBoot 2.0 — Spring Framework 5.0 — Java8
-
 * 搭配`SpringBoot starter`技术引入相关的依赖，结合`SpringBoot`自动装配，利用`SpringBoot`和`SpringFramework`的生命周期，使用嵌入式的Web容器，利用外部化配置影响`SpringApplication`的行为，通过`SpringApplication API`引导应用，`SpringBoot Actuator`提供运维-为生产准备特性
-
 * 特性
   * 创建独立的Spring应用
   * 直接嵌入Tomcat、Jetty或Undertow等Web容器，不需要部署WAR文件
   * 提供固化的"starter"依赖，简化构建配置
     * SpringBoot利用Maven的依赖管理特性，进而固化其Maven依赖，该特性并非SpringBoot专属
+    * 不需要在Maven的pom.xml中维护那些错综复杂的依赖关系
   * 当条件满足时自动地装配Spring或第三方类库
     * maven-starter添加到应用的Class Path中时，其关联的特性随应用的启动而自动地装载
   * 提供运维-为生产准备特性，如指标信息、健康检查以及外部化配置
@@ -32,11 +31,32 @@
   * SpringBoot Actuator
   * 嵌入式Web容器
 * SpringCloud
+  * 微服务是系统架构上的一种设计风格， 它的主旨是将一个原本独立的系统拆分成多个小型服务，这些小型服务都在各自独立的进程中运行，服务之间通过基于HTTP的RESTful API进行通信协作
+    * 服务组件化，都能够独立部署和扩展，可有效避免修改一个服务而引起整个系统的重新部署
+    * 通常会使用两种服务调用方式
+      *  使用HTTP的RESTfulAPI或轻量级的消息发送协议， 实现信息传递与服务调用的触发
+      *  通过在轻量级消息总线上传递消息，类似 RabbitMQ等一些提供可靠异步交换的中间件
+    * 去中心化管理数据，希望让每一个服务来管理其自有的数据库
+      * 分布式事务本身的实现难度就非常大， 所以在微服务架构中， 更强调在各服务之间进行 “ 无事务” 的调用， 而对于数据一致性， 只要求数据在最后的处理状态是一致的即可；若在过程中发现错误， 通过补偿机制来进行处理，使得错误数据能够达到最终的一致性
+    * 容错设计，快速检测出故障源并尽可能地自动恢复服务
+    * 基础设施自动化，构建可持续交付，自动化测试和自动化部署
   * Spring官方在SpringBoot的基础上研发出SpringCloud，致力于提供一些快速构建通用的分布式系统
     * 服务注册和发现、服务调用、负载均衡、熔断机制、分布式配置、路由、分布式消息
+    * `SpringCloud Config`：配置管理工具，支持使用Git存储配置内容，可以使用它实现应用配置的外部化存储，并支持客户端配置信息刷新、加密/解密配置内容等
+    * `SpringCloudNetflix`：核心组件， 对多个Netflix OSS开源套件进行整合。
+      - `Eureka`：服务治理组件， 包含服务注册中心、 服务注册与发现机制的实现
+      - `Hystrix`：容错管理组件，实现断路器模式，帮助服务依赖中出现的延迟和为故障提供强大的容错能力
+      - `Ribbon`：客户端负载均衡的服务调用组件
+      - `Feign`：基于Ribbon 和 Hystrix 的声明式服务调用组件
+      - `Zuul`：网关组件， 提供智能路由、 访问过滤等功能
+    * `Spring Cloud Bus`：事件、消息总线，用于传播集群中的状态变化或事件，以触发后续的处理，比如用来动态刷新配置等
+    * `Spring Cloud Stream`：通过Rabbit 或Kafka 实现的消费微服务，可通过简单的声明式模型来发送和接收消息
+    * `Spring Cloud Sleuth`：Spring Cloud 应用的分布式跟踪实现，可以完美整合 Zipkin
   * 优势
     * 高度抽象的接口，不需要关心底层的实现，当需要更替实现时，按需要配置即可，不需要过多的业务回归测试
-    * SpringCloud Stream整合，通过Stream编程模式，使得不同的通道之间可以自由的切换传输介质，达到数据通信的目的，比如通过消息、文件、网络等
+    * `SpringCloud Stream`整合，通过`Stream`编程模式，使得不同的通道之间可以自由的切换传输介质，达到数据通信的目的，比如通过消息、文件、网络等
+  * 版本说明
+    * `1.5.8.RELEASE`、`java8`、`Dalston.RELEASE`
 
 ## 独立的Spring应用
 
@@ -60,14 +80,17 @@
 
 * 创建可执行Jar
 
+  * 打包分为依赖jar包和可执行jar包，两者要分开，可执行包不可以被其他项目依赖
   * 前提需添加`spring-boot-maven-plugin`到`pom.xml`文件中
   * `mvn package`
 
 * 启动
 
   * 在`Java`启动命令中，通过`-D`命令行参数设置`Java`的系统属性：`System.getProperties()`
+    * `java -jar xxx.jar --server.port= 8888`
+    * 连续的两个减号—就是对`application.properties`中的属性值进行赋值的标识
   * `Spring Boot`默认的应用外部配置文件`application.properties`
-  * 开发阶段运行方式：`mvn spring-boot:run`
+  * 开发阶段运行方式：`mvn spring-boot:run`、直接通过运行拥有 `main` 函数的类来启动
   * 生产环境运行方式：`java -jar target/xxx.jar`
 
 * `SpringBoot Loader`
@@ -160,6 +183,7 @@
       * @EnableAutoConfiguration能够激活SpringBoot内建和自定义组件的自动装配特性
     * @ComponentScan，激活@Component的扫描
       * 扫描标有该注解类所在的包
+      * SpringBoot为了改善传统Spring应用繁杂的配置内容，采用了包扫描和自动化配置的机制来加载原本集中于XML文件中的各项内容
       * 添加了排除的TypeFilter实现：
         - TypeExcludeFilter
         - AutoConfigurationExcludeFilter：排除其他同时标注@Configuration和@EnableAuto Configuration的类
@@ -260,10 +284,20 @@
   * 常用的`Endpoins`
     * `beans`：显示当前Spring应用上下文的SpringBean完整列表
     * `conditions`：显示当前应用所有配置类和自动装配类的条件评估结果（包含匹配和非匹配）
-    * `evn`：暴露Spring ConfigurableEnvironment中的PropertySource属性
-    * `health`：显示应用的健康信息
-    * `info`：显示任意的应用信息
+    * `evn`：暴露Spring ConfigurableEnvironment中的PropertySource属性，获取应用所有可用的环境属性报告。 包括环境变量、JVM属性、应用的配置属性、命令行中的参数
+    * `health`：显示应用的健康信息。
+      * 可实现一个用来采集健康信息的检测器（实现Healthindicator接口，@Component）
+    * `info`：显示任意的应用信息，返回一些应用自定义的信息。 默认清况下， 该瑞点只会返回一个空的JSON内容。可以在application.properties配置文件中通过info前缀来设置一 些属性
+    * `mappings`：返回所有Spring MVC的控制器映射关系报告
+    * `autoconfig`：获取应用的自动化配置报告， 其中包括所有自动化配置的候选项。 同时还列出了每个候选项是否满足自动化配置的各个先决条件。可以方便地找到一些自动化配置为什么没有生效的具体原因
+    * `configprops:`：获取应用中配置的属性信息报告，可看到各个属性的配置路径。通过使用
+      `endpoints.configprops.enabled=false` 来关闭
+    * `metrics`：返回当前应用的各类重要度量指标，比如内存信息、线程信息、垃圾回收信息等。可以提供应用运行状态的完整度量指标报告。可通过`/metrics/{name}`接口来更细粒度地获取度量信息 ， 比如可以通过访问/metrics/mem.free来获取当前可用内存数量
+    * `dump`：暴露程序运行中的线程信息
+    * `trace`：返回基本的 HTTP 跟踪信息，始终保留最近的100条请求记录
+    * `shutdown`：关闭应用
   * 默认暴露`health`和`info`，增加`management.endpoints.web.exposure.include=*`的配置属性到`application.properties`或启动参数中
+  * `management.security.enabled=false`
 
 * 外部化配置
 
@@ -275,13 +309,25 @@
     * @TestPropertySource、@SpringBootTest
     * 命令行参数
     * ServletConfig init参数、ServletContext init参数
-    * JNDI属性、Java系统属性，System.getProperties()、系统环境变量、随机属性源
+    * java:comp/env中的JNDI属性
+    * Java系统属性，可以通过System.getProperties()获得的内容 
+    * 操作系统的环境变量
+    * 随机属性源，通过random.*配置的随机属性
     * jar包外部配置：application-{profile}.properties或YAML
     * jar包内配置：application-{profile}.properties或YAML
     * jar包外配置：application.properties或YAML
     * jar包内配置：application.properties或YAML
-    * @Configuration类上@PropertySource
-    * 默认属性，SpringApplication.setDefaultProperties
+    * @Configuration类上@PropertySource注解定义的属性
+    * 应用默认属性，SpringApplication.setDefaultProperties 定义的内容 
+
+* 多环境配置
+
+  * 多环境配置的文件名需要满足 application-{profile}. properties的格式， 其中{profile}对应的环境标识
+    * 在application.properties文件中通过spring.profiles.active 属性来设置{profile}值
+  * 在application.properties中配置通用内容，并设置spring.profiles.active= dev, 以开发环境为默认配置 
+  * 在application-{profile}.properties中配置各个环境不同的内容 
+  * 通过命令行方式去激活不同环境的配置
+    * `java -jar xxx.jar --spring.profiles.active =test`
 
 * 规约大于配置
 
@@ -829,7 +875,7 @@
 
 * `SpringBoot`的自动装配所依赖的注解驱动、@Enable模块驱动、条件装配、Spring工厂加载机制等特性均来自`Spring Framework`，也都围绕Spring应用上下文及其管理的Bean生命周期
 
-* 启动失败、自定义`Banner`、自定义`SpringApplication`、流式Builder API、Spring应用事件和监听器、Spring应用Web环境、存储Spring应用启动参数、使用`ApplicationRunner`或`CommandLineRunner`接口、Spring应用退出、Spring应用管理特性
+* 启动失败、自定义`Banner`、自定义`SpringApplication`、流式`Builder API`、`Spring`应用事件和监听器、Spring应用Web环境、存储Spring应用启动参数、使用`ApplicationRunner`或`CommandLineRunner`接口、Spring应用退出、Spring应用管理特性
 
 * `SpringApplication`初始化阶段
 
@@ -842,7 +888,7 @@
         * `primarySources`参数实际为`SpringBoot`应用上下文的`Configuration` Class，该配置类也不一定非的使用引导类，主配置类`primarySources`与传统`Spring Configuration` Class并无差异
           * 任何标注`@Configuration`和`@EnableAutoConguration`的类都能作为`primarySources`属性值
         * 主配置类属性`primarySources`除初始化构造器参数外，还能通过`SpringApplication#addPrimarySources(Collection)`方法追加修改
-    * SpringApplication的构造过程
+    * `SpringApplication`的构造过程
       * SpringApplication#run(Class,String...)方法的执行会伴随SpringApplication对象的构造，其中主配置primarySources被SpringApplication对象primarySources属性存储，随后依次执行
         * 推断Web应用类型、加载Spring应用上下文初始化器、加载Spring应用事件监听器、推断应用引导类
       * 推断Web应用类型
@@ -1078,7 +1124,7 @@
   * 最重要的SpringBoot内建事件监听器
     * ConfigFileApplicationListener
       - 监听事件：ApplicationEnvironmentPreparedEvent和ApplicationPreparedEvent
-      - 负责SPringBoot应用配置属性文件的加载，默认为application.properties或application.yml
+      - 负责SpringBoot应用配置属性文件的加载，默认为application.properties或application.yml
     * LoggingApplicationListener
       - 监听事件：ApplicationStartingEvent或ApplicationEnvironmentPreparedEvent或ApplicationPreparedEvent或ContextClosedEvent或ApplicationFailedEvent
       - 用于SpringBoot日志系统的初始化（日志框架识别，日志配置文件加载等）
@@ -1126,3 +1172,30 @@
     - 加载Spring应用上下文配置源
       - load(ApplicationContext,Object[])方法将承担加载Spring应用上下文配置源的职责，该方法将Spring应用上下文Bean装载的任务交给了BeanDefinitionLoader
     - 回调SpringApplicationRunListener#contextLoaded方法
+
+## 单元测试
+
+```java
+//src/test目录下
+import static org.hamcrest.Matchers.equalTo;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootApplication
+@WebAppConfiguration
+public class HelloServiceApplicationTests {
+	private MockMvc mvc;
+	@Before
+  public void setUp() {
+    mvc = MockMvcBuilders.standaloneSetup(new HelloController()).build();
+  }
+	@Test
+	public void contextLoads() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/hello").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string(equalTo("Hello, World!")));
+	}
+}
+```
+

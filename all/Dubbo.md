@@ -7,20 +7,19 @@
       * Dubbo的RPC，调用方应用对微服务提供的抽象接口存在强依赖关系
       * REST接口，服务提供方和调用方的依赖只是依靠契约，不存在代码级别的强依赖，在分布式环境下，REST方式的服务依赖要比RPC方式的依赖更为灵活
       * 在提供对外服务时，都会以REST的方式提供出去，这样可以实现跨平台的特点
-      * Dubbo中我们要提供REST接口时，不得不实现一层代理，用来将RPC接口转换成REST接口进行对外发布
+      * Dubbo中要提供REST接口时，不得不实现一层代理，用来将RPC接口转换成REST接口进行对外发布
   * 架构完整度
     * Dubbo目前只实现了服务治理，而SpringCloud还包括服务网关、断路器、分布式配置、消息总线、数据流、服务跟踪等模块
 
 * dubbo都支持什么协议，推荐用哪种？
 
-  * dubbo://（推荐）、rim://、hessian://、http://、webservice://、redis://、rest://
-
-  1. dubbo： 单一长连接和NIO异步通讯，适合大并发小数据量的服务调用，以及消费者远大于提供者。传输协议TCP，异步，Hessian序列化；
-  2. rmi： 采用JDK标准的rmi协议实现，传输参数和返回参数对象需要实现Serializable接口，使用java标准序列化机制，使用阻塞式短连接，传输数据包大小混合，消费者和提供者个数差不多，可传文件，传输协议TCP。 多个短连接，TCP协议传输，同步传输，适用常规的远程服务调用和rmi互操作。在依赖低版本的Common-Collections包，java序列化存在安全漏洞；
-  3. webservice： 基于WebService的远程调用协议，集成CXF实现，提供和原生WebService的互操作。多个短连接，基于HTTP传输，同步传输，适用系统集成和跨语言调用；http： 基于Http表单提交的远程调用协议，使用Spring的HttpInvoke实现。多个短连接，传输协议HTTP，传入参数大小混合，提供者个数多于消费者，需要给应用程序和浏览器JS调用；
-  4. hessian： 集成Hessian服务，基于HTTP通讯，采用Servlet暴露服务，Dubbo内嵌Jetty作为服务器时默认实现，提供与Hession服务互操作。多个短连接，同步HTTP传输，Hessian序列化，传入参数较大，提供者大于消费者，提供者压力较大，可传文件；
-  5. memcache： 基于memcached实现的RPC协议
-  6. redis： 基于redis实现的RPC协议
+  1. dubbo：默认，推荐， 单一长连接和NIO异步通讯，适合大并发小数据量的服务调用，以及消费者远大于提供者。传输协议TCP，异步，Hessian二进制序列化；
+  2. rmi： 采用JDK标准的rmi协议实现，传输参数和返回参数对象需要实现Serializable接口，使用java标准序列化机制，使用阻塞式短连接，传输数据包大小混合，消费者和提供者个数差不多，可传文件，传输协议TCP。 多个短连接，TCP协议传输，同步传输，适用常规的远程服务调用和rmi互操作
+  3. webservice： 基于WebService的远程调用协议，集成CXF实现，提供和原生WebService的互操作。多个短连接，基于HTTP传输，同步传输，适用系统集成和跨语言调用；
+  4. http： 基于Http表单提交的远程调用协议，使用Spring的Http Invoke实现。多个短连接，传输协议HTTP，传入参数大小混合，提供者个数多于消费者，需要给应用程序和浏览器JS调用；
+  5. hessian： 集成Hessian服务，基于HTTP通讯，采用Servlet暴露服务，Dubbo内嵌Jetty作为服务器时默认实现，提供与Hession服务互操作。多个短连接，同步HTTP传输，Hessian序列化，传入参数较大，提供者大于消费者，提供者压力较大，可传文件；
+  6. memcache： 基于memcached实现的RPC协议
+  7. redis： 基于redis实现的RPC协议
 
 * Dubbo需要 Web 容器吗？
 
@@ -41,13 +40,17 @@
 
 * Dubbo默认使用什么注册中心，还有别的选择吗？
 
-  * 推荐使用 Zookeeper 作为注册中心，还有Multicast、Simple、 Redis，但不推荐
+  * 推荐使用 Zookeeper 作为注册中心
+    * `<dubbo:registryprotocol="zookeeper" address="10.20.153.10:2181"/>`
+  * Multicast，不需要启动任何中心节点，只要广播地址一样，就可以互相发现
+    * `<dubbo:registryprotocol="multicast" address="224.5.6.7:1234"/>`
+  * Simple
+  *  Redis，`<dubbo:registryprotocol="redis"address="10.20.153.10:6379"/>`
 
 * Dubbo有哪几种配置方式
 
-  * Spring 配置方式 
-  * Java API 配置方式
-
+  * Spring 配置方式 和  Java API 配置方式
+  
 * Dubbo 核心的配置有哪些？
 
   * dubbo:service - 服务配置、dubbo:reference - 引用配置、 dubbo:protocol  -  协议配置、 dubbo:application -  应用配置 、dubbo:module  -  模块配置、 dubbo:registry -  注册中心配置 、dubbo:monitor  -  监控中心配置、 dubbo:provider  -  提供方配置、 dubbo:consumer  -  消费方配置、 dubbo:method  -  方法配置、 dubbo:argument - 参数配置
@@ -68,7 +71,7 @@
 
   * Dubbo 默认使用 Netty 框架，也是推荐的选择，另外内容还集成有Mina、Grizzly。
 
-* 注册了多个同一样的服务，如果测试指定的某一个服务呢？
+* 注册了多个同一样的服务，如何测试指定的某一个服务呢？
 
   * 可以配置环境点对点直连，绕过注册中心，将以服务接口为单位，忽略注册中心的提供者列表
 
@@ -82,7 +85,7 @@
 
 * 在使用过程中都遇到了些什么问题？ 如何解决的？
 
-  * 同时配置了XML和properties文件，则properties中的配置无效，只有XML没有配置时，properties才生效
+  * 同时配置XML和properties文件，则properties中的配置无效，只有XML没有配置时，properties才生效
   * dubbo缺省会在启动时检查依赖是否可用，不可用就抛出异常，阻止spring初始化完成，check属性默认为true。测试时有些服务不关心或者出现了循环依赖，将check设置为false
   * 为了方便开发测试，线下有一个所有服务可用的注册中心，这时，如果有一个正在开发中的服务提供者注册，可能会影响消费者不能正常运行
     * 解决：让服务提供者开发方，只订阅服务，而不注册正在开发的服务，通过直连测试正在开发的服务。设置dubbo:registry标签的register属性为false
@@ -155,7 +158,7 @@
 
 * Dubbo的管理控制台能做什么
 
-  * 管理控制台主要包含：路由规则，动态配置，服务降级，访问控制，权重调整，负载均衡，等管理功能
+  * 管理控制台主要包含：路由规则，动态配置，服务降级，访问控制，权重调整，负载均衡等管理功能
 
 * 说说 Dubbo 服务暴露的过程
 
@@ -171,7 +174,7 @@
 
 * 你还了解别的分布式框架吗
 
-  * 别的还有 Spring cloud、Facebook 的 Thrift、Twitter 的 Finagle 等、Hessian
+  * 别的还有 Spring cloud、Hessian、Facebook 的 Thrift
 
 * Dubbo 能集成 Spring Boot 吗？
   
@@ -186,49 +189,20 @@
 
 ### 是什么
 
-是一款高性能、轻量级的开源Java RPC框架，它提供了三大核心能力：==面向接口的远程方法调用==，==智能容错和负载均衡==，以及==服务自动注册和发现==。
+是一款高性能、轻量级的开源Java RPC框架，它提供了三大核心能力：面向接口的远程方法调用，智能容错和负载均衡，以及服务自动注册和发现
 
 ### 为什么使用
 
-* 当服务越来越多时，服务 URL 配置管理变得非常困难，F5 硬件负载均衡器的单点压力也越来越大，此时需要一个服务注册中心，动态的注册和发现服务，使服务的位置透明
-
-  并通过在消费方获取服务提供方地址列表，实现软负载均衡和 Failover，降低对 F5 硬件负载均衡器的依赖，也能减少部分成本
-
-* 当进一步发展，服务间依赖关系变得错踪复杂，甚至分不清哪个应用要在哪个应用之前启动，架构师都不能完整的描述应用的架构关系
-
-  这时，需要自动画出应用间的依赖关系图，以帮助架构师理清理关系
-
-* 服务的调用量越来越大，服务的容量问题就暴露出来，这个服务需要多少机器支撑?什么时候该加机器?
-
-  第一步，要将服务现在每天的调用量，响应时间，都统计出来，作为容量规划的参考指标
-
-  其次，要可以动态调整权重，在线上，将某台机器的权重一直加大，并在加大的过程中记录响应时间的变化，直到响应时间到达阀值，记录此时的访问量，再以此访问量乘以机器数反推总容量
+* 可动态的注册和发现服务；监控服务调用（调用量、响应时间等）；
 
 ### 特性
 
-* #### 面向接口代理的高性能RPC调用
-
-  提供高性能的基于代理的远程调用能力，服务以接口为粒度，为开发者屏蔽远程调用底层细节
-
-* #### 智能负载均衡
-
-  内置多种负载均衡策略，智能感知下游节点健康状况，显著减少调用延迟，提高系统吞吐量
-
-* #### 服务自动注册与发现
-
-    支持多种注册中心服务，服务实例上下线实时感知
-
-* #### 高度可扩展能力
-
-  遵循微内核+插件的设计原则，所有核心能力如Protocol、Transport、Serialization被设计为扩展点，平等对待内置实现和第三方实现
-
-* #### 运行期流量调度
-
-  内置条件、脚本等路由策略，通过配置不同的路由规则，轻松实现灰度发布，同机房优先等功能
-
-* #### 可视化的服务治理与运维
-
-  提供丰富服务治理、运维工具：随时查询服务元数据、服务健康状态及调用统计，实时下发路由策略、调整配置参数
+* 面向接口的远程方法调用
+* 智能容错和负载均衡
+* 服务自动注册和发现
+* 插件机制，高度可扩展能力
+* 运行期流量调度
+* 可视化的服务治理与运维
 
 ## 原理
 
@@ -236,16 +210,13 @@
 
 ## 使用
 
-dubbo服务容器是一个standalone的启动程序，因为后台服务不需要Tomcat或JBoss等Web容器的功能，如果硬要用Web容器去加载服务提供方，增加复杂性，也浪费资源
+* dubbo服务容器是一个standalone的启动程序，因为后台服务不需要Tomcat或JBoss等Web容器的功能，如果硬要用Web容器去加载服务提供方，增加复杂性，也浪费资源
+  1. 配置pom文件，MAVEN打包duboo可执行jar——Maven install
+  2. 在启动服务的时候，直接使用java -jar xxx.jar & 命令执行jar包即可 (&-后台运行)
 
-==服务容器只是一个简单的Main方法，并加载一个简单的Spring容器，用于暴露服务==
+* 服务容器只是一个简单的Main方法，并加载一个简单的Spring容器，用于暴露服务
 
-服务容器的加载内容可以扩展，内置了spring, jetty, log4j等加载，可通过Container扩展点进行扩展
-
-> 1. 配置pom文件，MAVEN打包duboo可执行jar——Maven install
-> 2. 在启动服务的时候，直接使用java -jar xxx.jar & 命令执行jar包即可 (&-后台运行)
->
-> 由框架本身提供，可实现优雅关机
+* 服务容器的加载内容可以扩展，内置了spring, jetty, log4j等加载，可通过Container扩展点进行扩展
 
 ```java
 //dubbo-server
@@ -257,7 +228,7 @@ server-provider
 	//1. tomcat启动服务
 		//将dubbo服务项目直接添加到容器中启动即可，不需要做任何配置
 		//但是增加了复杂性（端口、管理等方面），也浪费资源（内存）
-	//2. 自建main方法启动服务
+	//2. 自建main方法启动服务，ClassPathXmlApplicationContext
 		//可用于本地调试
 		public static void main(String[] args) throws IOException {
 			ClassPathXmlApplicationContext context=  new ClassPathXmlApplicationContext
@@ -339,8 +310,6 @@ server-provider
 
   **随机**，按权重设置随机概率
 
-  在一个截面上碰撞的概率高，但调用量越大分布越均匀，而且按概率使用权重后也比较均匀，有利于动态调整提供者权重
-
 * RoundRobin LoadBalance
 
   **轮循**，按公约后的权重设置轮循比率
@@ -349,7 +318,7 @@ server-provider
 
 * LeastActive LoadBalance
 
-  **最少活跃调用数**，相同活跃数的随机，活跃数指调用前后计数差
+  **最少活跃调用数**，相同活跃数的随机，活跃数指调用前后计数差（调用前加1，调用后减1）
 
   使慢的提供者收到更少请求，因为越慢的提供者的调用前后计数差会越大
 
@@ -364,17 +333,19 @@ server-provider
 <dubbo:service interface="..." loadbalance="roundrobin" />
 客户端级别：
 <dubbo:reference interface="..." loadbalance="roundrobin" />
+服务端或客户端方法级别：
+<dubbo:method name="hello" loadbalance="roundrobin"/>
+客户端方法级别 > 客户端接口级别 > 服务端方法级别 > 服务端接口级别
 ```
 
 ### 多版本支持
 
-不同服务发布不同协议、相同服务发布多个协议
+* 目的考虑到接口升级以后带来的兼容问题
 
-多注册中心支持
-
-服务间相互调用：check="true" 检测调用的服务是否启动
-
-设置不同版本的目的，就是要考虑到接口升级以后带来的兼容问题。在Dubbo中配置不同版本的接口，会在Zookeeper地址中有多个协议url的体现
+* 不同服务发布不同协议、相同服务发布多个协议
+* 多注册中心支持
+* 服务间相互调用：`check="true"` 检测调用的服务是否启动
+* 在Dubbo中配置不同版本的接口，会在Zookeeper地址中有多个协议url的体现
 
 ```xml
 dubbo-server.xml
@@ -394,11 +365,11 @@ dubbo-client.xml
 
 ### 主机绑定
 
-在发布一个Dubbo服务的时候，会生成一个dubbo://ip:port的协议地址
+* 在发布一个Dubbo服务的时候，会生成一个dubbo://ip:port的协议地址
 
-在生成绑定的主机的时候，会通过一层一层的判断，直到获取到合法的ip地址（ServiceConfig.java）
+* 在生成绑定的主机的时候，会通过一层一层的判断，直到获取到合法的ip地址（ServiceConfig.java）
 
-`dubbo:20880` `rmi:1099` `http:80` `hessian:80` `webservice:80`
+* `dubbo:20880` `rmi:1099` `http:80` `hessian:80` `webservice:80`
 
 ```java
 //从配置文件中获取host 1-4依次获取到为止
@@ -423,11 +394,7 @@ try {
 
 ### 集群容错
 
-某种系统控制在一定范围内的一种允许或包容犯错情况的发生
-
-例如，在电脑上运行一个程序，有时候会出现无响应的情况，然后系统会弹出一个提示框让我们选择，是立即结束还是继续等待，然后根据我们的选择执行对应的操作，这就是“容错”
-
-在分布式架构下，网络、硬件、应用都可能发生故障，由于各个服务之间可能存在依赖关系，如果一条链路中的其中一个节点出现故障，将会导致雪崩效应。为了减少某一个节点故障的影响范围，所以我们才需要去构建容错服务，来优雅的处理这种中断的响应结果
+* 某种系统控制在一定范围内的一种允许或包容犯错情况的发生
 
 **Dubbo提供了6种容错机制，分别如下**
 
@@ -435,7 +402,7 @@ try {
 * failsafe 失败安全，出现异常时，直接忽略（记录日志）
 * failfast 快速失败， 失败以后立马报错，只发起一次调用
 * failback  失败自动恢复，记录失败请求，定时重发 
-* forking  forks. 并行调用多个服务器，只要一个成功即返回 
+* forking  并行调用多个服务器，只要一个成功即返回 
 * broadcast 广播逐个调用所有提供者，任意一个报错则报错
 
 ```xml
@@ -448,12 +415,7 @@ try {
 
 ### 服务降级
 
-**降级的目的是为了保证核心服务可用**
-
-* 对一些非核心服务进行人工降级，在大促之前通过降级开关关闭那些推荐内容、评价等对主流程没有影响的功能
-* 故障降级，比如调用的远程服务挂了，网络故障、或者RPC服务返回异常。 那么可以直接降级，降级的方案比如设置默认值、采用兜底数据（系统推荐的行为广告挂了，可以提前准备静态页面做返回）等等 
-
-* 限流降级，在秒杀这种流量比较集中并且流量特别大的情况下，因为突发访问量特别大可能会导致系统支撑不了。这个时候可以采用限流来限制访问量。当达到阀值时，后续的请求被降级，比如进入排队页面，比如跳转到错误页（活动太火爆，稍后重试等）
+**降级的目的是为了保证核心服务可用**，故障降级、限流降级
 
 **方式**
 
@@ -497,11 +459,12 @@ dubbo-server.xml和client-client.xml中服务都设置了timeout，客户端的�
 
 * Java SPI
 
-  ==SPI全称（service provider interface），是JDK内置的一种服务提供发现机制，目前市面上有很多框架都是用它来做服务的扩展发现，如JDBC、日志框架==
+  * SPI全称（service provider interface），是JDK内置的一种服务提供发现机制，目前市面上有很多框架都是用它来做服务的扩展发现，如JDBC、日志框架
 
-  简单来说，它是一种==动态替换发现的机制==。
+  * 简单来说，它是一种动态替换发现的机制，为某个接口寻找服务实现的机制
+  * 比如有个接口，想运行时动态的给它添加实现，只需要添加一个实现
 
-  举个简单的例子，如果定义了一个规范，需要第三方厂商去实现，那么对于应用方来说，只需要集成对应厂商的插件，既可以完成对应规范的实现机制。形成一种插拔式的扩展手段
+  * 举个简单的例子，如果定义了一个规范，需要第三方厂商去实现，那么对于应用方来说，只需要集成对应厂商的插件，既可以完成对应规范的实现机制。形成一种插拔式的扩展手段
 
 * SPI规范
 
@@ -513,17 +476,13 @@ dubbo-server.xml和client-client.xml中服务都设置了timeout，客户端的�
 
      b) 文件内部描述的是该扩展接口的所有实现类
 
-     c) 文件的编码格式是UTF-8
-
   3. 通过java.util.ServiceLoader的加载机制来发现
 
-  ![image-20190102212324956](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.咕泡学院/02.分布式专题/05.分布式服务治理/image-20190102212324956-6435405.png)
-
   ```java
-  官方接口规范
+官方接口规范
   厂商添加官方依赖、实现官方接口规范
-      resources目录下META-INF/services
-          com.gupaoedu.spi.DataBaseDriver(实现类的package.接口规范名)
+    resources目录下META-INF/services
+          文件名：com.gupaoedu.spi.DataBaseDriver（接口全限定名称）
               内容：com.gupaoedu.spi.MysqlDriver(实现类全路径名)
   调用
       加入官方接口规范依赖、厂商依赖
@@ -534,14 +493,14 @@ dubbo-server.xml和client-client.xml中服务都设置了timeout，客户端的�
           }
       }
   ```
-
+  
 * SPI的缺点
 
-  1. JDK标准的SPI会一次性加载实例化扩展点的所有实现
-
-     就是如果在META-INF/service下的文件里面加了N个实现类，那么JDK启动的时候都会一次性全部加载，那么如果有的扩展点实现初始化很耗时或者如果有些实现类并没有用到，那么会很浪费资源
-
-  2. 如果扩展点加载失败，会导致调用方报错，而且这个错误很难定位到是这个原因
+  1. 需要遍历所有的实现，并实例化，然后在循环中才能找到需要的实现
+2. 没有给扩展实现命名
+  3. 扩展如果依赖其他的扩展，做不到自动注入和装配
+4. 不提供类似于Spring的IOC和AOP功能
+  5. 扩展很难和其他的框架集成，比如扩展里面依赖了一个Spring bean
 
 * Dubbo 优化后的SPI实现
 
@@ -550,8 +509,10 @@ dubbo-server.xml和client-client.xml中服务都设置了timeout，客户端的�
   大部分的思想都是和SPI是一样，只是下面两个地方有差异
 
   1. 需要在resource目录下配置META-INF/dubbo或者META-INF/dubbo/internal或者META-INF/services，并基于SPI接口去创建一个文件
-  2. 文件名称和接口名称保持一致，文件内容和SPI有差异，内容是KEY对应Value
-
+  2. 扩展都有一个别名，用于在应用中引用它们
+3. Dubbo的扩展机制支持IoC,AoP等高级功能
+  4. Dubbo的扩展机制能很好的支持第三方IoC容器，默认支持Spring Bean
+  
   ```java
   dubbo-client
   package com.gupaoedu.dubbo.protocol;

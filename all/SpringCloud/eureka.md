@@ -70,44 +70,42 @@
       ```properties
       spring.application.name=eureka-server
       server.port=1111
-      
       eureka.instance.hostname=peer1
-  eureka.client.serviceUrl.defaultZone=http://peer2:1112/eureka/
-      ```
-
-    * 创建application-peer2.properties 作为peer1服务中心的配置， 并将serviceUrl指向peer1
+      eureka.client.serviceUrl.defaultZone=http://peer2:1112/eureka/
+  ```
+      
+* 创建application-peer2.properties 作为peer1服务中心的配置， 并将serviceUrl指向peer1
     
       ```properties
       spring.application.name=eureka-server
       server.port=1112
-      
       eureka.instance.hostname=peer2
-  eureka.client.serviceUrl.defaultZone=http://peer1:1111/eureka/
-      ```
+      eureka.client.serviceUrl.defaultZone=http://peer1:1111/eureka/
+    ```
     
-* 在/etc/hosts文件中添加对peer1和 peer2的转换， 让上面配置的host形式的serviceUrl能在本地正确访间到
-    
+    * 在/etc/hosts文件中添加对peer1和 peer2的转换， 让上面配置的host形式的serviceUrl能在本地正确访w问到
+      
       ```properties
       127.0.0.1 peerl
       127.0.0.1 peer2
-  ```
-    
-* 通过spring.profiles.active属性来分别启动peerl和peer
-    
+      ```
+      
+    * 通过spring.profiles.active属性来分别启动peerl和peer
+      
       ```shell
-       java -jar eureka-server-1.0.0.jar --spring.profiles.active=peer1
-       java -jar eureka-server-1.0.0.jar --spring.profiles.active=peer2
-  ```
-    
-* 访问peer1的注册中心`http://localhost:1111/`和peer2的注册中心`http://localhost:1112/`
-    
-* 服务提供方
-    
+      java -jar eureka-server-1.0.0.jar --spring.profiles.active=peer1
+      java -jar eureka-server-1.0.0.jar --spring.profiles.active=peer2
+      ```
+      
+    * 访问peer1的注册中心`http://localhost:1111/`和peer2的注册中心`http://localhost:1112/`
+      
+    * 服务提供方
+      
       ```properties
       eureka.client.serviceUrl.defaultZone=http://peerl:llll/eureka/,http://peer2:lll2/eureka/
       ```
-
-    * 以上是主机名来定义注册中心的地址， 在配置文件中增加配置参数`eureka.instance.prefer江p-address= true`就可使用IP地址的形式
+    
+      * 以上是主机名来定义注册中心的地址， 在配置文件中增加配置参数`eureka.instance.prefer-ip-address= true`就可使用IP地址的形式
 
 ## 服务提供者
 
@@ -240,11 +238,11 @@
     * 在注册完服务之后，服务提供者会维护一个心跳用来持续告诉EurekaServer自己还可用，以防止Eureka Server 的剔除任务将该服务实例从服务列表中排除出去
     
     ```properties
-      # 服务续约任务的调用间隔时间，默认为30秒
+    # 服务续约任务的调用间隔时间，默认为30秒
     eureka.instance.lease-renewal-interval-in-seconds=30 
-      # 服务失效的时间， 默认为90秒
-      eureka.instance.lease-expiration-duration-in-seconds=90
-      ```
+    # 服务失效的时间， 默认为90秒
+    eureka.instance.lease-expiration-duration-in-seconds=90
+    ```
 
 * 服务消费者
   * 获取服务
@@ -320,7 +318,7 @@
 
 * 元数据
 
-  * 是Eureka 客户端在向服务注册中心发送注册请求时，用来描述自身服务信息的对象
+  * 是`Eureka`客户端在向服务注册中心发送注册请求时，用来描述自身服务信息的对象
 
     * 其中包含了一些标准化的元数据， 比如服务名称、实例名称、 实例IP、实例端口等用于服务治理的重要信息，以及一些用于负载均衡策略或是其他特殊用途的自定义元数据信息 
     * 可以通过`eureka.instance.<properties>=<value>`的格式对标准化元数据直接进行配置， 其中`<properties>`就是 EurekainstanceConfigBean对象中的成员变量名  
@@ -341,7 +339,7 @@
 
   * 端点配置
 
-    * 如果为应用设置了context-path，所有 spring-boot-actuator 模块的监控端点都会增加一个前缀
+    * 如果为应用设置了`context-path`，所有 `spring-boot-actuator` 模块的监控端点都会增加一个前缀
 
     ```properties
     management.context-path=/hello
@@ -356,15 +354,15 @@
     
     # 绝对路径的配置参数
     eureka.instance.statusPageUrl=https://${eureka.instance.hostname}/info
-    eureka.instance.healthCheckUrl=https://${eureka.instance.hos七 name}/health 
+    eureka.instance.healthCheckUrl=https://${eureka.instance.hostname}/health 
     eureka.instance.homePageUrl=https://${eureka.instance.hostname}/
     ```
 
 * 健康检测
-  * 默认情况下，Eureka中各个服务实例的健康检测并不是通过spring-boot-actuator模块的/health 端点来实现的， 而是依靠客户端心跳的方式来保持服务实例的存活
-    * 默认的心跳实现方式可以有效检查客户端进程是否正常运作， 但却无法保证客户端应用能够正常提供服务
+  * 默认情况下，`Eureka`中各个服务实例的健康检测并不是通过`spring-boot-actuator`模块的`/health` 端点来实现的， 而是依靠客户端心跳的方式来保持服务实例的存活
+    * 默认的心跳实现方式可有效检查客户端进程是否正常运作， 但却无法保证客户端应用能够正常提供服务
       * 当微服务应用与外部资源（如数据库、缓存、消息代理等）无法联通时，无法提供正常的对外服务，但是心跳依然在运行，所以它还是会被服务消费者调用，但是实际不能获得预期结果 
-    * 通过简单的配置， 把Eureka客户端的健康检测交给spring-boot-actuator模块的/health端点， 以实现更加全面的健康状态维护
+    * 通过简单的配置， 把`Eureka`客户端的健康检测交给`spring-boot-actuator`模块的`/health`端点， 以实现更加全面的健康状态维护
       * `spring-boot-starter-actuator`
       * 增加参数配置 `eureka.client.healthcheck.enabled=true`
       *  让服务注册中心可以正确访问到健康检测端点
