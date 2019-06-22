@@ -28,7 +28,7 @@
   - 发起IO请求的线程被阻塞直至IO操作完成后返回
 - 作为一个异步非阻塞框架，Netty 的所有 IO 操作都是异步非阻塞的，通过 FutureListener机制，用户可以方便的主动获取或者通过通知机制获得 IO 操作结果
 - 使用场景
-  1. 互联⽹网领域 ：构建高性能RPC框架基础通信框架，如Dubbo
+  1. 互联网领域 ：构建高性能RPC框架基础通信框架，如`Dubbo`
   2. 大数据领域、游戏行业、企业软件、通信行业
 - Reacotr设计模式
   - 定义：将并发服务请求提交到一个或多个服务处理程序的事件设计模式
@@ -71,7 +71,7 @@
   3. 安排进一步的动作
 
 - 当⼀个连接到达时，Netty 就会创建⼀个 Channel，然后从 EventLoopGroup 中分配一个 EventLoop
-  来给这个 Channel 绑定上，在该 Channel 的整个⽣命周期中都是有这个绑定的 EventLoop 来服务的（避免线程安全和同步问题）
+  来给这个 Channel 绑定上，在该 Channel 的整个⽣命周期中都是由这个绑定的 EventLoop 来服务的（避免线程安全和同步问题）
 
   1. 一个 EventLoopGroup 包含一个或多个 EventLoop 
   2. ⼀个 EventLoop 在它的生命周期内，只能与⼀个 Thread 绑定，所有由 EventLoop 处理的 I/O 事件都将在它专有的 Thread 上被处理，从而保证线程安全
@@ -160,10 +160,8 @@
       2. 数据读取
       3. 用户事件、错误事件
     - `出站事件`是未来将会触发的某个动作的操作结果
-  
-      1. 打开或者关闭到远程节点的连接
-  
-    2. 将数据写到或者冲刷到套接字
+  1. 打开或者关闭到远程节点的连接
+      2. 将数据写到或者冲刷到套接字
   
 - 每个事件都可以被分发给 ChannelHandler 类中的某个用户实现的方法，将事件驱动范式直接转换为应用程序构件块
   
@@ -185,7 +183,7 @@
 
 - 在服务器端持有两个 EventLoopGroup，其中 boss组是专门用来接收客户端发来的 TCP 链接请求的，worker组是专门用来具体处理完成三次握手的链接套接字的网络IO 请求的
 
-  - 当Channel是服务端通道NioServerSocketChannel 时候，NioServerSocketChannel本身会被注册到 boss EventLoopGroup 里面的某一个NioEventLoop 管理的 selector 选择器上，而完成三次握手的链接套接字是被注册到了 workerEventLoopGroup 里面的某一个 NioEventLoop 管理的 selector 选择器上
+  - 当Channel是服务端通道NioServerSocketChannel 时候，NioServerSocketChannel本身会被注册到 boss EventLoopGroup 里面的某一个NioEventLoop 管理的 selector 选择器上，而完成三次握手的链接套接字是被注册到了 worker EventLoopGroup 里面的某一个 NioEventLoop 管理的 selector 选择器上
 
 - 需要注意是，多个 Channel 可以注册到同一个 NioEventLoop管理的 selector 选择器上，这时候 NioEventLoop 对应的单个线程就可以处理多个 Channel 的就绪事件；但是每个Channel 只能注册到一个固定的 NioEventLoop 管理的selector 选择器上
 
@@ -294,13 +292,11 @@
 ## Channel
 
 - `Channel `是对` socket` 的装饰或者门面，其封装了对`socket` 的原子操作。
-
-  - 传入或者传出数据的载体，可以被打开或者被关闭，连接或者断开连接
-
+- 传入或者传出数据的载体，可以被打开或者被关闭，连接或者断开连接
+  
 - `Netty` 实现的客户端NIO 套接字通道是 `NioSocketChannel`
-
-  - 用来创建`SocketChannel` 实例和设置该实例的属性，并调用`Connect` 方法向服务端发起 TCP 链接等	
-
+- 用来创建`SocketChannel` 实例和设置该实例的属性，并调用`Connect` 方法向服务端发起 TCP 链接等	
+  
 - 提供的服务器端NIO 套接字通道是 `NioServerSocketChannel`
 
   - 用来创建`ServerSocketChannel` 实例和设置该实例属性，并调用该实例的 `bind` 方法在指定端口监听客户端的链接
@@ -316,7 +312,7 @@
 - Netty的Channel实现是线程安全的
 
   - Channel只注册到一个EventLoop，而EventLoop只和一个线程绑定
-  - 因此可以存储一个到Channel的引用，并且每当需要向远程节点写数据时，都可以使用它，即是当时许多线程都在使用它，消息将会保证按顺序发送
+  - 因此可以存储一个到Channel的引用，并且每当需要向远程节点写数据时，都可以使用它，即使当时许多线程都在使用它，消息将会保证按顺序发送
 
 - Channel的注册过程
 
@@ -472,8 +468,8 @@
 
     - ByteBuf 被它的两个索引划分成 3 个区域
     - 0-readerIndex：已被读取可丢弃的字节
-      - readerIndex-writerIndex：可读字节
-      - writerIndex-capacity：可写字节
+    - readerIndex-writerIndex：可读字节
+    - writerIndex-capacity：可写字节
 
   - 派生缓冲区
 
@@ -490,7 +486,7 @@
       - 独立数据副本
 
         - `copy`或者`copy(int,int)`
-      - 需要进行内存复制操作，不仅消耗更多资源，执行方法也会更耗时 
+        - 需要进行内存复制操作，不仅消耗更多资源，执行方法也会更耗时 
 
   - 其他操作
 
@@ -590,7 +586,7 @@
 
     ```java
     //AbstractBootstrap 类的完整声明
-    //在这个签名中，子类型 B 是其父类型的一个类型参数，因此可以返回到运行时实例的引用以支持方法的链式调用(也就是所谓的流式语法)
+    //在这个签名中，子类型 B 是其父类型的一个类型参数，因此可以返回到运行时实例的引用以支持方法的链式调用
     public abstract class AbstractBootstrap <B extends AbstractBootstrap<B,C>,C extends Channel>
     //子类的声明
     public class Bootstrap extends AbstractBootstrap<Bootstrap,Channel>
@@ -605,7 +601,7 @@
 
 - `BootStrap`
 
-  - `Bootstrap` 类负责为客户端和使用无连接协议的应用程序==创建 Channel==
+  - `Bootstrap` 类负责为客户端和使用无连接协议的应用程序创建 Channel
   - 用于客户端 ，连接到远程主机和端口；EventLoopGroup 的数目为1
     - Bootstrap类将会在bind()方法被调用后创建一个新的Channel，在这之后将会调用connect()方法以建立连接
     - 在connect()方法被调用后，Bootstrap类将会创建一个新的Channel
@@ -638,13 +634,13 @@
   });
   ```
 
-  - `option`设置`ChannelOption`，设置TCP参数，通过bind()或connect()方法设置到每个新建（之前已创建的Channel不会有效果）的Channel的ChannelConfig中
+  - `option`设置`ChannelOption`，设置TCP参数（socket options），通过bind()或connect()方法设置到每个新建（之前已创建的Channel不会有效果）的Channel的ChannelConfig中
 
     - 可用的`ChannelOption`包括了底层连接的详细信息，如keep-alive 或者超时属性以及缓冲区设置
 
   - `attr`指定新创建的`Channel` 的属性值，在 `Channel` 被创建后将不会有任何的效果，通过bind()或者 connect()方法设置到 Channel
 
-  - 像 Channel 这样的组件可能甚至会在正常的 Netty 生命周期之外被使用。
+  - 像 Channel 这样的组件可能甚至会在正常的 Netty 生命周期之外被使用
 
     - 在某些常用的属性和数据不可用时，Netty 提供了`AttributeMap`抽象(一个由 Channel 和引导类提供的集合)以及` AttributeKey`<T>(一个用于插入和获取属性值的泛型类)。
     - 使用这些工具，便可以安全地将任何类型的数据项与客户端和服务器 Channel(包含 ServerChannel 的子 Channel)相关联了
@@ -723,7 +719,7 @@
   	}                                                                                 );
   ```
 
-  - `childOption`指定当子 Channel 被接受时，应用到子 Channel 的 ChannelConfig 的ChannelOption。
+  - `childOption`指定当子 Channel 被接受时，应用到子 Channel 的 ChannelConfig 的ChannelOption
   - `childAttr`将属性设置给已经被接受的子 Channel。接下来的调用将不会有任何的效果
 
 - 从 Channel 引导客户端
@@ -879,15 +875,17 @@
 
     - `channelRead`当从 Channel 读取数据时被调用，当某个 ChannelInboundHandler 的实现重写 channelRead()方法时，它将负责显式地释放与池化的 ByteBuf 实例相关的内存`ReferenceCountUtil.release(msg);`丢弃已接收的消息。
 
+      - 当消息被`ctx.write(msg);`、`ctx.flush(); `后会自动释放
+
     - SimpleChannelInboundHandler的channelRead0会自动释放资源，消息被 channelRead0()方法消费之后自动释放消息
 
     - `ChannelWritabilityChanged` 
 
       `userEventTriggered`当 ChannelnboundHandler.fireUserEventTriggered()方法被调用时，因为一个 POJO 被传经了 ChannelPipeline
 
-  - ChannelOutboundHandler——处理出站数据并且允许拦截所有的操作
+  - `ChannelOutboundHandler`——处理出站数据并且允许拦截所有的操作
 
-    - 它的方法将被 Channel、ChannelPipeline 以及 ChannelHandlerContext 调用
+    - 它的方法将被`Channel`、`ChannelPipeline` 以及 `ChannelHandlerContext` 调用
 
     - 一个强大的功能是可以按需推迟操作或者事件
 
@@ -895,17 +893,17 @@
 
       ![image-20181214225758377](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181214225758377-4799478.png)
 
-    - `read` 当请求从 Channel 读取更多的数据时被调用
+    - `read` 当请求从`Channel` 读取更多的数据时被调用
 
-    - `flush`当请求通过 Channel 将入队数据冲刷到远程节点时被调用 
+    - `write`当请求通过`Channel` 将数据写到远程节点时被调用
 
-    - `write`当请求通过 Channel 将数据写到远程节点时被调用
-
-    - ChannelOutboundHandler中的大部分方法都需要一个ChannelPromise参数，以便在操作完成时得到通知。
+    - `flush`当请求通过`Channel` 将入队数据冲刷到远程节点时被调用 
   
-      - 可以调用它的addListener注册监听，当回调方法所对应的操作完成后，会触发这个监听
+    - `ChannelOutboundHandler`中的大部分方法都需要一个`ChannelPromise`参数，以便在操作完成时得到通知
   
-    - ChannelPromise是ChannelFuture的一个子类，其定义了一些可写的方法，如setSuccess()和setFailure()，从而使ChannelFuture不可变
+      - 可以调用它的`addListener`注册监听，当回调方法所对应的操作完成后，会触发这个监听
+  
+    - `ChannelPromise`是`ChannelFuture`的一个子类，其定义了一些可写的方法，如`setSuccess()`和`setFailure()`，从而使`ChannelFuture`不可变
   
       ```java
       public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -929,7 +927,8 @@
     - `ChannelInboundHandler`的`channelRead`回调负责执行入栈数据的`decode`逻辑，`ChannelOutboundHandler`的`write`负责执行出站数据的`encode`工作
     - 其他回调方法和具体触发逻辑有关，和in与out无关
     
-  - ChannelHandler 适配器
+  - `ChannelHandler` 适配器
+    
     - 只需要简单地扩展它们，并且重写那些想要自定义的方法
     - ![image-20181029215620920](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181029215620920.png)
     - 在`ChannelInboundHandlerAdapter` 和` ChannelOutboundHandlerAdapter` 中所提供的方法体调用了其相关联的`ChannelHandlerContext` 上的等效方法，从而将事件转发到了`ChannelPipeline` 中的下一个 `ChannelHandler` 中
@@ -938,10 +937,10 @@
       - `ChannelInboundHandlerAdapter` 的 `channelRead` 方法处理完消息后不会自动释放消息，若想自动释放收到的消息，可以使用 `SimpleChannelInboundHandler`
     - `ChannelInitializer` 用来初始化`ChannelHandler`，将自定义的各种`ChannelHandler`添加到`ChannelPipeline`中
       - 在 Netty 中，从网络读取的 Inbound 消息，需要经过解码，将二进制的数据报转换成应用层协议消息或者业务消息，才能够被上层的应用逻辑识别和处理;同理，用户发送到网络的 Outbound 业务消息，需要经过编码转换成二进制字节数组(对于 Netty 就是 ByteBuf)才能够发送到网络对端。编码和解码功能是 NIO 框架的有机组成部分，无论是由业务定制扩展实现，还是 NIO 框架内置编解码能力，该功能是必不可少的
-    - `ChannelHandlerAdapter` 还提供了实用方法` isSharable()`。如果其对应的实现被标注为 Sharable，那么这个方法将返回 true，表示它可以被添加到多个`ChannelPipeline`中
-    - @Sharable
-      - 为何要共享同一个ChannelHandler ?
-      - 在多个ChannelPipeline中安装同一个ChannelHandler的一个常见的原因是用于收集跨越多个 Channel 的统计信息
+    - `ChannelHandlerAdapter` 还提供了实用方法` isSharable()`。如果其对应的实现被标注为 `Sharable`，那么这个方法将返回 true，表示它可以被添加到多个`ChannelPipeline`中
+    - `@Sharable`
+      - 为何要共享同一个`ChannelHandler` ?
+      - 在多个`ChannelPipeline`中安装同一个`ChannelHandler`的一个常见的原因是用于收集跨越多个 `Channel` 的统计信息
       - 只应该在确定了ChannelHandler 是线程安全的时才使用@Sharable 注解
     
   - 资源管理
@@ -951,16 +950,16 @@
     - 如果一个消息被消费或者丢弃了，并且没有传递给 ChannelPipeline 中的下一个
       ChannelOutboundHandler，那么用户就有责任调用 ReferenceCountUtil.release()释放资源，还要通知 ChannelPromise。否则可能会出现 ChannelFutureListener 收不到某个消息已经被处理了的通知的情况
     
-  - ChannelHandler，它是一个接口族的父接口，它的实现负责接收并响应事件通知，充当了所有处理入站和出站数据的应用程序逻辑的容器，其方法是由网络事件触发的
+  - ChannelHandler，接口族的父接口，它的实现负责接收并响应事件通知，充当了所有处理入站和出站数据的应用程序逻辑的容器，其方法是由网络事件触发的
   
-  - 有许多不同类型的 ChannelHandler，它们各自的功能主要取决于它们的超类。
+  - 有许多不同类型的 ChannelHandler，它们各自的功能主要取决于它们的超类
   
     - Netty 以适配器类的形式提供了大量默认的 ChannelHandler 实现，其旨在简化应用程序处理逻辑的开发过程。
   
   - 每个 Channel 都拥有一个与之相关联的 ChannelPipeline，其持有一个 ChannelHandler 的实例链。在默认的情况下，ChannelHandler 会把对它的方法的调用转发给链中的下一个 ChannelHandler
     - 针对不同类型的事件来调用 ChannelHandler
     - 应用程序通过实现或扩展ChannelHandler来挂钩到事件的生命周期，并提供自定义的应用程序逻辑
-    - 在架构上，ChannelHandler 有助于保持业务逻辑与网络处理代码的分离
+    - 在架构上，`ChannelHandler` 有助于保持业务逻辑与网络处理代码的分离
     
   - 服务器会响应传入的消息，所以它需要实现 ChannelInboundHandler 接口，用来接收入站事件和数据，要给连接的客户端发送响应时，也可以从ChannelInboundHandler冲刷数据。
   
@@ -991,9 +990,8 @@
 
 - 添加的自定义ChannelHandler会插入到head和tail之间，如果是ChannelInboundHandler的回调，根据插入的顺序从左向右进行链式调用，ChannelOutboundHandler则相反
 
-- 需要注意一点是虽然每个 Channel(更底层说是每个socket)有自己的 ChannelPipeline，但是每个
-  ChannelPipeline 里面可以复用一个 ChannelHandler
-
+- 需要注意一点是虽然每个 Channel(更底层说是每个socket)有自己的 ChannelPipeline，但是每个ChannelPipeline 里面可以复用一个 ChannelHandler
+  
 - ChannelPipeline 实现了一种常见的设计模式— 拦截过滤器(InterceptingFilter)
 
   ![image-20181029221307994](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181029221307994.png)
@@ -1118,6 +1116,7 @@
 - 解码器
 
   1. 将字节解码为消息——ByteToMessageDecoder 和 ReplayingDecoder;
+     * `ChannelInboundHandler`接口的实现
   2. 将一种消息类型解码为另一种——MessageToMessageDecoder
 
   - 什么时候会用到解码器呢?
@@ -1125,6 +1124,8 @@
     - 每当需要为 ChannelPipeline 中的下一个 ChannelInboundHandler 转换入站数据时会用到
 
   - `ByteToMessageDecoder`由于不可能知道远程节点是否会一次性地发送一个完整的消息，所以这个类会对入站数据进行缓冲，直到它准备好处理
+
+    - ByteToMessageDecoder会一直调用decode()直到数据都读完
 
     ```java
     //对这个方法的调用将会重复进行，直到确定没有新的元素被添加到该 List，或者该 ByteBuf 中没有更多可读取的字节时为止。然后，如果该 List 不为空，那么它的内容将会被传递给 ChannelPipeline 中的下一个 ChannelInboundHandler    
@@ -1175,6 +1176,7 @@
     ```
 
     ```java
+    //对于每个需要被解码为另一种格式的入站消息来说，该方法都将会被调用。解码消息随后会被传递给ChannelPipeline 中的下一个 ChannelInboundHandler
     public class IntegerToStringDecoder extends MessageToMessageDecoder<Integer> {
     	@Override
     	public void decode(ChannelHandlerContext ctx, Integer msg,List<Object> out) throws Exception {
@@ -1223,6 +1225,7 @@
     //接受一个Short类型的实例作为消息，将它编码 为Short的原子类型值，并将它写入ByteBuf中，其将随后被转发给ChannelPipeline中的下一个ChannelOutboundHandler
     public class ShortToByteEncoder extends MessageToByteEncoder<Short> { 
       @Override
+      //被调用时将会传入要被该类编码为 ByteBuf 的(类型为I的)出站消息。该 ByteBuf 随后将会被转发给 ChannelPipeline 中的下一个 ChannelOutboundHandler
     	public void encode(ChannelHandlerContext ctx, Short msg, ByteBuf out) throws Exception {
         out.writeShort(msg);
       }
@@ -1239,6 +1242,7 @@
     ```java
     public class IntegerToStringEncoder extends MessageToMessageEncoder<Integer> {
     	@Override
+      //每个通过 write()方法写入的消息都将会被传递给 encode()方法，以编码为一个或者多个出站消息。随后，这些出站消息将会被转发给ChannelPipeline中的下一个ChannelOutboundHandler
     	public void encode(ChannelHandlerContext ctx, Integer msg,List<Object> out) throws Exception {
     			out.add(String.valueOf(msg)); 
         }
@@ -1270,7 +1274,7 @@
     protected abstract encode(ChannelHandlerContext ctx,OUTBOUND_IN msg,List<Object> out)
     ```
 
-  - `CombinedChannelDuplexHandler`充当了 ChannelInboundHandler 和 ChannelOutboundHandler的容器
+  - `CombinedChannelDuplexHandler`充当了`ChannelInboundHandler` 和 `ChannelOutboundHandler`的容器
 
     ```java
     public class CombinedChannelDuplexHandler <I extends ChannelInboundHandler,
@@ -1284,14 +1288,14 @@
     }
     ```
 
-- 网络数据总是一系列的字节，所有由 Netty 提供的编码器/解码器适配器类都实现了 ChannelOutboundHandler 或者 ChannelInboundHandler 接口
-- 对于入站数据来说，channelRead 方法/事件已经被重写了。对于每个从入站Channel 读取的消息，这个方法都将会被调用。随后，它将调用由预置解码器所提供的 decode()方法，并将已解码的字节转发给 ChannelPipeline 中的下一个 ChannelInboundHandler
+- 网络数据总是一系列的字节，所有由`Netty` 提供的编码器/解码器适配器类都实现了 `ChannelOutboundHandler` 或者 `ChannelInboundHandler` 接口
+- 对于入站数据来说，channelRead 方法/事件已经被重写了。对于每个从入站Channel 读取的消息，这个方法都将会被调用。随后，它将调用由预置解码器所提供的decode()方法，并将已解码的字节转发给 ChannelPipeline 中的下一个 ChannelInboundHandler
 - 出站消息的模式是相反方向的：编码器将消息转换为字节，并将它们转发给下一个`ChannelOutboundHandler`
 - `SimpleChannelInboundHandler`
   
   - 应用程序会利用一个`ChannelHandler` 来接收解码消息，并对该数据应用业务逻辑
   - 要创建一个这样的 `ChannelHandler`，只需要扩展基类 `SimpleChannelInboundHandler<T>`，其中 T 是要处理的消息的 `Java` 类型
-  - 在这个`ChannelHandler`中，将需要重写基类的一个或者多个方法，并且获取到一个到`ChannelHandlerContext`的引用，这个引用将作为输入参数传递给 ChannelHandler 的所有方法
+  - 在这个`ChannelHandler`中，将需要重写基类的一个或者多个方法，并且获取到一个到`ChannelHandlerContext`的引用，这个引用将作为输入参数传递给`ChannelHandler` 的所有方法
 
 ## 预置的 ChannelHandler和编解码器
 
@@ -1384,7 +1388,7 @@
   - Netty 为压缩和解压缩提供了 ChannelHandler 实现，它们同时支持 gzip 和 deflate 编码
 
   ```java
-  //自动压缩 HTTP 消息
+  //自动压缩 HTTP 消息以尽可能多地减小传输数据的大小
   public class HttpCompressionInitializer extends ChannelInitializer<Channel> { 
     private final boolean isClient;
   	public HttpCompressionInitializer(boolean isClient) {
@@ -1412,7 +1416,7 @@
 
 - `WebSocket`
 
-  - `WebSocket`提供了“在一个单个的`TCP`连接上提供双向的通信，结合`WebSocket API`，它为网页和远程服务器之间的双向通信提供了一种替代HTTP轮询的方案
+  - `WebSocket`提供了在一个单个的`TCP`连接上提供双向的通信，结合`WebSocket API`，它为网页和远程服务器之间的双向通信提供了一种替代HTTP轮询的方案
   - 应用程序中添加对于 `WebSocket` 的支持，需要将适当的客户端或者服务器`WebSocket` ChannelHandler 添加到 ChannelPipeline 中。这个类将处理由 WebSocket 定义的称为帧的特殊消息类型。`WebSocketFrame` 可以被归类为数据帧或者控制帧
   - 要想为 WebSocket 添加安全性，只需将 SslHandler 作为第一个ChannelHandler 添加到 ChannelPipeline 中
 - 客户端通过`HTTP(S)`向服务器发起`WebSocket`握手，并等待确认，服务端同意后，连接协议升级到`WebSocket`
@@ -1440,13 +1444,13 @@
 
 - 空闲的连接和超时
 
-  - `IdleStateHandler`当连接空闲时间太长时，将会触发一个IdleStateEvent 事件。
+  - `IdleStateHandler`当连接空闲时间太长时，将会触发一个`IdleStateEvent` 事件
 
     - 然后，可以通过在ChannelInboundHandler 中重写 userEventTriggered()方法来处理该 IdleStateEvent 事件
 
   - `ReadTimeoutHandler`如果在指定的时间间隔内没有收到任何的入站数据，则抛出一个 `ReadTimeoutException` 并关闭对应的`Channel`。可以通过重写`ChannelHandler` 中的 `exceptionCaught()`方法来检测该 `ReadTimeoutException`
 
-  - `WriteTimeoutHandler`如果在指定的时间间隔内没有任何出站数据写入，则抛出一个 `WriteTimeoutException` 并关闭对应的 `Channel`。可以通过重写`ChannelHandler`的 `exceptionCaught()`方法检测该 WriteTimeoutException
+  - `WriteTimeoutHandler`如果在指定的时间间隔内没有任何出站数据写入，则抛出一个 `WriteTimeoutException` 并关闭对应的 `Channel`。可以通过重写`ChannelHandler`的 `exceptionCaught()`方法检测该 `WriteTimeoutException`
 
     ```java
     //发送心跳
@@ -1484,9 +1488,9 @@
 
   - `DelimiterBasedFrameDecoder`使用任何由用户提供的分隔符来提取帧的通用解码器
 
-  - `LineBasedFrameDecoder`提取由行尾符(\n或\r\n)分隔的帧的解码器，比DelimiterBasedFrameDecoder更快
+  - `LineBasedFrameDecoder`提取由行尾符(\n或\r\n)分隔的帧的解码器，比`DelimiterBasedFrameDecoder`更快
 
-    ![image-20181030224743554](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181030224743554.png)
+    - 由尾行符分隔的帧，字节流：`ABC\r\nDEF\r\n`—帧：`ABC\r\n`（第一帧）、`DEF\r\n`（第二帧）
 
     ```java
     // 该LineBasedFrameDecoder将提取的帧转发给下一个ChannelInboundHandler
@@ -1502,7 +1506,9 @@
     ```
 
   - 基于长度的协议通过将它的长度编码到帧的头部来定义帧，而不是使用特殊的分隔符来标记它的结束
+
   - `FixedLengthFrameDecoder`提取在调用构造函数时指定的定长帧
+
   - `LengthFieldBasedFrameDecoder`根据编码进帧头部中的长度值提取帧;该字段的偏移量以及长度在构造函数中指定
 
 - 写大型数据
@@ -1525,7 +1531,7 @@
     });
     ```
 
-  - 在需要将数据从文件系统复制到用户内存中时，可以使用 ChunkedWriteHandler，它支持异步写大型数据流，而又不会导致大量的内存消耗
+  - 在需将数据从文件系统复制到用户内存中时，可以使用`ChunkedWriteHandler`，它支持异步写大型数据流，而又不会导致大量的内存消耗
 
     ```java
     //使用 ChunkedStream 传输文件内容
@@ -1557,27 +1563,25 @@
 
   - JDK序列化
 
-    - `ObjectDecoder`构建于 JDK 序列化之上的使用自定义的序列化来解码的解码器
-    - `ObjectEncoder`构建于 JDK 序列化之上的使用自定义的序列化来编码的编码器
-
-  - JBoss Marshalling 进行序列化
-
-    - 比JDK序列化最多快 3 倍，而且也更加紧凑
+    - `ObjectDecoder`/`ObjectEncoder`构建于 JDK 序列化之上的使用自定义的序列化来解码/编码的解码器
+  
+- JBoss Marshalling 进行序列化
+  
+  - 比JDK序列化最多快 3 倍，而且也更加紧凑
     - `MarshallingDecoder`  `MarshallingEncoder`
-
-    ```java
+  
+  ```java
     // 添加 MarshallingDecoder 以 将 ByteBuf 转换为 POJO
     pipeline.addLast(new MarshallingDecoder(unmarshallerProvider));
     // 添加 MarshallingEncoder 以将 POJO 转换为 ByteBuf
     pipeline.addLast(new MarshallingEncoder(marshallerProvider));
     // 添加 ObjectHandler， 以处理普通的实现了 Serializable 接口的 POJO
     pipeline.addLast(new ObjectHandler());
-    ```
-
-  - Protocol Buffers 序列化
+  ```
+  
+- Protocol Buffers 序列化
     - 一种紧凑而高效的方式对结构化的数据进行编码以及解码
-    - `ProtobufDecoder`使用 protobuf 对消息进行解码
-    - `ProtobufEncoder`使用 protobuf 对消息进行编码
+    - `ProtobufDecoder`/`ProtobufEncoder`使用 protobuf 对消息进行解码/编码
 
 ## 异常处理
 
@@ -1605,7 +1609,7 @@
      	}); 
      ```
 
-  2. 几乎所有的`ChannelOutboundHandler` 上的方法都会传入一个`ChannelPromise` 的实例。作为 `ChannelFuture` 的子类，`ChannelPromise` 也可以被分配用于异步通知的监听器。但是，`ChannelPromise` 还具有提供立即通知的可写方法 `setSuccess()` `setFailure`
+  2. 几乎所有的`ChannelOutboundHandler` 上的方法都会传入一个`ChannelPromise` 的实例。作为 `ChannelFuture` 的子类，`ChannelPromise` 也可被分配用于异步通知的监听器。但是，`ChannelPromise` 还具有提供立即通知的可写方法 `setSuccess()` `setFailure`
 
      ```java
      public class OutboundExceptionHandler extends ChannelOutboundHandlerAdapter { 
@@ -1624,7 +1628,7 @@
      }
      ```
 
-     - 通过调用 ChannelPromise 上的 setSuccess()和 setFailure()方法，可以使一个操作的状态在 ChannelHandler 的方法返回给其调用者时便即刻被感知到
+     - 通过调用`ChannelPromise` 上的 `setSuccess()`和` setFailure()`方法，可以使一个操作的状态在 `ChannelHandler` 的方法返回给其调用者时便即刻被感知到
 
 # 网络协议
 
@@ -1664,7 +1668,7 @@
 ## 线程
 
 - 数据报如何读取？读取之后的编解码在哪个线程进行，编解码后的消息如何派发？
-- Reactor 线程模型的不同，对性能的影响也非常大
+- `Reactor`线程模型的不同，对性能的影响也非常大
 
 # Netty高性能
 
@@ -1727,7 +1731,7 @@
 
   - 从架构层面看，一个 NIO 线程确实可以完成其承担的职责。例如，通过 Acceptor 接收客户端的 TCP 连接请求消息，链路建立成功之后，通过Dispatch 将对应的 ByteBuffer 派发到指定的Handler 上进行消息解码。用户 Handler 可以通过 NIO 线程将消息发送给客户端。
 
-  - 对于一些小容量应用场景，可以使用单线程模型。但是对于高负载、大并发的应用却不合适，主要原因如下：
+  - 对于一些小容量应用场景，可使用单线程模型。但对于高负载、大并发的应用却不合适，主要原因如下：
 
     1. 一个 NIO 线程同时处理成百上千的链路，性能上无法支撑，即便 NIO 线程的 CPU 负荷达到 100%，也无法满足海量消息的编码、解码、读取和发送;
     2. 当 NIO 线程负载过重之后，处理速度将变慢，这会导致大量客户端连接超时，超时之后往往会进行重发，这更加重了 NIO 线程的负载，最终会导致大量消息积压和处理超时，NIO线程会成为系统的性能瓶颈;
@@ -1748,7 +1752,7 @@
 
   - 为了解决性能问题，产生了第三种 Reactor 线程模型-主从 Reactor 多线程模型。
 
-- ==主从Reactor线程模型==
+- 主从Reactor线程模型（官方推荐）
 
   - 特点
 
@@ -1764,15 +1768,15 @@
 
   - 事实上，Netty 的线程模型并非固定不变，通过在启动辅助类中创建不同的 EventLoopGroup实例并通过适当的参数配置，就可以支持上述三种 Reactor 线程模型。
 
-  - 正因为 Netty 对Reactor 线程模型的支持提供了灵活的定制能力，所以可以满足不同业务场景的性能诉求
+  - 正因为 Netty 对Reactor 线程模型的支持提供了灵活的定制能力，所以可满足不同业务场景的性能诉求
 
 ## 无锁化的串行设计理念
 
-- 在大多数场景下，并行多线程处理可以提升系统的并发性能。但是，如果对于共享资源的并发访问处理不当，会带来严重的锁竞争，这最终会导致性能的下降。
+- 在大多数场景下，并行多线程处理可以提升系统的并发性能。但是，如果对于共享资源的并发访问处理不当，会带来严重的锁竞争，这最终会导致性能的下降
 
-- ==为了尽可能的避免锁竞争带来的性能损耗，可以通过串行化设计，即消息的处理尽可能在同一个线程内完成，期间不进行线程切换，这样就避免了多线程竞争和同步锁==
+- 为了尽可能的避免锁竞争带来的性能损耗，可以通过串行化设计，即消息的处理尽可能在同一个线程内完成，期间不进行线程切换，这样就避免了多线程竞争和同步锁
 
-- 为了尽可能提升性能，Netty 采用了串行无锁化设计，在 IO 线程内部进行串行操作，避免多线程竞争导致的性能下降。
+- 为了尽可能提升性能，Netty 采用了串行无锁化设计，在 IO 线程内部进行串行操作，避免多线程竞争导致的性能下降
 
 - 表面上看，串行化设计似乎 CPU 利用率不高，并发程度不够。但是，通过调整 NIO 线程池的线程参数，可以同时启动多个串行化的线程并行运行，这种局部无锁化的串行线程设计相比一个队列-多个工作线程模型性能更优。
 
@@ -1782,10 +1786,10 @@
 
 ## 高效的并发编程
 
-1. volatile 的大量、正确使用;
-2. CAS 和原子类的广泛使用
-3. 线程安全容器的使用;
-4. 通过读写锁提升并发性能。
+1. `volatile`的大量、正确使用
+2. `CAS` 和原子类的广泛使用
+3. 线程安全容器的使用
+4. 通过读写锁提升并发性能
 
 ## 高性能的序列化框架
 
@@ -1809,10 +1813,6 @@
 - RMI不能跨语言，只能Java用（只支持Java序列化），是最原始的一种RPC协议，走TCP
 - RPC支持多种协议
 - Dobbo走TCP、支持多种序列化协议，实现跨平台调用
-
-![基于Netty手写实现RPC](/Users/dingyuanjie/Desktop/notes/%E4%B9%A6%E5%8D%95/%E5%9F%BA%E4%BA%8ENetty%E6%89%8B%E5%86%99%E5%AE%9E%E7%8E%B0RPC.png)
-
-![RPC基本原理](/Users/dingyuanjie/Desktop/notes/%E4%B9%A6%E5%8D%95/RPC%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86.png)
 
 ![image-20181106140203347](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/04.%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%AB%98%E5%B9%B6%E5%8F%91/02.Netty/image-20181106140203347.png)
 
@@ -1850,25 +1850,23 @@ public class RPCRegistry {
         //NioEventLoopGroup 是用来处理I/O操作的多线程事件循环器
         //Netty提供了许多不同的EventLoopGroup的实现用来处理不同传输协议
         //创建boss线程组 ⽤于服务端接受客户端的连接
-        //用来接收进来的连接
         //一旦‘boss’接收到连接，就会把连接信息注册到‘worker’上
         EventLoopGroup boosGroup = new NioEventLoopGroup();
-        // 创建 worker 线程组 ⽤于进行客户端的 SocketChannel 的数据读写
-        //用来处理已经被接收的连接
+        // 创建 worker 线程组 ⽤于进行已连接客户端的 SocketChannel 的数据读写
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        //如何知道多少个线程已经被使用，如何映射到已经创建的Channels上都需要依赖于EventLoopGroup的实现，并且可以通过构造函数来配置他们的关系
+        //如何知道多少个线程已经被使用，如何映射到已经创建的Channels上都需依赖于EventLoopGroup的实现，并且可以通过构造函数来配置他们的关系
 
         try {
             //ServerBootstrap 是一个启动NIO服务的辅助启动类
             ServerBootstrap server = new ServerBootstrap();
             server.group(boosGroup, workerGroup)
-                	//设置要被实例例化的为 NioServerSocketChannel 类
+                	//设置要被实例化的为 NioServerSocketChannel 类
                     .channel(NioServerSocketChannel.class)
                 	// 设置 NioServerSocketChannel 的处理器
 					//.handler(new LoggingHandler(LogLevel.INFO))
                 	//犯过的错
                 	//.childHandler(new ChannelInitializer<ServerSocketChannel>() {
-                	// 设置连⼊入服务端的 Client 的 SocketChannel 的处理器
+                	// 设置连入服务端的 Client 的 SocketChannel 的处理器
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
@@ -1889,7 +1887,7 @@ public class RPCRegistry {
                     .option(ChannelOption.SO_BACKLOG, 128)
                 //如果在两小时内没有数据的通信时，TCP会自动发送一个活动探测数据报文
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
-            // 绑定端⼝口，并同步等待成功，即启动服务端
+            // 绑定端口，并同步等待成功，即启动服务端
             ChannelFuture future = server.bind(this.port).sync();
             System.out.println("RPC Registry start listen at " + this.port);
             // 监听服务端关闭，并阻塞等待
@@ -1910,7 +1908,7 @@ public class RPCRegistry {
 //业务逻辑处理
 //继承 SimpleChannelInboundHandler 类之后，会在接收到数据后会自动 release 掉数据占用的 Bytebuffer 资源。并且继承该类需要指定数据格式。 ⽽继承ChannelInboundHandlerAdapter 则不会⾃动释放，需要⼿动调用 ReferenceCountUtil.release()等⽅法进行释放。继承该类不需要指定数据格式
 //推荐服务端继承 ChannelInboundHandlerAdapter ，⼿动进行释放，防⽌数据未处理完就⾃动释放了。而且服务端可能有多个客户端进行连接，并且每⼀个客户端请求的数据格式都不⼀致，这时便可以进行相应的处理
-//客户端根据情况可以继承 SimpleChannelInboundHandler 类。好处是直接指 定好传输的数据格式，就不需要再进行格式的转换了
+//客户端根据情况可以继承 SimpleChannelInboundHandler 类。好处是直接指定好传输的数据格式，就不需再进行格式的转换
 
 //注解 Sharable 主要是为了多个handler可以被多个channel安全地共享，也就是保 证线程安全
  
@@ -1960,7 +1958,6 @@ public class RegistryHandler extends ChannelInboundHandlerAdapter {
                 classCache.add(packageName + "." + file.getName().replace(".class", "").trim());
             }
         }
-
     }
 
     private void doRegister() {
@@ -1980,7 +1977,6 @@ public class RegistryHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-
         cause.printStackTrace();
         ctx.close();
     }
@@ -2010,7 +2006,6 @@ public class RPCConsumer {
 ```java
 //代理
 public class RPCProxy {
-
     public static <T> T create(Class<?> clazz) {
         MethodProxy methodProxy = new MethodProxy(clazz);
 		//犯过的错，因为clazz本身就是接口 new Class<?>[]{clazz}
@@ -2021,7 +2016,6 @@ public class RPCProxy {
 }
 
 class MethodProxy implements InvocationHandler {
-
     private Class<?> clazz;
     public MethodProxy(Class<?> clazz) {
         this.clazz = clazz;
@@ -2206,7 +2200,6 @@ public class NettySocketIOServer {
 
 ```java
 public class NettySocketIOClient {
-
     public NettySocketIOClient() throws URISyntaxException, InterruptedException {
         //客户端配置
         IO.Options options = new IO.Options();

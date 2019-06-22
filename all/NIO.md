@@ -1,11 +1,8 @@
 # Java NIO 组件
 
 * 在 Java 1.4 中推出了 NIO
-* Java NIO 的工作原理：
-  * 由一个专门的线程来处理所有的 IO 事件，并负责分发
-  * 事件驱动机制：事件到的时候触发，而不是同步的去监视事件
-  * 线程通讯：线程之间通过 `wait,notify` 等方式通讯。保证每次上下文切换都是有意义的。减少无谓的线程切换
-  * 反应堆是个抽象的概念，selector是具体的行为的体现
+
+* 反应堆是个抽象的概念，selector是具体的行为的体现
 
 * Java NIO channel和buffer
 
@@ -17,7 +14,7 @@
 
 * Java NIO 是非阻塞IO
 
-  * 线程从channel中读取数据到buffer时，该线程还能够做其他事情，一旦数据读取到buffer后，线程能够继续处理该数据。对于写数据也是一样的。
+  * 线程从channel中读取数据到buffer时，该线程还能够做其他事情，一旦数据读取到buffer后，线程能够继续处理该数据。对于写数据也是一样的
 
   ```java
   //1. 分配空间
@@ -35,7 +32,7 @@
 # 同步与阻塞
 
 * 阻塞和非阻塞是进程在访问数据的时候，数据是否准备就绪的一种处理方式
-  * 阻塞：当进程访问数据缓冲区的时候，进程需要等待缓冲区中的数据准备好过后才处理其他的事情，否则一直等待在那
+  * 阻塞：当进程访问数据缓冲区的时候，进程需要等待缓冲区中的数据准备好后才处理其他的事情，否则一直等待在那
   * 非阻塞：当进程访问数据缓冲区的时候，如果数据没有准备好则直接返回，不会等待
 * 同步和异步都是基于应用程序和操作系统处理 IO 事件所采用的方式
   * 同步：是应用程序要直接参与 IO 读写的操作
@@ -56,7 +53,7 @@
 
 * `SocketChannel`(TCP)
 
-* `ServerSocketChannel`(能够像web服务器一样监听tcp连接，对于每个连接都创建一个`SocketChannel`)
+* `ServerSocketChannel`(监听tcp连接，对于每个连接都创建一个`SocketChannel`)
 
 * `Channel`能够读写，流只能够读或者写；Channel能够异步读写；
 
@@ -115,9 +112,9 @@
     channel.force(true); //是否需要被刷新到硬盘
     ```
 
-* SocketChannel
+* `SocketChannel`
 
-  * 连接到一个TCP的Socket，等价于Java网络编程的Socket
+  * 连接到一个`TCP`的`Socket`，等价于`Java`网络编程的`Socket`
 
     ```java
     // 创建SocketChannel
@@ -156,9 +153,9 @@
     // 由于是非阻塞，异步形式，可能没有数据可读取，需要注意返回的int（多少数据被读取）
     ```
 
-* ServerSocketChannel
+* `ServerSocketChannel`
 
-  * 是一个能够监听TCP连接的Channel，就像一个Java网络编程中的ServerSocket
+  * 监听`TCP`连接，对于每个连接都创建一个`SocketChannel`，就像一个Java网络编程中的`ServerSocket`
 
     ```java
     // 打开一个ServerSocketChannel
@@ -193,18 +190,18 @@
 
 * 属性
 
-  - capacity
-  - position：值由 get()/put()方法自动更新
-  - limit
-    - capacity：buffer初始大小
-    - 写模式：开始position为0，写入数据就增加，最大为capacity-1，limit=capacity
-    - 读模式：调用flip()从写模式切换到读模式，position为0，limit为切换前position大小，读出数据position就增加，最大为limit大小
+  - `capacity`
+  - `position`：值由 `get()/put()`方法自动更新
+  - `limit`
+    - `capacity`：`buffer`初始大小
+    - 写模式：开始`position`为0，写入数据就增加，最大为`capacity-1`，`limit=capacity`
+    - 读模式：调用`flip()`从写模式切换到读模式，`position`为0，`limit`为切换前`position`大小，读出数据`position`就增加，最大为`limit`大小
 
 * 解决缓冲区满了：
 
   * 通过协议：先解析存储消息体长度的字节来确定创建多大的缓冲区
 
-* * 分配Buffer，如`ByteBuffer buf = ByteBuffer.allocate(48);`
+  * 分配`Buffer`，如`ByteBuffer buf = ByteBuffer.allocate(48);`
 
 * 写入Buffer
     * 从Channel写入Buffer，如`int bytesRead = inChannel.read(buf); `
@@ -214,7 +211,7 @@
   * 读取Buffer
     * 将Buffer读取到Channel，如`int bytesWritten = inChannel.write(buf);`
     * Buffer自己读取，`byte aByte = buf.get(); `
-  * `Buffer.rewind()`，将position重置为0，可以再次读取所有Buffer中数据，limit不变
+  * `Buffer.rewind()`，将`position`重置为0，可以再次读取所有`Buffer`中数据，`limit`不变
   * `Buffer.clear()`和`Buffer.compact()`
     * 读取完数据之后，写入数据之前调用
       * `clear()`把所有状态设置为初始值，将`position`设置为0，`limit`设置为`capacity`
@@ -224,8 +221,8 @@
   * `Buffer.equals()`和`Buffer.compareTo()`
     * `equals()`相同条件：类型相同、剩余未读数据数量相等、剩余未读数据`equal`为`true`
     * `compareTo()`，小于另一个条件：
-      * 甲Buffer第一个元素和乙Buffer的某个元素相等，则甲小于乙
-      * 所有元素相等，但是甲Buffer先消耗完
+      * 甲`Buffer`第一个元素和乙`Buffer`的某个元素相等，则甲小于乙
+      * 所有元素相等，但是甲`Buffer`先消耗完
   
 * Scatter和Gather
 
@@ -300,15 +297,15 @@
 
 * 直接缓冲区
 
-  * 为加快 I/O 速度，使用一种特殊方式为其分配内存的缓冲区
-  * 需要调用` allocateDirect()`方法，而不是 allocate()方法，使用方式与普通缓冲区并无区别
-  * Direct Bufer创建和销毁过程中，都会比一般的堆内Bufer增加部分开销，所以通常都建议用于长期使用、数据较大的场景
+  * 为加快 `I/O`速度，使用一种特殊方式为其分配内存的缓冲区
+  * 需要调用` allocateDirect()`方法，而不是`allocate()`方法，使用方式与普通缓冲区并无区别
+  * `Direct Bufer`创建和销毁过程中，都会比一般的堆内`Bufer`增加部分开销，所以通常都建议用于长期使用、数据较大的场景
 
-* 内存映射文件 I/O
+* 内存映射文件 `I/O`
 
   * MappedByteBufer将文件按照指定大小直接映射为内存区域，当程序访问这个内存区域时将直接操作这块儿文件数据，省去了将数据从内核空间向用户空间传输的损耗。本质上也是种Direct Bufer
 
-  * 是一种读和写文件数据的方法，它可以比常规的基于流或者基于通道的 I/O 快的多
+    * 是一种读和写文件数据的方法，它可以比常规的基于流或者基于通道的 I/O 快的多
 
   * 是通过使文件中的数据出现为内存数组的内容来完成的，这其初听起来似乎不过就是将整个文件读到内存中，但是事实上并不是这样。一般来说，只有文件中实际读取或者写入的部分才会映射到内存中
   
@@ -330,7 +327,24 @@
   * 当有读或写等任何注册的事件发生时，可从` Selector `中获得相应的`SelectionKey`，同时从 `SelectionKey`中可找到发生的事件和该事件所发生的具体的`SelectableChannel`，以获得客户端发送过来的数据
   * 使用较少的线程便可以处理许多连接，因此也减少了内存管理和上下文切换所带来开销
   * 当没有 I/O 操作需要处理的时候，线程也可以被用于其他任务
+  
 * 适用于打开很多channel，但是只是传输少量数据
+
+* 一个或多个SelectableChannel实例注册到Selector，通过调用Selector的select()或selectNow()将返回有数据可读的SelectableChannel实例
+
+* 当从SelectableChannel中读取数据时不能确定读取了多少数据，可能得到部分、完整、超过完整的数据，所以需要
+
+  - 检查是否读取了完整数据
+  - 如果只读取了部分数据，则需存储该数据直到下部分数据到来
+
+  1. 尽可能复制少的数据，数据越多性能越低
+  2. 将完整的数据存入到一个连续的字节序列中使其容易处理
+
+* 一些协议消息格式使用TLV(Type, Length, Value)格式编码，当消息到达时，消息的总长度存储在消息的开头，这样就可以立即知道为整个消息分配多少内存
+
+  - 写入部分数据
+    - write(ByteBuffer)返回写入的字节数
+    - 确保只有具有要写入消息的Channel实例才能实际注册到Selector
 
 * NIO 中非阻塞 I/O 采用了基于 Reactor 模式的工作方式，I/O 调用不会被阻塞，相反是注册感兴趣的特定 I/O 事件，如可读数据到达，新的套接字连接等等，在发生特定事件时，系统再通知我们
 
@@ -356,9 +370,9 @@
   // 3. 根据不同的事件进行相应的处理
   ```
 
-* SelectionKey
+* `SelectionKey`
 
-  * Channel注册到Selector时返回
+  * `Channel`注册到`Selector`时返回
 
   * 包含属性：
 
@@ -398,7 +412,7 @@
   
     * An attached object (optional)
     
-      * 可以通过在SelectionKey中附件一个对象来识别一个给定的Channel，或者在Channel上附件一些信息（如Buffer、对象）
+      * 可以通过在`SelectionKey`中附件一个对象来识别一个给定的`Channel`，或在`Channel`上附件一些信息（如`Buffer`、对象）
 
       ```java
   selectionKey.attach(theObject);
@@ -409,7 +423,7 @@
   
 * 通过Selector选择Channel
 
-  * 通过调用selector()，返回已经准备好的Channel，并且对该Channel的某些事件(connect, accept, read or write)感兴趣
+  * 通过调用select()，返回已经准备好的Channel，并且对该Channel的某些事件(connect, accept, read or write)感兴趣
 
     * 如果对一个Channel的读取事件感兴趣，能够通过select()获得准备被读取的Channel
 
@@ -471,48 +485,19 @@
 
 ## Non-blocking IO Pipelines
 
-* 一个非阻塞IO Pipeline
+* 一个非阻塞`IO Pipeline`
 
-  * 使用一系列组件来进行非阻塞IO，包括读取IO和写入IO
-    * Channel-Selector-Component-Channel
-  * 不需要具备读取和写入，有些pipeline只能读取数据，有些只能写入数据
-  * 能够同时从多个Channel中读取数据，例如从多个SocketChannel中读取数据
+  * 使用一系列组件来进行非阻塞`IO`，包括读取`IO`和写入`IO`
+    * `Channel-Selector-Component-Channel`
+  * 不需要具备读取和写入，有些`pipeline`只能读取数据，有些只能写入数据
+  * 能够同时从多个`Channel`中读取数据，例如从多个`SocketChannel`中读取数据
 
-* 数据从哪里读取
-
-  * BIO从流（file或者socket）中读取到一个连续的消息中
-
-    * BIO通过InputStream一次只能读取一个字节，并且InputStream将阻塞直到有数据可读
-    * 每个流都需要一个线程去处理消息，因为每个流将阻塞直到有数据可读。单个线程读取流的时候，流中没有数据也不能去读取其他流
-    * BIO使用一个线程对应一个连接，当连接很多时会非常占用系统资源
-
-  * NIO可以使用单个线程从多个流中读取数据，要求流能够切换到非阻塞模式
-
-    * 在非阻塞模式中，一次可以从流中读取0个或者多个字节
-    * 通过Selector来避免检查流读取0个字节
-  
-* 一个或多个SelectableChannel实例注册到Selector，通过调用Selector的select()或selectNow()将返回有数据可读的SelectableChannel实例
-  
-* 当从SelectableChannel中读取数据时不能确定读取了多少数据，可能得到部分、完整、超过完整的数据，所以需要
-  
-  *  检查是否读取了完整数据
-  
-  * 如果只读取了部分数据，则需存储该数据直到下部分数据到来
-  1.  尽可能复制少的数据，数据越多性能越低
-  
-  2. 将完整的数据存入到一个连续的字节序列中使其容易处理
-  
-* 一些协议消息格式使用TLV(Type, Length, Value)格式编码，当消息到达时，消息的总长度存储在消息的开头，这样就可以立即知道为整个消息分配多少内存
-  
-    * 写入部分数据
-      * write(ByteBuffer)返回写入的字节数
-      * 确保只有具有要写入消息的Channel实例才能实际注册到Selector
 
 ## Server Thread Model
 
 * 两个线程的线程模型
 
-  * 第一个线程从ServerSocketChannel处接收传入连接
+  * 第一个线程从`ServerSocketChannel`处接收传入连接
 
   * 第二个线程处理接受的连接，即读取消息，处理消息和将响应写回连接
 
@@ -547,9 +532,9 @@
 
 ## Java NIO Pipe
 
-* Java NIO Pipe是两个线程之间的单向数据连接
+* `Java NIO Pipe`是两个线程之间的单向数据连接
 
-* 管道具有源通道和接收器通道。将数据写入接收器通道（sink channel），然后可以从源通道读取该数据（ source channel）
+* 管道具有源通道和接收器通道。将数据写入接收器通道（`sink channel`），然后可以从源通道读取该数据（ `source channel`）
 
   ![image-20190417115904872](/Users/dingyuanjie/Library/Application Support/typora-user-images/image-20190417115904872.png)
 
@@ -579,21 +564,26 @@
 * IO：
 
   * 面向流
-    * 从流中一次读取一个或多个字节，不会缓存在任何地方，无法在流中前后移动数据，除非先将其缓存在缓冲区中。
+    * 从流中（file或者socket）一次读取一个或多个字节，不会缓存在任何地方，无法在流中前后移动数据，除非先将其缓存在缓冲区中
   * 阻塞IO
-    * Java IO的各种流都是阻塞的。当线程调用read()或write()时，该线程将被阻塞，直到有一些数据要读取，或者数据被完全写入。在此期间，该线程无法执行任何其他操作。
+    * `Java IO`的各种流都是阻塞的，每个流都需要一个线程去处理
+      * 当线程调用`read()`或`write()`时，该线程将被阻塞，直到有一些数据要读取，或者数据被完全写入。在此期间，该线程无法执行任何其他操作。
 
 * NIO：
 
-  * 面向Buffer
-    * 数据被读入缓冲区，稍后处理该缓冲区。可以根据需要在缓冲区中前后移动，处理具有灵活性。但是，还需要检查缓冲区是否包含完整的所需处理数据，并且要确保后面的数据不覆盖前面尚未处理的数据
+  * 面向`Buffer`
+    * 数据被读入缓冲区，稍后处理该缓冲区
+      * 可根据需要在缓冲区中前后移动，处理具有灵活性。但是，还需要检查缓冲区是否包含完整的所需处理数据，并且要确保后面的数据不覆盖前面尚未处理的数据
   * 非阻塞
-    * 线程从Channel中请求数据时，读取不到或者只能读取部分数据，该线程不会阻塞直到所有可读数据准备好可读取，而是可以去做其他事情。线程不必等所有可写数据都准备好才写入到Channel中，当没有数据可写入时，线程也可以去做其他事情
-  * Selector
-    * 一个线程可以管理多个Channel的输入和输出：当线程没有阻塞在IO调用上时，它将执行其他Channel的IO
-    * 线程通常将非阻塞 IO 的空闲时间用于在其它通道上执行 IO 操作，所以一个单独的线程现在可以管理多个输入和输出通道(channel)
+    * NIO可使用单个线程从多个流中读取数据，要求流能够切换到非阻塞模式
+      * 在非阻塞模式中，一次可以从流中读取0个或者多个字节
+      * 通过Selector来避免检查流读取0个字节
+    * 线程从`Channel`中请求数据时，读取不到或者只能读取部分数据，该线程不会阻塞直到所有可读数据准备好可读取，而是可以去做其他事情。线程不必等所有可写数据都准备好才写入到`Channel`中，当没有数据可写入时，线程也可以去做其他事情
+  * `Selector`
+    * 一个线程可以管理多个`Channel`的输入和输出：当线程没有阻塞在`IO`调用上时，它将执行其他`Channel`的`IO`
+    * 线程通常将非阻塞 `IO` 的空闲时间用于在其它通道上执行 `IO` 操作，所以一个单独的线程现在可以管理多个输入和输出通道(`channel`)
     * 选择器机制使单个线程可以轻松管理多个通道：
-      - 注册多个Channel到Selector，然后单个线程去检查并获取那些能够写入和读取的Channel
+      - 注册多个`Channel`到`Selector`，然后单个线程去检查并获取那些能够写入和读取的`Channel`
 
 * NIO和IO如何影响应用程序设计
 
@@ -606,7 +596,8 @@
     * IO从InputStream或者Reader中逐个字节读取
 
       ```java
-      FileInputStream input = new FileInputStream("d://info.txt");  // get the InputStream from the client socket
+      FileInputStream input = new FileInputStream("d://info.txt");  
+      // get the InputStream from the client socket
       BufferedReader reader = new BufferedReader(new InputStreamReader(input));
       //readLine()阻塞直到一行读完，仅在有新数据读入时运行，并知道每步的数据是什么
       String nameLine   = reader.readLine();
@@ -620,7 +611,7 @@
       // read方法返回时，只知道读取了一些数据，不知道是否读取了完整的数据
       int bytesRead = inChannel.read(buffer);
       //  bufferFull方法返回Buffer是否填充满
-      while(! bufferFull(bytesRead) ) {
+      while(!bufferFull(bytesRead)) {
           bytesRead = inChannel.read(buffer);
       }
       ```
@@ -631,13 +622,13 @@
 
 * 总之
 
-  * 如果要同时管理上千个只发送少量数据的连接，例如聊天服务器，那么使用NIO作为服务器有优势；同样，如果需要维护一些和其他计算机的连接，例如在P2P网络中，使用单个线程去管理所有外部连接有优势
-  * 如果有需发送大量数据、占用高宽带的少量连接，则使用IO Server比较适合，一个连接通过一个线程处理
+  * 如果要同时管理上千个只发送少量数据的连接，例如聊天服务器，那使用NIO作为服务器有优势；同样，如果需要维护一些和其他计算机的连接，例如在P2P网络中，使用单个线程去管理所有外部连接有优势
+  * 如有需发送大量数据、占用高宽带的少量连接，则使用IO Server比较适合，一个连接通过一个线程处理
   * ![各IO操作对比](/Users/dingyuanjie/Desktop/notes/书单/各IO操作对比.png)
 
 # Java Path 
 
-* Java Path（`java.nio.file.Path`）实例代表了一个文件系统的路径，能够指向一个文件或目录，分绝对路径和相对路径
+* `Java Path`（`java.nio.file.Path`）实例代表了一个文件系统的路径，能够指向一个文件或目录，分绝对路径和相对路径
 
   ```java
   //创建Path实例
@@ -651,7 +642,7 @@
   Paths.get(basePath, relativePath)
   Path projects = Paths.get("d:\\data", "projects");
   Path file     = Paths.get("d:\\data", "projects\\a-project\\myfile.txt");
-  //. 表示 当前目录
+  //. 表示当前目录
   Path currentDir = Paths.get(".");
   System.out.println(currentDir.toAbsolutePath());
   //d:\data\projects\a-project
@@ -681,11 +672,7 @@
 # AsynchronousFileChannel
 
 ```java
-// 创建
 Path path = Paths.get("data/test.xml");
-AsynchronousFileChannel fileChannel =
-    AsynchronousFileChannel.open(path, StandardOpenOption.READ);
-
 // 通过Future读取数据，（ByteBuffer，position）
 AsynchronousFileChannel fileChannel = 
     AsynchronousFileChannel.open(path, StandardOpenOption.READ);
@@ -765,9 +752,7 @@ fileChannel.write(buffer, position, buffer, new CompletionHandler<Integer, ByteB
 
 ```java
 public class ThreadPoolUtil {
-
     private ThreadPoolUtil(){}
-
     private static class ThreadPoolHolder{
         static ThreadFactory nameThreadFactory = new ThreadFactoryBuilder().setNameFormat("demo-pool-%d").build();
         private static final ExecutorService threadPool = new ThreadPoolExecutor(5, 200,
@@ -786,9 +771,7 @@ public class ThreadPoolUtil {
 
 ```java
 public class Test {
-
     public static void main(String[] args) throws InterruptedException {
-
         //运行服务器
         ThreadPoolUtil.getThreadPool().execute(new Runnable() {
             @Override
@@ -868,9 +851,7 @@ public class BIOServer {
 
 ```java
 public class ServerHandler implements Runnable {
-
     private Socket socket;
-
     public ServerHandler(Socket socket) {
         this.socket = socket;
     }
@@ -924,7 +905,6 @@ public class ServerHandler implements Runnable {
 
 ```java
 public class Calculator {
-
     public static int cal(String expression) throws Exception {
         char op = expression.charAt(1);
         switch (op) {
@@ -1249,7 +1229,7 @@ public class NIOClient {
  * 功能2：客户端初次连接时，服务端提示输入昵称，如果昵称已经有人使用，提示重新输入，如果昵称唯一，则登录成功，之后发送消息都需要按照规定格式带着昵称发送消息
  * 功能3：客户端登录后，发送已经设置好的欢迎信息和在线人数给客户端，并且通知其他客户端该客户端上线
  * 功能4：服务器收到已登录客户端输入内容，转发至其他登录客户端。
- * 
+ 
  * TODO 客户端下线检测
  */
 ```

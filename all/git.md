@@ -1,3 +1,91 @@
+```shell
+# 下载
+# 配置用户信息
+git config --global user.name "woody"
+git config --global user.email "woody@163.com"
+git config --list
+# SourceTree 图形化界面
+# 初始化版本库
+git init
+echo "git repo2" >> test.txt
+git add test.txt
+git commit -m "repo2 first commit"
+git status
+# 暂存区回退到工作区
+git reset HEAD bash_demo.txt
+# 清理工作区
+git checkout -- bash_demo.txt
+# 远程仓库回滚
+git log   # 获取 commitID
+git reset --hard commitID
+git status
+# 清空文件（本地、远程仓库）
+git rm bash_demo.txt
+git status
+git commit -m "..."
+```
+
+```shell
+# 创建SSH key
+ssh-keygen -t rsa -C "woody@163.com"
+# 系统用户目录
+cd .ssh/
+ll   # id_rsa、id_rsa.pub、known_hosts
+cat id_rsa.pub   # 内容复制到github的setting设置的SSH and GPG keys的 Key中
+# 判断本地和github是否是通的
+ssh -T git@github.com
+
+# 远程创建一个空仓库 demo4.git
+# 本地初始化仓库
+echo "# tyler_muke" >> README.md
+git init 
+git add README.md
+git commit -m "first commit"
+# 添加到远程仓库
+git remote add origin git@github.com:tylerdemo/demo4.git
+# 本地仓库和远程仓库关联起来
+# git pull origin master --allow-unrelated-histories
+git push -u origin master
+```
+
+```shell
+# 克隆仓库
+git clone git@github.com:tylerdemo/demo4.git
+git add ..
+git commit ..
+git push    # 默认本地已与远程绑定，可直接push推送
+```
+
+```shell
+# 标签管理  版本-回滚
+git tag  # 查看所有标签
+git tag name  # 创建标签
+# git tag -a name -m "comment"  # 指定提交信息
+git tag -d name # 删除标签
+git push origin name # 标签发布
+```
+
+```shell
+# 分支管理
+git init 
+echo "xxx" >> branch.txt
+git add baranch.txt
+git commit -m "xx"
+git status
+# 创建分支
+git branch feature_x
+git branch       # 查看分支（*当前分支master）
+git checkout feature_x # feature_x
+echo "new feature" >> baranch.txt
+git add barnch.txt
+git commit -m "new feature add"
+# 合并到master分支
+git checkout master
+git merge feature_x
+# 删除分支
+git branch -d feature_x
+```
+
 # Git
 
 * 开源分布式管理控制系统
