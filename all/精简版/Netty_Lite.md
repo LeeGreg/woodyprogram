@@ -74,7 +74,26 @@
   * writeAndFlush()
     * 从tail节点开始往前传播、逐个调用channelHandler的write方法、逐个调用channelHandler的flush方法
 
+* Netty 服务端启动的流程：创建一个引导类，然后给他指定线程模型，IO模型，连接读写处理逻辑，绑定端口之后，服务端就启动起来了，bind 方法是异步的，可通过这个异步机制来实现端口递增绑定
+
+  * 服务端 Channel 或者客户端 Channel 设置属性值，设置底层 TCP 参数
+
+* Netty 客户端启动的流程：创建一个引导类，然后给他指定线程模型，IO 模型，连接读写处理逻辑，连接上特定主机和端口，客户端就启动起来了， `connect` 是异步的，可通过异步回调机制来实现指数退避重连逻辑
+
+  * 客户端 Channel 绑定自定义属性值，设置底层 TCP 参数
+
+* Netty 对二进制数据的抽象 ByteBuf 的结构，本质上它的原理就是，它引用了一段内存，这段内存可以是堆内也可以是堆外的，然后用引用计数来控制这段内存是否需要被释放，使用读写指针来控制对 ByteBuf 的读写
+
+  * 基于读写指针和容量、最大可扩容容量
+  * 多个 ByteBuf 可引用同一段内存，通过引用计数来控制内存的释放，遵循谁 retain() 谁 release() 的原则
+
 * 连接服务端：`telnet 127.0.0.1 8888`
+
+* 
+  序列化和编码都是把 Java 对象封装成二进制数据的过程，这两者有什么区别和联系？
+
+  * 序列化是关于移动结构化数据在存储/传输介质上的结构可以保持的方式
+  * 编码更广泛，数据如何转换为不同的形式
 
 * 传统RPC调用性能差的三宗罪
   * 网络传输方式
@@ -230,6 +249,7 @@
 
 * 迭代器模式：对容器里面各个对象进行访问
 * 责任链模式：将一些对象连接成一条链，消息在这条链之间传递，链中对象能够处理自己关心的消息
+  
   * 继承ChannelInboundHandlerAdapter，如果不重写channelRead，默认会继续往下传播，而fireChannelRead是显示传播
 
 ## 调优
@@ -256,6 +276,24 @@
   * ChannelHandler、ByteBuf
 
 ![image-20190420115756469](/Users/dingyuanjie/Library/Application Support/typora-user-images/image-20190420115756469.png)
+
+## 协议
+
+* 服务端与客户端的通信协议
+  * 无论是使用 Netty 还是原始的 Socket 编程，基于 TCP 通信的数据包格式均为二进制
+  * 协议指的就是客户端与服务端事先商量好的，每一个二进制数据包中每一段字节分别代表什么含义的规则
+  * 客户端（对象 -> 二进制）—— 服务端（二进制 -> 对象）
+
+  ![image-20190623065639942](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190623065639942.png)
+
+  * 第一个字段是魔数，通常为固定的几个字节，服务端首先取出前面四个字节（魔数）进行比对，能够在第一时间识别出这个数据包是否遵循自定义协议，为了安全考虑可以直接关闭连接以节省资源。在 Java 的字节码的二进制文件中，开头的 4 个字节为`0xcafebabe` 用来标识这是个字节码文件，亦是异曲同工之妙
+  * 版本号，通常情况下是预留字段，用于协议升级时
+  * 序列化算法表示如何把 Java 对象转换二进制数据以及二进制数据如何转换回 Java 对象，比如 Java 自带的序列化，json，hessian 等序列化方式
+  * 指令，服务端或者客户端每收到一种指令都会有相应的处理逻辑
+  * 数据部分的长度，占四个字节
+  * 数据内容，每一种指令对应的数据是不一样的
+
+* 把 Java 对象根据协议封装成二进制数据包的过程成为编码，而把从二进制数据包中解析出 Java 对象的过程成为解码
 
 ## EventLoop
 
@@ -601,6 +639,8 @@
 
 ## ByteBuf
 
+* 引用了一段内存，这段内存可以是堆内也可以是堆外的，然后用引用计数来控制这段内存是否需要被释放，使用读写指针来控制对 ByteBuf 的读写
+
 * ByteBuf分类
   * Pooled和Unpooled
   * Unsafe和非Unsafe：unsafe会调用jdk底层的api直接操作内存
@@ -627,8 +667,17 @@
 
   * 随机访问索引，ByteBuf的索引也是从0开始的，最后一个字节的位置是容量-1
   * 顺序访问索引，ByteBuf 被它的两个索引划分成 3 个区域，0-readerIndex：已被读取可丢弃的字节，readerIndex-writerIndex：可读字节，writerIndex-capacity：可写字节
+    * 还有个容量上限：maxCapacity，当向 ByteBuf 写数据的时候，如果容量不足时可进行扩容，直到 capacity 扩容到 maxCapacity，超过 maxCapacity 就会报错
+  * `markReaderIndex() 与 resetReaderIndex()`
+    * 前者表示把当前的读指针保存起来，后者表示把当前的读指针恢复到之前保存的值
+  * `release() 与 retain()`
+    * Netty 的 ByteBuf 是通过引用计数的方式管理，默认情况下，当创建完一个 ByteBuf，它的引用为1，然后每次调用 retain() 方法， 它的引用就加一， release() 方法原理是将引用计数减一，减完之后如果发现引用计数为0，则直接回收 ByteBuf 底层的内存
 
 * 类型
+
+  * 由于 Netty 使用了堆外内存不被 jvm 直接管理，需手动回收，`release() 与 retain()`
+
+    * Netty 的 ByteBuf 是通过引用计数的方式管理，如果一个 ByteBuf 没有地方被引用到，需要回收底层内存，现引用计数为0，则直接回收 ByteBuf 底层的内存
 
   * 堆缓冲区（支撑数组）
 
@@ -714,8 +763,14 @@
       `order(ByteOrder);` `readSlice(int)`
 
       * 返回一个新的 ByteBuf 实例，具有自己的读索引、写索引和标记索引
-
+      
+    * slice() 只截取从 readerIndex 到 writerIndex 之间的数据，它返回的 ByteBuf 的最大容量被限制到原始 ByteBuf 的 readableBytes(), 而 duplicate() 是把整个 ByteBuf 都与原始的 ByteBuf 共享
+    
     * 独立数据副本，`copy`或者`copy(int,int)`，需进行内存复制操作，不仅消耗更多资源，执行方法也会更耗时 
+    
+    * slice()、duplicate()、copy()均维护着自己的读写指针，与原始的 ByteBuf 的读写指针无关，相互之间不受影响
+    
+    * 在一个函数体里面，只要增加了引用计数（包括 ByteBuf 的创建和手动调用 retain() 方法），就必须调用 release() 方法。遵循谁 retain() 谁 release() 的原则
 
 * 分配
 
@@ -1429,6 +1484,388 @@
 
 # Demo
 
+## 通信协议
+
+* 协议
+
+```java
+//通信过程中 Java 对象的抽象类
+@Data
+public abstract class Packet {
+    //协议版本
+    private Byte version = 1;
+    //指令,指令数据包都必须实现这个方法，这样就可知道某种指令的含义
+    public abstract Byte getCommand();
+}
+```
+
+```java
+public interface Command {
+    Byte LOGIN_REQUEST = 1;
+    Byte LOGIN_RESPONSE = 2;
+    Byte MESSAGE_REQUEST = 3;
+    Byte MESSAGE_RESPONSE = 4;
+}
+
+//客户端登录请求为例，定义登录请求数据包
+@Data
+public class LoginRequestPacket extends Packet {
+    private Integer userId;
+    private String username;
+    private String password;
+
+    @Override
+    public Byte getCommand() {
+        return LOGIN_REQUEST;
+    }
+}
+
+@Data
+public class LoginResponsePacket extends Packet {
+    private boolean success;
+    private String reason;
+
+    @Override
+    public Byte getCommand() {
+        return LOGIN_RESPONSE;
+    }
+}
+```
+
+```java
+public class PacketCodeC {
+    private static final int MAGIC_NUMBER = 0x12345678;
+    private static final Map<Byte, Class<? extends Packet>> packetTypeMap;
+    private static final Map<Byte, Serializer> serializerMap;
+
+    static {
+        packetTypeMap = new HashMap<>();
+        packetTypeMap.put(LOGIN_REQUEST, LoginRequestPacket.class);
+
+        serializerMap = new HashMap<>();
+        Serializer serializer = new JSONSerializer();
+        serializerMap.put(serializer.getSerializerAlogrithm(), serializer);
+    }
+		//编码：封装成二进制的过程
+    public ByteBuf encode(Packet packet) {
+        // 1. 创建 ByteBuf 对象
+      	//ioBuffer()返回适配io读写相关的内存，它会尽可能创建一个直接内存（可以理解为不受 jvm 堆管理的内存空间，写到 IO 缓冲区的效果更高）
+        ByteBuf byteBuf = ByteBufAllocator.DEFAULT.ioBuffer();
+        // 2. 序列化 java 对象
+        byte[] bytes = Serializer.DEFAULT.serialize(packet);
+        // 3. 实际编码过程
+        byteBuf.writeInt(MAGIC_NUMBER);
+        byteBuf.writeByte(packet.getVersion());
+        byteBuf.writeByte(Serializer.DEFAULT.getSerializerAlogrithm());
+        byteBuf.writeByte(packet.getCommand());
+        byteBuf.writeInt(bytes.length);
+        byteBuf.writeBytes(bytes);
+        return byteBuf;
+    }
+		//解码：解析 Java 对象的过程
+    public Packet decode(ByteBuf byteBuf) {
+        // 跳过 magic number
+        byteBuf.skipBytes(4);
+        // 跳过版本号
+        byteBuf.skipBytes(1);
+        // 序列化算法
+        byte serializeAlgorithm = byteBuf.readByte();
+        // 指令
+        byte command = byteBuf.readByte();
+        // 数据包长度
+        int length = byteBuf.readInt();
+        byte[] bytes = new byte[length];
+        byteBuf.readBytes(bytes);
+      
+        Class<? extends Packet> requestType = getRequestType(command);
+        Serializer serializer = getSerializer(serializeAlgorithm);
+        if (requestType != null && serializer != null) {
+            return serializer.deserialize(requestType, bytes);
+        }
+        return null;
+    }
+
+    private Serializer getSerializer(byte serializeAlgorithm) {
+        return serializerMap.get(serializeAlgorithm);
+    }
+
+    private Class<? extends Packet> getRequestType(byte command) {
+        return packetTypeMap.get(command);
+    }
+}
+```
+
+* 序列化
+
+```java
+//把一个 Java 对象转换成二进制数据
+// 如果想要实现其他序列化算法的话，只需要继承一下 Serializer，然后定义一下序列化算法的标识，再覆盖一下两个方法即可
+public interface Serializer {
+  	//序列化算法的类型以及默认序列化算法
+  	//json 序列化
+    byte JSON_SERIALIZER = 1;
+    Serializer DEFAULT = new JSONSerializer();
+  
+    //序列化算法， 获取具体的序列化算法标识
+    byte getSerializerAlgorithm();
+    //java 对象转换成二进制
+    byte[] serialize(Object object);
+    //二进制转换成 java 对象
+    <T> T deserialize(Class<T> clazz, byte[] bytes);
+}
+
+public interface SerializerAlgorithm {
+    //json 序列化标识
+    byte JSON = 1;
+}
+```
+
+```java
+//使用最简单的 json 序列化方式，使用阿里巴巴的 fastjson 作为序列化框架
+public class JSONSerializer implements Serializer {
+    @Override
+    public byte getSerializerAlgorithm() {
+        return SerializerAlgorithm.JSON;
+    } 
+
+    @Override
+    public byte[] serialize(Object object) {
+        return JSON.toJSONBytes(object);
+    }
+
+    @Override
+    public <T> T deserialize(Class<T> clazz, byte[] bytes) {
+        return JSON.parseObject(bytes, clazz);
+    }
+}
+```
+
+## 客户端登录
+
+* 客户端登录成功或者失败之后，如果把成功或者失败的标识绑定在客户端的连接上？服务端又是如何高效避免客户端重新登录？
+  * 可以给客户端连接，也就是 Channel 绑定属性，通过 `channel.attr(xxx).set(xx)` 的方式，可在登录成功之后，给 Channel 绑定一个登录成功的标志位，然后判断是否登录成功的时候取出这个标志位就可以了
+
+![image-20190623080206778](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190623080206778.png)
+
+
+
+```java
+//定义一下是否登录成功的标志位
+public interface Attributes {
+    AttributeKey<Boolean> LOGIN = AttributeKey.newInstance("login");
+}
+```
+
+```java
+public class LoginUtil {
+    public static void markAsLogin(Channel channel) {
+        channel.attr(Attributes.LOGIN).set(true);
+    }
+
+    public static boolean hasLogin(Channel channel) {
+        Attribute<Boolean> loginAttr = channel.attr(Attributes.LOGIN);
+        return loginAttr.get() != null;
+    }
+}
+```
+
+* 
+
+  ![image-20190623104514638](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190623104514638.png)
+
+  * 避免if else，优化：
+    * 模块化处理，不同的逻辑放置到单独的类来处理，最后将这些逻辑串联起来，形成一个完整的逻辑处理链
+    * Netty 中的 pipeline 和 channelHandler：它通过责任链设计模式来组织代码逻辑，并且能够支持逻辑的动态添加和删除 ，Netty 能够支持各类协议的扩展，比如 HTTP，Websocket，Redis
+    * `ChannelInboundHandlerAdapter`的 `channelRead()` 方法里面，调用父类的 `channelRead()` 方法`super.channelRead(ctx, msg);`，而这里父类的 `channelRead()` 方法会自动调用到下一个 inBoundHandler 的 `channelRead()` 方法，并且会把当前 inBoundHandler 里处理完毕的对象传递到下一个 inBoundHandler，如传递的对象都是同一个 msg
+      * `ctx.fireChannelRead(packet)`，解码后的对象传递到下一个 handler 处理
+    * `ChannelOutboundHandlerAdapter`的 `write()` 方法里面调用父类的 `write()` 方法，而这里父类的 `write()` 方法会自动调用到下一个 outBoundHandler 的 `write()` 方法`super.write(ctx, msg, promise);`，并且会把当前 outBoundHandler 里处理完毕的对象传递到下一个 outBoundHandler
+      * inboundA <-> inboundB <-> inboundC <-> outboundA <-> outboundB <-> outboundC
+    * inBoundHandler 的执行顺序与实际的添加顺序相同，而 outBoundHandler 则相反
+
+* git：构建客户端与服务端pipeline
+
+  ![image-20190623112722309](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190623112722309.png)
+
+  * 基于 ByteToMessageDecoder，可实现自定义解码，而不用关心 ByteBuf 的强转和解码结果的传递
+    * 无论是在客户端还是服务端，当收到数据之后，首先把二进制数据转换到一个 Java 对象
+    * 继承 `ByteToMessageDecoder` 只需实现 `decode()` 方法， in传递进来时已是 ByteBuf 类型，所以不再需要强转，第三个参数是 `List` 类型，通过往这个 `List` 里面添加解码后的结果对象，就可以自动实现结果往下一个 handler 进行传递，这样就实现了解码的逻辑 handler
+    *  Netty 里面的 ByteBuf，使用 `4.1.6.Final` 版本，默认情况下用的是堆外内存，需要自行手动释放，否则存在内存泄漏
+    *  `ByteToMessageDecoder`，Netty 会自动进行内存的释放
+  * 继承 `SimpleChannelInboundHandler<参数>`，可实现每一种指令的处理，不再需要强转，不再有冗长乏味的 `if else` 逻辑，不需要手动传递对象，自动实现类型判断和对象传递，可专注于处理所关心的指令即可
+  * 继承 `MessageToByteEncoder<参数>`，可实现自定义编码，而不用关心 ByteBuf 的创建，不用每次向对端写 Java 对象都进行一次编码，它的功能就是将对象转换到二进制数据
+
+## 拆包粘包解决方案
+
+* 对于操作系统来说，只认 TCP 协议，尽管应用层是按照 ByteBuf 为单位来发送数据，但到了底层操作系统仍然是按照字节流发送数据，因此，数据到了服务端，也是按照字节流的方式读入，然后到了 Netty 应用层面，重新拼装成 ByteBuf，而这里的 ByteBuf 与客户端按顺序发送的 ByteBuf 可能是不对等的。因此，需要在客户端根据自定义协议来组装应用层的数据包，然后在服务端根据应用层的协议来组装数据包，这个过程通常在服务端称为拆包，而在客户端称为粘包
+
+* 拆包器的作用就是根据自定义协议，把数据拼装成一个个符合自定义数据包大小的 ByteBuf，然后送到自定义协议解码器去解码
+
+* Netty 自带的一些开箱即用的拆包器
+
+  * 固定长度拆包器-FixedLengthFrameDecoder
+    * 如果应用层协议非常简单，每个数据包的长度都是固定的，比如 100，那只需把这个拆包器加到 pipeline 中，Netty 会把一个个长度为 100 的数据包 (ByteBuf) 传递到下一个 channelHandler
+  * 行拆包器-LineBasedFrameDecoer
+    * 每个数据包之间以换行符作为分隔，接收端通过 LineBasedFrameDecoder 将粘过的 ByteBuf 拆分成一个个完整的应用层数据包
+  * 分隔符拆包器-DelimiterBasedFrameDecoder
+  * 基于长度域拆包器-LengthFieldBasedFrameDecoder
+    * 最通用的一种拆包器，只要自定义协议中包含长度域字段，均可以使用这个拆包器来实现应用层拆包
+    * 基于自定义协议，长度域相对整个数据包的偏移量为4+1+1+1=7，即数据长度开始位置，长度域的长度为4，即数据长度大小，非数据大小
+    * 构造拆包器：`new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 7, 4);`
+      * 第一个参数指的是数据包的最大长度，第二个参数指的是长度域的偏移量，第三个参数指的是长度域的长度，只需在 pipeline 的最前面加上这个拆包器
+      * 在后续进行 decode 操作的时候，ByteBuf 就是一个完整的自定义协议数据包
+
+* 拒绝非本协议连接
+
+  * 魔数的原因是为了尽早屏蔽非本协议的客户端
+
+  * 每个客户端发过来的数据包都做一次快速判断是否满足自定义协议
+
+  * 只需要继承自 LengthFieldBasedFrameDecoder 的 `decode()` 方法，然后在 decode 之前判断前四个字节是否是等于自定义的魔数 `0x12345678`
+
+    ```java
+    public class Spliter extends LengthFieldBasedFrameDecoder {
+        private static final int LENGTH_FIELD_OFFSET = 7;
+        private static final int LENGTH_FIELD_LENGTH = 4;
+    
+        public Spliter() {
+            super(Integer.MAX_VALUE, LENGTH_FIELD_OFFSET, LENGTH_FIELD_LENGTH);
+        }
+    
+      	//第二个参数 in，每次传递进来的时候，均为一个数据包的开头
+        @Override
+        protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
+            // 屏蔽非本协议的客户端
+            if (in.getInt(in.readerIndex()) != PacketCodeC.MAGIC_NUMBER) {
+                ctx.channel().close();
+                return null;
+            }
+            return super.decode(ctx, in);
+        }
+    }
+    ```
+
+    ```java
+    //ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 7, 4));
+    // 替换为
+    ch.pipeline().addLast(new Spliter());
+    ```
+
+* 服务端和客户端的pipeline结构
+
+  ![image-20190623152257830](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190623152257830.png)
+
+## ChannelHandler的生命周期
+
+![image-20190623154000457](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190623154000457.png)
+
+* 基于 `ChannelInboundHandlerAdapter`回调方法的执行顺序为
+  * 客户端连接到服务端时
+    * handlerAdded() -> channelRegistered() -> channelActive() -> channelRead() -> channelReadComplete()
+    * `handlerAdded()` ：当检测到新连接之后，调用 `ch.pipeline().addLast(new LifeCyCleTestHandler());` 之后的回调，表示在当前的 channel 中，已经成功添加了一个 handler 处理器。通常用在一些资源的申请。
+    * `channelRegistered()`：当前的 channel 的所有的逻辑处理已经和某个 NIO 线程建立了绑定关系， Netty 使用了线程池的方式，只需从线程池里抓一个线程绑定在这个 channel 上即可，这里的 NIO 线程通常指的是 `NioEventLoop`
+    * `channelActive()`：当 channel 的所有的业务逻辑链准备完毕（也就是说 channel 的 pipeline 中已经添加完所有的 handler）以及绑定好一个 NIO 线程之后，这条连接算是真正激活了，然后就会回调到此方法。 TCP 连接的建立，可统计单机的连接数，加一。可实现对客户端连接 ip 黑白名单的过滤
+    * `channelRead()`：客户端向服务端发来数据，每次都会回调此方法，表示有数据可读。服务端根据自定义协议来进行拆包，其实就是在这个方法里面，每次读到一定的数据，都会累加到一个容器里面，然后判断是否能够拆出来一个完整的数据包，如果够的话就拆了之后，往下进行传递
+    * `channelReadComplete()`：服务端每次读完一次完整的数据之后，回调该方法，表示数据读取完毕。每次向客户端写数据的时候，都通过 `writeAndFlush()` 的方法写并刷新到底层，其实这种方式不是特别高效，可在之前调用 `writeAndFlush()` 的地方都调用 `write()` 方法，然后在这个方面里面调用 `ctx.channel().flush()` 方法，相当于一个批量刷新的机制，当然，如果对性能要求没那么高，`writeAndFlush()` 足矣
+  * 客户端关闭
+    * channelInactive() -> channelUnregistered() -> handlerRemoved()
+    * `channelInactive()`: 这条连接已经被关闭了，这条连接在 TCP 层面已经不再是 ESTABLISH 状态了。 TCP 连接的释放，统计单机的连接数，减一
+    * `channelUnregistered()`: 与这条连接对应的 NIO 线程移除掉对这条连接的处理
+    * `handlerRemoved()`：最后，给这条连接上添加的所有的业务逻辑处理器都给移除掉。通常用在一些资源的释放
+* ChannelInitializer的实现原理
+  * `ChannelInitializer` 定义了一个抽象的方法 `initChannel()`，自行实现，在服务端启动的流程里面的实现逻辑就是往 pipeline 里面塞自定义的 handler 链
+  * `handlerAdded()` 和 `channelRegistered()` 方法，都会尝试去调用 `initChannel()` 方法，`initChannel()` 使用 `putIfAbsent()` 来防止 `initChannel()` 被调用多次
+  * 在 `handlerAdded()` 方法被调用的时候，channel 其实已经和某个线程绑定上了，所以，就的应用程序来说，这里的 `channelRegistered()` 其实是多余的
+    * 防止写了个类继承自 `ChannelInitializer`，然后覆盖掉了 `handlerAdded()` 方法，这样即使覆盖掉，在 `channelRegistered()` 方法里面还有机会再调一次 `initChannel()`，把自定义的 handler 都添加到 pipeline 中去
+
+## 热插拔实现客户端身份校验
+
+* 客户端连上服务端之后，即使没有进行登录校验，服务端在收到消息之后仍然会进行消息的处理，这个逻辑其实是有问题的
+* 身份检验
+  * 只需在后续所有的指令处理 handler 之前插入一个用户认证 handle
+    * 在 `MessageRequestHandler` 之前插入了一个 `AuthHandler`来处理掉身份认证相关的逻辑，后续所有的 handler 都不用操心身份认证这个逻辑
+
+* 移除校验逻辑
+
+  * 只要连接未断开，客户端只要成功登录过，后续就不需要再进行客户端的身份校验
+
+  ```java
+  public class AuthHandler extends ChannelInboundHandlerAdapter {
+    @Override
+      public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+          if (!LoginUtil.hasLogin(ctx.channel())) {
+              ctx.channel().close();
+          } else {
+              // 一行代码实现逻辑的删除，删除之后，这条客户端连接的逻辑链中就不再有这段逻辑了
+              ctx.pipeline().remove(this);
+            	////把读到的数据向下传递，传递给后续指令处理器
+              super.channelRead(ctx, msg);
+          }
+      }
+  
+      @Override
+      public void handlerRemoved(ChannelHandlerContext ctx) {
+          if (LoginUtil.hasLogin(ctx.channel())) {
+              System.out.println("当前连接登录验证完毕，无需再次验证, AuthHandler 被移除");
+          } else {
+              System.out.println("无登录验证，强制关闭连接!");
+          }
+      }
+  }
+  ```
+
+## 客户端互聊
+
+* 一对一单聊
+  * 客户端启动之后，在控制台输入用户名，服务端随机分配一个 userId 给客户端（省去账号密码注册）
+  * 当有两个客户端登录成功之后，在控制台输入`userId + 空格 + 消息`，这里的 userId 是消息接收方的标识， 消息接收方的控制台接着就会显示另外一个客户端发来的消息
+    * A 要和 B 聊天，首先 A 和 B 需要与服务器建立连接，然后进行一次登录流程，服务端保存用户标识和 TCP 连接的映射关系
+    * A 发消息给 B，首先需要将带有 B 标识的消息数据包发送到服务器，然后服务器从消息数据包中拿到 B 的标识，找到对应的 B 的连接，将消息发送给 B
+* 定义一个会话类 `Session` 用户维持用户的登录信息，用户登录的时候绑定 Session 与 channel，用户登出或者断线的时候解绑 Session 与 channel
+* 服务端处理消息的时候，通过消息接收方的标识，拿到消息接收方的 channel，调用 `writeAndFlush()` 将消息发送给消息接收方
+* 群聊的发起与通知
+
+## 成功启动服务端
+
+```java
+// 启动服务端直到成功
+private static void bind(final ServerBootstrap serverBootstrap, final int port) {
+    serverBootstrap.bind(port).addListener(new GenericFutureListener<Future<? super Void>>() {
+        public void operationComplete(Future<? super Void> future) {
+            if (future.isSuccess()) {
+                System.out.println("端口[" + port + "]绑定成功!");
+            } else {
+                System.err.println("端口[" + port + "]绑定失败!");
+                bind(serverBootstrap, port + 1);
+            }
+        }
+    });
+}
+```
+
+## 成功启动客户端
+
+```java
+// 启动客户端，通常情况下，连接建立失败不会立即重新连接，而是会通过一个指数退避的方式，比如每隔 1 秒、2 秒、4 秒、8 秒，以 2 的幂次来建立连接，然后到达一定次数之后就放弃连接，默认重试 5 次
+connect(bootstrap, "juejin.im", 80, MAX_RETRY);
+private static void connect(Bootstrap bootstrap, String host, int port, int retry) {
+    bootstrap.connect(host, port).addListener(future -> {
+        if (future.isSuccess()) {
+            System.out.println("连接成功!");
+        } else if (retry == 0) {
+            System.err.println("重试次数已用完，放弃连接！");
+        } else {
+            // 第几次重连
+            int order = (MAX_RETRY - retry) + 1;
+            // 本次重连的间隔
+            int delay = 1 << order;
+            System.err.println(new Date() + ": 连接失败，第" + order + "次重连……");
+            bootstrap.config().group().schedule(() -> connect(bootstrap, host, port, retry - 1), delay, TimeUnit
+                    .SECONDS);
+        }
+    });
+}
+```
+
 ## 基于Netty实现RPC
 
 ```java
@@ -1860,3 +2297,15 @@ public class NettySocketIOClient {
 
 ## WebSocket聊天系统
 
+## 问题
+
+* 在服务端每隔一秒输出当前客户端的连接数，需要建立多个客户端
+* 统计客户端的入口流量，以字节为单位
+* 对于客户端在登录情况下发送消息以及客户端在未登录情况下发送消息，`AuthHandler` 的其他回调方法分别是如何执行的，为什么？
+* 其实还少了用户登出请求和响应的指令处理，你是否能说出，对登出指令来说，服务端和客户端分别要干哪些事情？是否能够自行实现？
+* 如何实现在某个客户端拉取群聊成员的时候，不需要输入自己的用户 ID，并且展示创建群聊消息的时候，不显示自己的昵称？
+* 客户端加入或者退出群聊，将加入群聊的消息也通知到群聊中的其他客户端，这个消息需要和发起群聊的客户端区分开，类似 "xxx 加入群聊 yyy" 的格式
+* 实现当一个群的人数为 0 的时候，清理掉内存中群相关的信息
+* `IMIdleStateHandler` 能否实现为单例模式，为什么
+* 如何实现客户端在断开连接之后自动连接并重新登录？
+* 对于客户端在登录情况下发送消息以及客户端在未登录情况下发送消息，`AuthHandler` 的其他回调方法分别是如何执行的，为什么？

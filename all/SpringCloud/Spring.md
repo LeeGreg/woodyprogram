@@ -2,7 +2,7 @@
 
 ## 是什么
 
-* Spring 一个为 Java 应用程序开源开发框架，帮助开发者解决了开发中基础性的问题，使得开发人员可以专注于应用程序的开发
+* Spring 一个为 Java 应用程序开发的开源框架，帮助开发者解决了开发中基础性的问题，使得开发人员可以专注于应用程序的开发
 * 狭义的是指Spring Framework，广义是指庞大的生态系统，如SpringBoot、SpringCloud、Spring Security、SpringData等
 
 ## 配置Spring方式
@@ -45,7 +45,7 @@
 
     ```java
     //最简单的@Configuration 声明类
-    //com.gupaoedu 包首先会被扫到，然后再容器内查找被@Component 声明的类，找到 后将这些类按照 Sring bean 定义进行注册
+    //com.gupaoedu 包首先会被扫到，然后再容器内查找被@Component 声明的类，找到后将这些类按照 Sring bean 定义进行注册
     @Configuration
     @ComponentScan(basePackages = "com.gupaoedu") 
     public class AppConfig{
@@ -207,7 +207,7 @@
 
 ## @Required
 
-* 适用于bean属性setter方法，并表示受影响的bean属性必须在XML配置文件在配置时进行填充。否则，容器会抛出一个BeanInitializationException异常
+* 检查属性是否已经设置，用于bean属性setter方法，并表示受影响的bean属性必须在XML配置文件在配置时进行填充。否则，容器会抛出一个BeanInitializationException异常
 
   ```java
   public class Student {
@@ -234,7 +234,7 @@
   * `@RequestBody`、`@ResponseBody`
   * `@Valid`对javaBean进行JSR-303验证
   * `ConversionService`的实例对表单参数进行类型转换
-  * `@NumberFormat`、`@NumberFormat`注解对数据类型进行格式化
+  * `@NumberFormat`、注解对数据类型进行格式化
 
 * 解决循环依赖
   * 使用字段注入且有无参数构造器
@@ -923,12 +923,14 @@ sbd.setSource(resource);
   update member set age = age - 1 where name = 'tom'
   1. 执行SELECT，将满足条件的记录找出来
   2. 把找出来的记录放到内存中   --锁
+  ```
 3. 进行数据检查，数据是否有效、合法
   4. 数据操作没有任何异常的话，更新原始表，写日志（根据日志回滚）
   5. 更新状态返回状态码
   6. 内存中该数据消失
   ```
   
+  ```
 * 不同数据源的事务如何处理
   * 原理：在`Spring`中，事务是不支持跨数据源，即一个事务不能操作两个数据库
   * `DataSouce`是`Connection`，当创建语句集的时候开启事务
