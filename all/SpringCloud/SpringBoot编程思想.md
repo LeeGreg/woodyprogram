@@ -23,9 +23,9 @@
 ## SpringBoot 五大特性
 
 * SpringApplication
+* SpringBoot Actuator
 * 自动装配
 * 外部化配置
-* SpringBoot Actuator
 * 嵌入式Web容器
 
 五大特性构成了SpringBoot作为微服务中间件的基础，又提供了SpringCloud的基础设施
@@ -87,7 +87,7 @@
 
 * `mvn package`
 
-* 生产环境运行方式：`java -jar target/xxx.jar`
+* 生产环境运行方式：`java -jar target/xxx.jar [--参数名=参数值 --参数名=参数值]`
 
 ## Spring-Boot-loader
 

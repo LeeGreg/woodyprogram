@@ -475,7 +475,7 @@
 
 * 多绑定器配置
 
-  * 当应用程序的classpath下存在多个绑定器时，SpringCloudStream在为消息通道做绑定操作时， 无法判断应该使用哪个具体的绑定器
+  * 当应用程序的classpath下存在多个绑定器时，SpringCloudStream在为消息通道做绑定操作时，无法判断应该使用哪个具体的绑定器
 
     * 所以需要为每个输入或输出通道指定具体的绑定器 
 
@@ -558,7 +558,7 @@
       * `group`，设置绑定通道的消费组，该参数主要作用于输入通道，以保证同一消息组中的消息只会有一个消费实例接收和处理 
       * `contentType`，设置绑定通道的消息类型
       * `binder`，当存在多个绑定器时使用该参数来指定当前通道使用哪个具体的绑定器
-    * 消费者配置（以`spring.cloud.stream. bindings.<channelName>.consumer.`格式作为前缀 ）
+    * 消费者配置（以`spring.cloud.stream.bindings.<channelName>.consumer.`格式作为前缀 ）
       * 仅对输入通道的绑定有效
       * `concurrency=1`，输入通道消费者的并发数
       * `partitioned=false`，来自消息生产者的数据是否采用了分区

@@ -113,8 +113,9 @@
 ## 整合Spring Cloud Bus
 
 * 通过使用`Spring Cloud Bus`与`Spring Cloud Config`的整合， 并以`RabbitMQ`作为消息代理， 实现了应用配置的动态更新 
-  * 微服务应用的实例中都引入了`Spring Cloud Bus`，所以它们都连接到了`RabbitMQ`的消息总线上 
-
+  
+* 微服务应用的实例中都引入了`Spring Cloud Bus`，所以它们都连接到了`RabbitMQ`的消息总线上 
+  
 * 扩展config-client应用
 
   * 增加`bus-amqp`、`actuator`模块
@@ -178,14 +179,14 @@
   * `Spring`中定义了事件的抽象类`ApplicationEvent`， 它继承自`JDK`的`Event Object`类 
     * 包含了两个成员变量：`timestamp`，用于存储事件发生的时间戳， 以及父类中的`source `, 表示源事件对象
   * 当需要自定义事件的时候，只需要继承`ApplicationEvent`
-    * 比如`RernoteApplicationEvnet`、` RefreshRemoteApplicationEvent`等，可以在自定义的`Event`中增加一些事件的属性来给事件监听者处理 
+    * 比如`RemoteApplicationEvnet`、` RefreshRemoteApplicationEvent`等，可以在自定义的`Event`中增加一些事件的属性来给事件监听者处理 
 * 事件监听者：
   * `Spring`中定义了事件监听者的接口`ApplicationListener`, 它继承自`JDK` 的`EventListener`接口， 同时`ApplicationListener`接口限定了`ApplicationEvent`子类作为该接口中`onApplicationEvent(E event);` 函数的参数 
     * 所以，每一个`ApplicationListener`都是针对某个`ApplicationEvent`子类的监听和处理者
 * 事件发布者：
   *  `Spring`定义了`ApplicationEventPublisher`和`Application­EventMulticaster`两个接口用来发布事件
   * `ApplicationEventPublisher`接口定义了发布事件的函数`publishEvent(ApplicationEvent event)`和 `publishEvent(Object event); `
-    * `ApplicationEventPublisher的publishEvent`实现在`AbstractApp让cation­Context`中 
+    * `ApplicationEventPublisher的publishEvent`实现在`AbstractApplication­Context`中 
     * 它最终会调用`ApplicationEventMulticaster`的`multicastEvent`来具体实现发布事件给监听者的操作
   * 而`ApplicationEventMulticaster`接口中定义了对`ApplicationListener`的维护操作(比如新增、 移除等)以及将`ApplicationEvent`多播给可用`ApplicationListener`的操作  
     * `ApplicationEventMulticaster`在`Spring`的默认实现位于`SimpleApplicationEventMulticaster`中，`SimpleApplicationEventMulticaster`通过遍历维护的`ApplicationListener`集合来找到对应 `ApplicationEvent`的监听器，然后调用监听器的`onApplicationEvent`函数来对具体事件做出处理操作

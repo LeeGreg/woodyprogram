@@ -80,7 +80,7 @@
   * 当使用Git作为配置中心来存储各个微服务应用配置文件的时候，该功能会变得非常有用， 通过在URI中使用占位符可以帮助规划和实现通用的仓库配置
     * 代码库：使用服务名作为Git仓库名称， 比如会员服务的代码库`http://git.oschina.net/didispace/mernber-service  `
     * 配置库：使用服务名加上-config后缀作为Gti 仓库名称， 比如上面会员服务对应的配置库地址位置`http://git.oschina.net/didispace/member-service­-config `
-    * 就可以使用 spring.cloud.config.server.git.uri=`http://git.oschina.net/didispace/{application}-config `配置， 来同时匹配多个不 同服务的配置仓库 
+    * 就可以使用 spring.cloud.config.server.git.uri=`http://git.oschina.net/didispace/{application}-config `配置， 来同时匹配多个不同服务的配置仓库 
 
 * 配置多个仓库
 
