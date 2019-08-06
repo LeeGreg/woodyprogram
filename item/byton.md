@@ -34,6 +34,9 @@ qwe123
 ext_dingyj_efast
 dyj123dyj
 
+// gradle 
+ gradle clean build --stacktrace --info
+
 // 配置开发环境
 1、git clone -b develop https://git.byton.cn/EC-Pre-order/component-java-library.git
 
@@ -51,7 +54,7 @@ cat biz-cms/settings.gradle.txt  > settings.gradle
 consul agent -data-dir=/Users/dingyuanjie/Documents/code/work/20190703_byton/consul_agent/data -server -bootstrap -node=Air -bind=127.0.0.1
   
 // 2. 启动redis
-/Users/dingyuanjie/Documents/code/util/redis-5.0.2/src/redis-server ../redis.conf
+/Users/dingyuanjie/Documents/code/util/redis-5.0.2/src/redis-server /Users/dingyuanjie/Documents/code/util/redis-5.0.2/redis.conf
   
 // 安装rabbitmq standalone版
   	// 安装管理插件
@@ -78,6 +81,11 @@ npm run dev-serve
   
 // 项目规范
   https://www.processon.com/view/link/5c4ee9d0e4b0fa03cea9b2dc#outline
+// 部署工具 
+	https://www.processon.com/view/link/5d2438bbe4b05dcb439c1025#outline
+
+//cms,portal,service 三中类型的接口区分在后边的url上,其实域名用的是一个
+
 
 // 配置host
 47.102.63.28 ec-apollo-dev.byton.cn
@@ -88,7 +96,7 @@ npm run dev-serve
 47.102.63.28 ec-grafana-dev.byton.cn
 47.102.63.28 ec-service-dev.byton.cn
 47.102.63.28 ec-xxl-job-dev.byton.cn
-47.102.63.28  ec-jenkins-dev.byton.cn
+47.102.63.28 ec-jenkins-dev.byton.cn
 
 47.111.39.247 ec-jenkins-test.byton.cn 
 47.111.39.247 ec-apollo-test.byton.cn
@@ -135,121 +143,70 @@ cms
 ```shell
 # 查找某个端口的应用，并干掉该应用
 
-
 netstat -an|grep 8805
 kill -9 8805
 lsof -i:8805
 kill -9 27489
 ```
 
-```sql
-select  
-DISTINCT
-product.id, 
-product.uid,
-product.type,
-product.product_name,
-product.series,
-product.subtype,
-product.down_payment_rate,
-product.terms,
-product.interest_rate,
-product.rate,
-product.vehicle_support_type,
-product.vehicle_mode,
-product.vehicle_edition,
-product.product_status,
-product.period_of_validity_startdate,
-product.period_of_validity_enddate,
-product.subsidy_format,
-product.discount_interest_rate,
-product.discount_rate,
-product.product_description,
-product.maintain_tag,
-	formula.down_payment_amount_cal,
-	formula.remaining_money_amount_cal,
-	formula.loan_amount_cal,
-	formula.subsidy_amount_rate,
-	formula.monthly_payment_cal_rate,
-	formula.total_fee_cal_rate_bank,
-	formula.total_fee_cal_rate_customer,
-	formula.subsidy_amount_interest_rate,
-	formula.monthly_payment_cal_interest_rate,
-	formula.total_fee_cal_interest_rate_bank,
-	formula.total_fee_cal_interest_rate_customer,
-	formula.rate_cal,
-partner.id,
-partner.name,
-partner.short_name,
-partner.code  
+## 项目
 
-from byton_vendor_finance_product product
-left join byton_vendor_partner_subsidiary sub on sub.parent_id = product.partner_id
-left join byton_vendor_finance_product_formula formula on  formula.id = product.formula_id
-left join byton_vendor_partner partner on partner.id = product.partner_id
-left join byton_vendor_finance_product_region region on region.finance_product_id = product.id
-where product.product_status = 2 and product.vehicle_mode = '' and product.vehicle_edition = ''
-and ((product.city_support_type = 1 and sub.city_code = '' ) or (product.city_support_type = 2 and region.city_code = '' ))
-
-
-select
-DISTINCT
-product.id, 
-product.uid,
-product.type,
-product.product_name,
-product.series,
-product.subtype,
-product.down_payment_rate,
-product.terms,
-product.interest_rate,
-product.rate,
-product.vehicle_support_type,
-product.vehicle_mode,
-product.vehicle_edition,
-product.product_status,
-product.period_of_validity_startdate,
-product.period_of_validity_enddate,
-product.subsidy_format,
-product.discount_interest_rate,
-product.discount_rate,
-product.product_description,
-product.maintain_tag,
-	formula.down_payment_amount_cal,
-	formula.remaining_money_amount_cal,
-	formula.loan_amount_cal,
-	formula.subsidy_amount_rate,
-	formula.monthly_payment_cal_rate,
-	formula.total_fee_cal_rate_bank,
-	formula.total_fee_cal_rate_customer,
-	formula.subsidy_amount_interest_rate,
-	formula.monthly_payment_cal_interest_rate,
-	formula.total_fee_cal_interest_rate_bank,
-	formula.total_fee_cal_interest_rate_customer,
-	formula.rate_cal,
-partner.id,
-partner.name,
-partner.short_name,
-partner.code  
-from byton_vendor_finance_product product
-left join byton_vendor_partner_subsidiary sub on sub.parent_id = product.partner_id
-left join byton_vendor_finance_product_formula formula on  formula.id = product.formula_id
-left join byton_vendor_partner partner on partner.id = product.partner_id
-left join byton_vendor_finance_product_region region on region.finance_product_id = product.id
-where product.product_status = 2 and product.city_support_type = 1 
-and product.vehicle_mode = '' and product.vehicle_edition = ''
-
-
-select 
-distinct 
-product.type, product.subtype, product.series, product.maintain_tag, product.subsidy_format, product.partner_id,
-product.terms, product.down_payment_rate, product.remaining_money_rate, product.total_amount, product.city_support_type
-from byton_vendor_finance_product product 
-where product.product_status = 2 
-		and product.vehicle_mode = ''
-		and product.vehicle_edition = '' 
-		and product.id in('')
+```java
+// 供应商
+biz-vendor
+// 各服务jar包
+component-java-library
+// 前端
+oms_manage
+// 车型
+biz_vehicle
+// 订单
+biz-order
+// 支付
+biz-payment
+// 问卷调查
+biz-questionnaire
+// 用户
+biz-user
+// 管理平台用户
+biz-adminuser
+// 代理
+biz_proxy
+// 开放给管理后台的接口
+biz-cms
+// 开放给外网客户端接口,app,浏览器,小程序等
+biz-portal
+// 开放给外网服务器的接口
+biz-service
+// 文件上传
+biz-upload
+// 提醒
+biz-notification
+// 验证码
+component-verificationcode
+// 网关
+component-zuul
+// 字典
+biz-dict
+// 定时任务
+component-appjobs
+// 认证
+component-oauth2server
+// 框架
+java-framework
+// demo
+biz-demo
+// 阿波罗配置中心
+component-app-config-libs
+// 小程序
+mini-program-charging
+// 文件上传
+component-fileupload
+// 部署
+deploy
 ```
+
+
 
 
 
