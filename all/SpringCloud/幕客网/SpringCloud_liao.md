@@ -3,7 +3,7 @@
 cd /Users/dingyuanjie/code/SpringCloud_liao/liao_SpringCloud/SpringCloud_Sell/eureka
 mvn clean package
 nohup java -jar target/eureka-0.0.1-SNAPSHOT.jar > /dev/null 2>&1 &
-# 查看源码时，看类之间的关系
+# 【查看源码时，看类之间的关系/maven依赖关系】，maven依赖关系-查看【根据图，搜索相关依赖】以检查是否缺少相关依赖  启动项目时，控制台没有打印接口映射地址，可能是缺少web依赖
 右键 - Diagrams - show Diagrams...
 # 使用了@RequestBody注解后，需使用@PostMapping注解
 # Post请求参数使用form形式
@@ -13,6 +13,36 @@ nohup java -jar target/eureka-0.0.1-SNAPSHOT.jar > /dev/null 2>&1 &
 # service【方法上】加上@Transactional
 # 【要保证服务不去调用不是自己的数据库】
 # 【幕客网 ajax跨域完全讲解】
+# 【postman的runner可以设置自动调用接口】
+# 【容器部署、版本更新】以后多看几遍
+# 【zuul组件】超时 配置 - springcloud官方文档 - 搜 zuul - zuul timeout
+	ribbon:
+		ReadTimeout: 5000
+		SocketTimeout: 5000
+	management:
+  	security:
+  		enabled: false
+# 调用接口返回500时，代码提示NPE，可能是超时导致的  		
+# zuul、fegin超时设置  springcloud 官网 - 根据版本搜索相关超时配置进行设置
+# 检测配置中心（git）上的配置文件格式是否正确：直接访问配置中心http://xxx:xx/order-test.yml，能正常显示配置则格式正确
+# 用postman请求接口时，注意查看请求时间
+# 设置 打印 feign 日志级别
+	#全局搜索 FeignClient，选取其包名
+	logging:
+		level:
+			org.springframework.cloud.bus: debug
+			org.springframework.cloud.openfegin: debug
+# zipkin 虽然引入了rabbitmq，但是还是想使用http方式发送追踪信息
+	spring:
+		zipkin:
+			base-url: http://zipkin:9411/
+			sender:
+				type: web      # http方式
+# gitlab 设置 配置自动刷新  webhooks
+	# Settings - Integrations - url：natapp中配置的-127.0.0.1:8080
+
+# 将源码clone 到与项目相同目录，在项目里点击依赖可以直接跳到源码文件上，则说明源码配置正确
+# 可以修改源码并启动，然后启动项目、断点源码调试
 ```
 
 # 微服务
@@ -734,6 +764,17 @@ mvn -Dmaven.test.skip=true -U clean install
   http://localhost:9000/application/routes
   ```
 
+  ```yaml
+  # 也需设置 hystrix
+  hystrix:
+    command:
+      default:  # 全局配置
+        execution:
+          isolation:
+            thread:
+              timeoutInMilliseconds: 3000
+  ```
+
 ## Zuu l综合使用
 
 ![image-20190806134727431](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806134727431.png)
@@ -1052,7 +1093,269 @@ public class addResponseHeaderFilter extends ZuulFilter{
 
 ## 服务容错
 
+* 防止雪崩效应
 
+  * SpringCloud Hystrix
+    * 服务降级：优先核心服务，非核心服务不可用或弱可用
+      * 通过HystrixCommand注解指定
+      * fallbackMethod（回退函数）中具体实现降级逻辑
+    * 服务熔断
+    * 依赖隔离
+      * 线程池隔离
+      * Hystrix自动实现了依赖隔离
+    * 监控
+
+  ```java
+  // 添加依赖
+  // 主类上添加注解 @EnableCircuitBreaker
+  // 类上可注解 
+  //@RestController
+  //@DefaultProperties(defaultFallback = "defaultFallback")  // 不指定fallback时的默认调用
+  
+  //超时配置
+  //	@HystrixCommand(commandProperties = {
+  			// HystrixCommandProperties中可以找到
+  //		@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "3000")
+  //	})
+  
+  // 服务熔断
+  //	@HystrixCommand(commandProperties = {
+  //			@HystrixProperty(name = "circuitBreaker.enabled", value = "true"),  				//设置熔断
+  //			@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),	//请求数达到后才计算
+  //			@HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "10000"), //休眠时间窗
+  //			@HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "60"),	//错误率
+  //	})
+  @HystrixCommand
+  @GetMapping("/getProductInfoList")
+  public String getProductInfoList(@RequestParam("number") Integer number) {
+    if (number % 2 == 0) {
+      return "success";
+    }
+    // 调用目标服务
+    RestTemplate restTemplate = new RestTemplate();
+    return restTemplate.postForObject("http://127.0.0.1:8005/product/listForOrder",
+                                      Arrays.asList("157875196366160022"), String.class);
+    //		throw new RuntimeException("发送异常了");  // 抛出异常也可触发降级
+  }
+  
+  private String fallback() {
+    return "太拥挤了, 请稍后再试~~";
+  }
+  
+  private String defaultFallback() {
+    return "默认提示：太拥挤了, 请稍后再试~~";
+  }
+  ```
+
+  * 微服务和分布式中容错是必须要考虑的
+    * 重试机制：对于预期的短暂问题，重试是可以解决的，更长时间的故障问题则无意义
+    * 断路器模式：将受保护的服务封装在一个可以监控故障的断路器对象里，当故障达到一定的值，短路器将会跳闸，断路器返回错误
+
+  ![image-20190806160257813](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806160257813.png)
+
+  * Circuit Breaker：断路器
+
+    ```java
+    // 请求数达到后才计算，设置在滚动时间窗口中，断路器的最小请求数
+    @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
+    // 断路器确定是否要打开统计请求错误数据时会有个时间范围，该范围称为时间窗口，当断路器打开对主逻辑进行熔断后，Hystrix会启动一个休眠时间窗
+    // 休眠时间窗，在这期间，降级逻辑成为临时的主逻辑，休眠期到期时会进入半开状态，释放一次请求到原来的主逻辑上，如果此次正常返回，则断路器将继续闭合，主逻辑恢复；如果此次返回异常，断路器将继续进入打开状态，休眠时间窗将继续计时
+    @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "10000"),
+    // 错误率，断路器打开的错误百分比条件，在滚动时间窗口中，10次调用有7次异常，超过设置百分比，则断路器打开，否则设置关闭状态
+    @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "60"),	
+    ```
+
+    * 状态机状态：
+      * Closed：调用失败次数累计到一定阈值或一定比例就会启动熔断机制
+      * Open：此时服务直接返回错误，设置了一个时钟选项，到了时钟会进入半熔断状态允许定量服务请求，如果调用成功占到了一定比例，则认为服务恢复了，会关闭断路器，否则任务服务还没恢复，会回到断路器打开状态
+      * Half Open
+
+    ```yaml
+    # 记得加 @HystrixCommand 注解
+    # application.yml
+    hystrix:
+      command:
+        default:  # 全局配置
+          execution:
+            isolation:
+              thread:
+                timeoutInMilliseconds: 3000
+        getProductInfoList:  # 针对某个方法配置
+          execution:
+            isolation:
+              thread:
+                timeoutInMilliseconds: 1000
+    ```
+
+    * 可视化组件
+
+      ```yaml
+      # 添加依赖 spring-cloud-starter-hystrix-dashboard
+      management:
+      	context-path: /
+      	
+      http://localhost:8081/hystrix
+      	http://localhost:8081/hystrix.stream
+      	100 order
+      【postman能够设置自动调用接口】	
+      ```
+
+## 服务追踪
+
+* 链路监控
+
+  * SpringCloudSleuth
+
+  ```yaml
+  # 引入依赖、启动ZipKin Server、配置参数
+  <!--包含sleuth和zipkin-->
+  <dependency>
+  	<groupId>org.springframework.cloud</groupId>
+  	<artifactId>spring-cloud-starter-zipkin</artifactId>
+  </dependency>
+  # 调整日志级别
+  logging:
+    level:
+      org.springframework.cloud.openfeign: debug
+  
+  # 通过docker安装 zipkin
+  docker run -d -p 9411:9411 openzipkin/zipkin  
+  # 查看追踪
+  http://localhost:9411/zipkin/   
+  
+  # 配置追踪
+  spring:
+  	zipkin:
+      base-url: http://zipkin:9411/
+      sender:
+        type: web
+    sleuth:
+      sampler:
+      	# percentage: 1      # 抽样百分比
+        probability: 1    # 新版 抽样百分比
+  ```
+
+* 分布式追踪系统
+
+  * 核心步骤
+
+    * 数据采集、数据存储、查询展示
+
+  * OpenTracing
+
+    * 标准
+
+    ![image-20190806215720539](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806215720539.png)
+
+  * ZipKin
+
+    * traceId、spanId、parentId
+
+## 容器部署
+
+* docker
+
+```shell
+docker run -p 8761:8761 -d hub.c.163.com/springcloud/eureka
+docker run -p 18761:8761 -d hub.c.163.com/springcloud/eureka
+
+# eureka项目
+Dockerfile
+FROM hub.c.163.com/library/java:8-alpine
+MAINTAINER XXX XXX@imooc.com
+ADD target/*.jar app.jar
+EXPOSE 8761
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+
+mvn clean package -Dmaven.skip.test=true 
+docker build -t springcloud2/eureka
+docker images|grep eureka
+docker run -p 8762:8761 -d springcloud2/eureka
+```
+
+* rancher
+
+```shell
+# http://www.cnrancher.com  【快速入门】
+# 更方便的管理docker
+# 需要下载
+centos7.4.ova，到virtual box中，命名为rancher-server
+# 设置网络 - 连接方式：桥接网卡 - wifi
+# 虚拟机和本地可以互相ping通
+# 虚拟机 ssh root@ip
+# 1. 先装docker 
+yum install docker
+systemctl start docker
+docker verion
+# 2. 安装racher
+sudu docker run -d --restart=unless-stopped -p 8080:8080 rancher/server:stable
+# 虚拟机中启动镜像加速器
+	vim /etc/docker/daemon.json
+		{
+			"registry-mirrors":["https://fy707np5.mirror.aliyuncs.com"]
+		}
+	systemctl daemon-reload
+  systemctl restart docker
+# rancher启动后访问：http://虚拟机ip:8080
+
+# 重启再倒入一个centos7.4.ova到virtual box中，命名为rancher-agent
+ssh root@ip(agent)
+yum install docker
+systemctl start docker
+# 【】第四步骤 填写rancher-agent的ip
+# 复制第五步的命令到rancher-agent上执行
+
+# 页面[基础架构-主机]  （http://虚拟机ip:8080）
+```
+
+* 部署
+
+```shell
+// eureka、config，都packge、Dockerfile，将镜像推送到仓库（网易云）,并设置为公开，否则拉去不下来
+docker images|grep config
+# docker tag 镜像id hub.c.163.com/网易云仓库用户名/镜像名(config)
+docker images|grep config
+docker push hub.c.163.com/网易云仓库用户名/镜像名(config)
+```
+
+```bash
+# build.sh  脚本，直接执行bash build.sh
+
+#!/usr/bin/env bash
+mvn clean package -Dmaven.skip.test=true -U
+docker build -t hub.c.163.com/springcloud/config .
+docker push hub.c.163.com/springcloud/config
+```
+
+```shell
+# 访问http://虚拟机ip:8080
+添加应用：【应用-用户】：名称：SpringCloud，其他不用填
+添加服务(对应java里的一个应用)（同样依照此步骤添加config）：
+	名称：eureka
+	勾选创建前总是拉取镜像
+	选择镜像：hub.c.163.com/springcloud/eureka:latest
+	端口映射：公有：8761 私有：8761
+	# config的端口映射共有可不填（因为不需要通过主机去访问），私有填8080
+	# 创建config服务后会显示主机ip、分配端口，如64641，访问：http://主机ip:64641/product-dev.yml测试
+	# 
+	
+# 注意ip，如config中注册的eureka，使用 rancher中eureka的ip，直接用eureka的名称eureka即可，如
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:8761/eureka/
+```
+
+```shell
+# eureka高可用,互相注册
+application-eureka1.yml  # 8761  
+application-eureka2.yml  # 8762
+application.yml
+# java -jar Dspring.profiles.active=eureka1 target/*.jar
+# java -jar Dspring.profiles.active=eureka2 target/*.jar
+```
+
+## 版本更新
 
 
 
