@@ -1,3 +1,27 @@
+## 配置Virtual Box的镜像位置
+
+```shell
+1. 偏好设置 - 【修改】默认虚拟电脑位置
+2. 复制 （移动）现有虚拟机目录到新位置，软件里删除现有虚拟机
+3. 菜单——控制——注册，逐个选择虚拟机目录里的 .vbox文件，导进虚拟机配置
+```
+
+## 配置Docker镜像存储位置
+
+```shell
+# Docker MacOS版本默认的存储路径  ~/Library/Containers/com.docker.docker/
+# 思路就是先把这个文件夹移动到其他（你的其他硬盘或分区）位置，然后再将新位置创建一个软链接到这里来
+1. 将docker文件夹复制到新位置，因为socket文件是不允许直接复制的，所以可以用rsync来进行同步实现复制
+	rsync -a ~/Library/Containers/com.docker.docker/ /Volumes/xxxx
+2. 将原来的docker文件夹重命名为 com.docker.docker.old
+	cd ~/Library/Containers
+	mv com.docker.docker com.docker.docker.old
+3. 将新路径软链接过来
+	ln -s /Volumes/xxxx com.docker.docker
+4. 启动docker，如果正常启动删除掉原来的docker文件夹即可
+	rm com.docker.docker.old
+```
+
 ## IDEA 
 
 ## 配置

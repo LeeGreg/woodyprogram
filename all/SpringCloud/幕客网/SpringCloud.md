@@ -114,6 +114,7 @@ CREATE TABLE `user_info` (
 ![image-20190802174711946](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190802174711946.png)
 
 * logback-spring.xml
+  * 要弄的非常熟
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -223,13 +224,15 @@ logging:
       }
   }
   
+  ```
+
  public ProductInfo findOne(String productId) {
   		Optional<ProductInfo> productInfoOptional = repository.findById(productId);
 //        if (productInfoOptional.isPresent()) {
   //            return productInfoOptional.get().addImageHost(upYunConfig.getImageHost());
   //        }
   //        return null;
-  
+
   		productInfoOptional.ifPresent(e -> e.addImageHost(upYunConfig.getImageHost()));
   		return productInfoOptional.orElse(null);
   }
@@ -262,9 +265,9 @@ logging:
     return new PageImpl<OrderDTO>(orderDTOList, pageable, orderMasterPage.getTotalElements());
   }
   ```
+
   
-  
-  
+
   ```java
   // entity 类
   @Entity
@@ -354,9 +357,9 @@ List<CartDTO> cartDTOList = orderDTO.getOrderDetailList().stream().map(e ->
   判断状态（特定状态下才能改状态），再更改状态
   限制只能自己查自己的订单
   ```
-  
+
   * 联调
-  
+
   ```java
   // 开启virtual虚拟机
   192.168.1.105/#/order
@@ -1088,6 +1091,7 @@ public ProductInfo save(ProductInfo productInfo) {...}
   电脑ip 192.168.31.32
   电脑上ping手机ip
   手机-无线局域网-配置HTTP代理：手动-服务器（电脑ip），端口8888
+  ```
 ```
   
 ![image-20190804230743636](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190804230743636.png)
@@ -1095,7 +1099,7 @@ public ProductInfo save(ProductInfo productInfo) {...}
 
 ![image-20190804231451984](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190804231451984.png)
 
-```java
+​```java
 302 GET sell.springboot.cn 
 	访问：http://sell.springboot.cn/sell/wechat/authorize?returnUrl=http://sell.springboot.cn/openid.html
 	重定向，看Headers，跳转到微信授权地址：https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxd898xxx&redirect_uri=http://sell.springboot.cn/sell/wechat/userInfo&response_type=code&scope=snsapi_base&state=http://sell.springboot.cn/openid.html#wechat_redirect
