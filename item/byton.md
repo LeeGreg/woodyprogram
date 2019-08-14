@@ -24,6 +24,8 @@
 * docker
   * [官网](https://docs.docker.com/)和[docker中文](http://www.docker.org.cn/dockerppt.html)
 
+![image-20190814103622142](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190814103622142.png)
+
 ## 配置
 
 ```java
@@ -204,6 +206,74 @@ mini-program-charging
 component-fileupload
 // 部署
 deploy
+```
+
+```java
+// 计算机接口
+ Map<String, Object> nameMap = (Map<String, Object>) prdMap.get(result.getName());
+//                if (nameMap == null) {
+//                    nameMap = new HashMap<>();
+//                    nameMap.put("productName", result.getName());
+//                    nameMap.put("productType", new HashMap<String, Object>());
+//                    prdMap.put(result.getName(), nameMap);
+//                }
+//
+//
+//                Map<String, Object> typeMap = (Map<String, Object>) nameMap.get(result.getType().toString());
+//                if (typeMap == null) {
+//                    typeMap = new HashMap<>();
+//                    nameMap.put(result.getType().toString(), typeMap);
+//                }
+//
+//                Map<String, Object> subTypeMap = (Map<String, Object>) typeMap.get(result.getSubType().toString());
+//                if (subTypeMap == null) {
+//                    subTypeMap = new HashMap<>();
+//                    typeMap.put(result.getType().toString(), subTypeMap);
+//                }
+//
+//                Map<String, Object> seriesMap = (Map<String, Object>) subTypeMap.get(result.getSeries().toString());
+//                if (seriesMap == null) {
+//                    seriesMap = new HashMap<>();
+//                    subTypeMap.put(result.getSeries().toString(), seriesMap);
+//                }
+//
+//
+//                // 合作伙伴
+//                if (seriesMap.get("partnerName") == null) {
+//                    Set<String> partnerNameList = new HashSet<>();
+//                    partnerNameList.add(result.getPartner().getName());
+//                    seriesMap.put("partnerName", partnerNameList);
+//                } else {
+//                    Set<String> partnerNames = (Set) seriesMap.get("partnerName");
+//                    partnerNames.add(result.getPartner().getName());
+//                }
+//                // 首付比例
+//                if (seriesMap.get("downPaymentRate") == null) {
+//                    Set<BigDecimal> downPaymentRateList = new HashSet<>();
+//                    downPaymentRateList.add(result.getDownPaymentRate());
+//                    seriesMap.put("downPaymentRate", downPaymentRateList);
+//                } else {
+//                    Set<BigDecimal> downPaymentRate = (Set) seriesMap.get("downPaymentRate");
+//                    downPaymentRate.add(result.getDownPaymentRate());
+//                }
+//                // 尾款比例
+//                if (seriesMap.get("remainingMoneyRate") == null) {
+//                    Set<BigDecimal> remainingMoneyRateList = new HashSet<>();
+//                    remainingMoneyRateList.add(result.getRemainingMoneyRate());
+//                    seriesMap.put("remainingMoneyRate", remainingMoneyRateList);
+//                } else {
+//                    Set<BigDecimal> remainingMoneyRate = (Set) seriesMap.get("remainingMoneyRate");
+//                    remainingMoneyRate.add(result.getRemainingMoneyRate());
+//                }
+//                // 贷款期限
+//                if (seriesMap.get("terms") == null) {
+//                    Set<Integer> termsList = new HashSet<>();
+//                    termsList.add(result.getTerms().intValue());
+//                    seriesMap.put("terms", termsList);
+//                } else {
+//                    Set<Integer> termsList = (Set) seriesMap.get("terms");
+//                    termsList.add(result.getTerms().intValue());
+//                }
 ```
 
 

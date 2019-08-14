@@ -7,7 +7,7 @@
 
 * Redis为什么这么快
 
-  * 完全基于内存，绝大部分请求是存粹的内存操作，执行效率高
+  * 完全基于内存，绝大部分请求是纯粹的内存操作，执行效率高
   * 数据结构简单，对数据操作也简单
   * 采用单线程，单线程也能处理高并发请求，想多核也可启动多实例
     * 主线程是单线程，包括IO事件的处理、IO对应相关业务的处理、主线程还负责过期键的处理、复制协调、集群协调，这些除了IO事件之外的逻辑会被封装成周期性的任务由主线程周期性的处理，正因为采用单线程的处理，对于客户端的所有读写请求都由一个主线程串行处理，因此多个客户端同时对一个键进行写操作时就不会有并发的问题，避免了频繁的上下文切换和锁竞争，使得redis执行起来效率更高
@@ -105,4 +105,57 @@
   ![image-20190809162352367](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809162352367.png)
   
   ![image-20190809162524260](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809162524260.png)
+  
+  ![image-20190809162807869](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809162807869.png)
+  
+* ![image-20190809162950035](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809162950035.png)
 
+  * `redis.conf`
+
+    * `appendonly yes`
+    * `appendfsync everysec`
+
+  * `config set appendonly yes`
+
+    ![image-20190809163512426](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809163512426.png)
+
+  * ![image-20190809163555684](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809163555684.png)
+
+  * ![image-20190809163705223](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809163705223.png)
+
+  * RDB - AOF混合持久化方式
+
+    * BGSAVE做镜像全量持久化，AOF做增量持久化
+
+* 使用Pipeline的好处
+
+  * Pipeline和Linux的管道类似
+  * ![image-20190809164141352](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809164141352.png)
+
+* Redis的同步机制
+
+  * 主从同步原理
+
+    * 全同步过程
+
+      ![image-20190809164425012](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809164425012.png)
+
+    * 增量同步过程
+
+      ![image-20190809164540093](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809164540093.png)
+
+    * ![image-20190809164659256](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809164659256.png)
+
+    * ![image-20190809164808371](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809164808371.png)
+
+    * ![image-20190809164930580](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809164930580.png)
+
+      * 一致性Hash算法：对2^32取模，将Hash值空间组织成虚拟的圆环
+      * ![image-20190809165236475](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190809165236475.png)
+      * 取服务器的主机名或IP进行Hash以确定每台服务器在Hash环上的位置
+      * 对数据进行同样的hash算法去定位访问到相应的服务器，对数据key使用和服务器IP使用的相同的Hash函数计算出Hash值确定在环上的位置，顺时针遇到的第一个服务器即存储位置
+      * 如果某个Node宕机，影响的是与其逆时针方向Node之间的数据，则其上数据会继续顺时针方向存储到相邻的节点上，影响最小化
+      * 如果新增一个Node，受影响的是与其逆时针方向Node之间的数据，会存储到新的Node上
+      * Hash环的数据倾斜问题：环上服务器数量少，大部分数据都存储在某一台上
+        * 引入虚拟节点解决数据倾斜的问题
+          * 对每一个服务器节点计算多个Hash，服务器节点的服务名或IP后增加编号
