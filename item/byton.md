@@ -29,6 +29,9 @@
 ## 配置
 
 ```java
+// uat 环境jenkins
+admin/Byton_12
+
 // 项目 git 地址
 git:  https://git.byton.cn/user/login
 ext_taow_efast

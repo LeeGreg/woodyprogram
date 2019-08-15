@@ -12,8 +12,6 @@ javac xxx.xxx.java
 javap -verbose xxx.xxx.class
 ```
 
-
-
 # 计算机网络
 
 * OSI
@@ -968,6 +966,7 @@ javap -verbose xxx.xxx.class
 # GC
 
 * 对象被判定为垃圾的标准
+  
   - 没有被其他对象引用
 * 判定对象是否为垃圾的算法
   - 引用计数算法
@@ -1220,4 +1219,960 @@ javap -verbose xxx.xxx.class
 
     ![image-20190810105650499](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810105650499.png)
 
+# 多线程
+
+* 进程和线程的区别
+
+  * 进程和线程的由来
+    * 串行：初期的计算机只能串行执行任务，并且需要长时间等待用户输入
+    * 批处理：预先将用户的指令集中成清单，批量串行处理用户指令，仍然无法并发执行
+    * 进程：进程独占内存空间，保存各自运行状态，相互间不干扰且可以互相切换，为并发处理任务提供了可能
+    * 线程：共享进程的内存资源，相互间切换更快捷，支持更细粒度的任务控制，使进程内的子任务得以并发执行
+  * 区别
+    * 线程不能看作独立应用，而进程可看作独立应用
+    * 进程有独立的地址空间，相互不影响，线程只是进程的不同执行路径
+    * 线程没有独立的地址空间，多进程的程序比多线程程序健壮
+    * 进程的切换比线程的切换开销大
+
+* Java进程和线程的关系
+
+  * Java对操作系统提供的功能进行封装，包括进程和线程
+  * 运行一个程序会产生一个进程，进程包含至少一个线程
+  * 每个进程对应一个JVM实例，多个线程共享JVM里的堆
+  * Java采用单线程编程模型，程序会自动创建主线程
+  * 主线程可以创建子线程，原则上要后于子线程完成执行
+
+* Thread中的start和run方法的区别
+
+  * 调用start()方法会创建一个新的子线程并启动
+  * run()方法只是Thread的一个普通方法的调用
+
+* Thread和Runnable时什么关系
+
+  * Thread是实现了Runnable接口的类，使得run支持多线程
+  * 因类的单一继承原则，推荐多使用Runnable接口
+
+* 如何给run()方法传参
+
+  * 构造函数传参、成员变量传参、回调函数传参
+
+* 如何实现处理线程的返回值
+
+  - 主线程等待法
+
+  - 使用Thread类的join()阻塞当前线程以等待子线程处理完毕
+
+  - 通过Callable接口实现：通过FutureTask Or 线程池获取
+
+  - ```java
+    public class CycleWait implements Runnable{
+        private String value;
+        public void run() {
+            try {
+                Thread.currentThread().sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            value = "we have data now";
+        }
     
+        public static void main(String[] args) throws InterruptedException {
+            CycleWait cw = new CycleWait();
+            Thread t = new Thread(cw);
+            t.start();
+            // 主线程等待法
+    //        while (cw.value == null){
+    //            Thread.currentThread().sleep(100);
+    //        }
+            // join阻塞当前线程以等待子线程处理完毕
+            t.join();
+            System.out.println("value : " + cw.value);
+        }
+    }
+    ```
+
+    ```java
+    public class MyCallable implements Callable<String> {
+        @Override
+        public String call() throws Exception{
+            String value="test";
+            System.out.println("Ready to work");
+            Thread.currentThread().sleep(5000);
+            System.out.println("task done");
+            return  value;
+        }
+    }
+    
+    public class FutureTaskDemo {
+        public static void main(String[] args) throws ExecutionException, InterruptedException {
+            FutureTask<String> task = new FutureTask<String>(new MyCallable());
+            new Thread(task).start();
+            if(!task.isDone()){
+                System.out.println("task has not finished, please wait!");
+            }
+            System.out.println("task return: " + task.get());
+        }
+    }
+    
+    public class ThreadPoolDemo {
+        public static void main(String[] args) {
+            ExecutorService newCachedThreadPool = Executors.newCachedThreadPool();
+            Future<String> future = newCachedThreadPool.submit(new MyCallable());
+            if(!future.isDone()){
+                System.out.println("task has not finished, please wait!");
+            }
+            try {
+                System.out.println(future.get());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } finally {
+                newCachedThreadPool.shutdown();
+            }
+        }
+    }
+    ```
+
+* 线程的状态
+
+  * 新建（New）：创建后尚未启动
+  * 运行（Runnable）：包含Running和Ready
+  * 无限期等待（Waiting）：不会被分配CPU执行时间，需要显示被唤醒
+    * 没有设置Timeout参数 的Object.wait()
+    * 没有设置Timeout参数的Thread.join()
+    * LockSupport.park()
+  * 限期等待（Timed Waiting）：在一定时间后会由系统自动唤醒
+    * Thread.sleep()
+    * 设置了Timeout参数 的Object.wait()
+    * 设置了Timeout参数的Thread.join()
+    * LockSupport.parkNanos()
+    * LockSupport.parkUntil()
+  * 阻塞（Blocked）：等待获取排他锁
+  * 结束（Terminated）：已终止线程的状态，线程已经结束执行
+
+* sleep和wait的区别
+
+  * sleep是Thread类的方法，wait是Object类中定义的方法
+
+  * sleep()可以在任何地方使用
+
+  * wait()只能在synchronized方法或synchronized块中使用
+
+    * 需要先获得锁
+
+  * Thread.sleep只会让出CPU，不会导致锁行为的改变
+
+  * Object.wait不仅让出CPU，还会释放已经占有的同步资源锁
+
+    ```java
+    public class WaitSleepDemo {
+        public static void main(String[] args) {
+            final Object lock = new Object();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("thread A is waiting to get lock");
+                    synchronized (lock){
+                        try {
+                            System.out.println("thread A get lock");
+                            Thread.sleep(20);
+                            System.out.println("thread A do wait method");
+                            lock.wait();
+                            System.out.println("thread A is done");
+                        } catch (InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }).start();
+            try{
+                Thread.sleep(10);
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("thread B is waiting to get lock");
+                    synchronized (lock){
+                        try {
+                            System.out.println("thread B get lock");
+                            System.out.println("thread B is sleeping 10 ms");
+                            Thread.sleep(10);
+                            lock.notifyAll();
+                            Thread.yield();
+                            Thread.sleep(2000);
+                            System.out.println("thread B is done");
+                        } catch (InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }).start();
+        }
+    }
+    ```
+
+* notify和notifyAll的区别
+
+  * 锁池（EntryList）
+
+    * 假设线程A已经拥有了某个对象（不是类）的锁，而其他线程B、C想要调用这个对象的某个synchronized方法（或者块），由于B、C线程在进入对象的synchronized方法（或者块）之前必须先获得该对象锁的拥有权，而恰巧该对象的锁目前正被线程A所占用，此时B、C线程就会被阻塞，进入一个地方去等待锁的释放——这个地方便是该对象的锁池
+
+  * 等待池（WaitSet）
+
+    * 假设线程A调用了某个对象的wait()，线程A就会释放该对象的锁，同时线程A就进入到了该对象的等待池中，进入到等待池中的线程不会去竞争该对象的锁
+
+  * notifyAll会让所有处于等待池的线程全部进入锁池去竞争获取锁的机会
+
+  * notify只会随机选取一个处于等待池中的线程进入锁池去竞争获取锁的机会
+
+  * ```java
+    public class NotificationDemo {
+        private volatile boolean go = false;
+    
+        public static void main(String args[]) throws InterruptedException {
+            final NotificationDemo test = new NotificationDemo();
+    
+            Runnable waitTask = new Runnable(){
+    
+                @Override
+                public void run(){
+                    try {
+                        test.shouldGo();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println(Thread.currentThread().getName() + " finished Execution");
+                }
+            };
+    
+            Runnable notifyTask = new Runnable(){
+    
+                @Override
+                public void run(){
+                    test.go();
+                    System.out.println(Thread.currentThread().getName() + " finished Execution");
+                }
+            };
+    
+            Thread t1 = new Thread(waitTask, "WT1"); //will wait
+            Thread t2 = new Thread(waitTask, "WT2"); //will wait
+            Thread t3 = new Thread(waitTask, "WT3"); //will wait
+            Thread t4 = new Thread(notifyTask,"NT1"); //will notify
+    
+            //starting all waiting thread
+            t1.start();
+            t2.start();
+            t3.start();
+    
+            //pause to ensure all waiting thread started successfully
+            Thread.sleep(200);
+    
+            //starting notifying thread
+            t4.start();
+    
+        }
+        /*
+         * wait and notify can only be called from synchronized method or bock
+         */
+        private synchronized void shouldGo() throws InterruptedException {
+            while(go != true){
+                System.out.println(Thread.currentThread()
+                        + " is going to wait on this object");
+                wait(); //release lock and reacquires on wakeup
+                System.out.println(Thread.currentThread() + " is woken up");
+            }
+            go = false; //resetting condition
+        }
+    
+        /*
+         * both shouldGo() and go() are locked on current object referenced by "this" keyword
+         */
+        private synchronized void go() {
+            while (go == false){
+                System.out.println(Thread.currentThread()
+                        + " is going to notify all or one thread waiting on this object");
+    
+                go = true; //making condition true for waiting thread
+                //notify(); // only one out of three waiting thread WT1, WT2,WT3 will woke up
+                notifyAll(); // all waiting thread  WT1, WT2,WT3 will woke up
+            }
+    
+        }
+    }
+    ```
+
+    ![image-20190810143044680](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810143044680.png)
+
+    ![image-20190810143015163](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810143015163.png)
+
+* yield
+
+  * 当调用Thread.yield()函数时，会给线程调度器一个当前线程愿意让出CPU使用的暗示，但是线程调度器可能会忽略这个暗示
+
+* 如何中断线程
+
+  * 调用interrupt()，通知线程应该中断了
+
+    * 如果线程处于被阻塞状态，那么线程将立即退出被阻塞状态，并抛出一个InterruptedException异常
+    * 如果线程处于正常活动状态，那么会将该线程的中断标识设置为true，被设置中断标志的线程将继续正常运行，不受影响
+
+  * 需要被调用的线程配合中断
+
+    * 在正常运行任务时，经常检查本线程的中断标志位，如果被设置了中断标志就自行停止线程
+
+    * 如果线程处于正常活动状态，那么会将该线程的中断标志设置为true，被设置中断标志的线程将继续正常运行，不受影响
+
+    * ```java
+      public class InterruptDemo {
+          public static void main(String[] args) throws InterruptedException {
+              Runnable interruptTask = new Runnable() {
+                  @Override
+                  public void run() {
+                      int i = 0;
+                      try {
+                          //在正常运行任务时，经常检查本线程的中断标志位，如果被设置了中断标志就自行停止线程
+                          while (!Thread.currentThread().isInterrupted()) {
+                              Thread.sleep(100); // 休眠100ms
+                              i++;
+                              System.out.println(Thread.currentThread().getName() + " (" + Thread.currentThread().getState() + ") loop " + i);
+                          }
+                      } catch (InterruptedException e) {
+                          //在调用阻塞方法时正确处理InterruptedException异常。（例如，catch异常后就结束线程。）
+                          System.out.println(Thread.currentThread().getName() + " (" + Thread.currentThread().getState() + ") catch InterruptedException.");
+                      }
+                  }
+              };
+              Thread t1 = new Thread(interruptTask, "t1");
+              System.out.println(t1.getName() +" ("+t1.getState()+") is new.");
+      
+              t1.start();                      // 启动“线程t1”
+              System.out.println(t1.getName() +" ("+t1.getState()+") is started.");
+      
+              // 主线程休眠300ms，然后主线程给t1发“中断”指令。
+              Thread.sleep(300);
+              t1.interrupt();
+              System.out.println(t1.getName() +" ("+t1.getState()+") is interrupted.");
+      
+              // 主线程休眠300ms，然后查看t1的状态。
+              Thread.sleep(300);
+              System.out.println(t1.getName() +" ("+t1.getState()+") is interrupted now.");
+          }
+      }
+      ```
+
+* ![image-20190810144025915](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810144025915.png)
+
+* 线程安全问题的主要诱因
+
+  * 存在共享数据（也称临界资源）
+  * 存在多条线程共同操作这些共享数据
+  * 解决
+    * 同一时刻有且只有一个线程在操作共享数据，其他线程必须等到该线程处理完数据后再对共享数据进行操作
+
+* 互斥锁的特性
+
+  * 互斥性：即在同一时间只允许一个线程持有某个对象锁，通过这种特性来实现多线程的协调机制，这样在同一时间只有一个线程对需要同步的代码块（复合操作）进行访问。互斥性也被称为操作的原子性
+  * 可见性：必须确保在锁被释放之前，对共享变量所做的修改，对于随后获得该锁的另一个线程是可见的（即在获得锁时应获得最新共享变量的值），否则另一个线程可能是在本地缓存的某个副本上继续操作，从而引起不一致
+  * synchronized锁的不是代码，锁的都是对象
+
+* synchronized
+
+  * 根据获取的锁的分类：获取对象锁和获取类锁
+
+    * 获取对象锁的两种方法
+      * 同步代码块
+        * synchronized(this)、synchronized(类实例对象)
+        * 锁是小括号中的实例对象
+      * 同步非静态方法
+        * 锁是当前对象的实例对象
+    * 获取类锁的两种方法
+      * 同步代码块
+        * synchronized(类.class)，锁是Class对象
+      * 同步静态方法
+        * synchronized static method，锁是Class对象
+
+  * 对象锁和类锁的总结
+
+    * 有线程访问对象的同步代码块时，另外的线程可以访问该对象的非同步代码块
+
+    * 若锁住的是同一个对象，一个线程在访问对象的同步代码块时，另一个访问对象的同步代码块的线程会被阻塞
+
+    * 若锁住的是同一个对象，一个线程在访问对象的同步方法时，另一个访问该对象的同步方法的线程会被阻塞
+
+    * 若锁住的是同一个对象，一个线程在访问对象的同步代码块时，另一个访问对象同步方法的线程会被阻塞，反之亦然
+
+    * 同一个类的不同对象的对象锁互不干扰
+
+    * 类锁由于也是一种特殊的对象锁，因此表现和上述1，2，3，4一致，而由于一个类只有一把对象锁，所以同一个类的不同对象使用类锁将会是同步的
+
+    * 类锁和对象锁互不干扰
+
+    * ```java
+      public class SyncThread implements Runnable {
+      
+          @Override
+          public void run() {
+              String threadName = Thread.currentThread().getName();
+              if (threadName.startsWith("A")) {
+                  async();
+              } else if (threadName.startsWith("B")) {
+                  syncObjectBlock1();
+              } else if (threadName.startsWith("C")) {
+                  syncObjectMethod1();
+              } else if (threadName.startsWith("D")) {
+                  syncClassBlock1();
+              } else if (threadName.startsWith("E")) {
+                  syncClassMethod1();
+              }
+      
+          }
+      
+          /**
+           * 异步方法
+           */
+          private void async() {
+              try {
+                  System.out.println(Thread.currentThread().getName() + "_Async_Start: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+                  Thread.sleep(1000);
+                  System.out.println(Thread.currentThread().getName() + "_Async_End: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+              } catch (InterruptedException e) {
+                  e.printStackTrace();
+              }
+          }
+      
+          /**
+           * 方法中有 synchronized(this|object) {} 同步代码块
+           */
+          private void syncObjectBlock1() {
+              System.out.println(Thread.currentThread().getName() + "_SyncObjectBlock1: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+              synchronized (this) {
+                  try {
+                      System.out.println(Thread.currentThread().getName() + "_SyncObjectBlock1_Start: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+                      Thread.sleep(1000);
+                      System.out.println(Thread.currentThread().getName() + "_SyncObjectBlock1_End: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+                  } catch (InterruptedException e) {
+                      e.printStackTrace();
+                  }
+              }
+          }
+      
+          /**
+           * synchronized 修饰非静态方法
+           */
+          private synchronized void syncObjectMethod1() {
+              System.out.println(Thread.currentThread().getName() + "_SyncObjectMethod1: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+              try {
+                  System.out.println(Thread.currentThread().getName() + "_SyncObjectMethod1_Start: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+                  Thread.sleep(1000);
+                  System.out.println(Thread.currentThread().getName() + "_SyncObjectMethod1_End: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+              } catch (InterruptedException e) {
+                  e.printStackTrace();
+              }
+          }
+      
+          private void syncClassBlock1() {
+              System.out.println(Thread.currentThread().getName() + "_SyncClassBlock1: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+              synchronized (SyncThread.class) {
+                  try {
+                      System.out.println(Thread.currentThread().getName() + "_SyncClassBlock1_Start: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+                      Thread.sleep(1000);
+                      System.out.println(Thread.currentThread().getName() + "_SyncClassBlock1_End: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+                  } catch (InterruptedException e) {
+                      e.printStackTrace();
+                  }
+              }
+          }
+      
+          private synchronized static void syncClassMethod1() {
+              System.out.println(Thread.currentThread().getName() + "_SyncClassMethod1: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+              try {
+                  System.out.println(Thread.currentThread().getName() + "_SyncClassMethod1_Start: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+                  Thread.sleep(1000);
+                  System.out.println(Thread.currentThread().getName() + "_SyncClassMethod1_End: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+              } catch (InterruptedException e) {
+                  e.printStackTrace();
+              }
+          }
+      }
+      ```
+
+      ```java
+      public class SyncDemo {
+          public static void main(String... args) {
+              SyncThread syncThread = new SyncThread();
+              Thread A_thread1 = new Thread(syncThread, "A_thread1");
+              Thread A_thread2 = new Thread(syncThread, "A_thread2");
+              Thread B_thread1 = new Thread(syncThread, "B_thread1");
+              Thread B_thread2 = new Thread(syncThread, "B_thread2");
+              Thread C_thread1 = new Thread(syncThread, "C_thread1");
+              Thread C_thread2 = new Thread(syncThread, "C_thread2");
+              Thread D_thread1 = new Thread(syncThread, "D_thread1");
+              Thread D_thread2 = new Thread(syncThread, "D_thread2");
+              Thread E_thread1 = new Thread(syncThread, "E_thread1");
+              Thread E_thread2 = new Thread(syncThread, "E_thread2");
+              A_thread1.start();
+              A_thread2.start();
+              B_thread1.start();
+              B_thread2.start();
+              C_thread1.start();
+              C_thread2.start();
+              D_thread1.start();
+              D_thread2.start();
+              E_thread1.start();
+              E_thread2.start();
+          }
+      }
+      ```
+
+      ![image-20190810144918539](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810144918539.png)
+
+      ![image-20190810145152619](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810145152619.png)
+
+      ![image-20190810145212451](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810145212451.png)
+
+* synchronized底层实现原理
+
+  * 实现synchronized的基础
+    * Java对象头
+      * Mark Word，默认存储对象的hashCode，分代年龄，锁类型，锁标志位等信息
+      * ![image-20190810145948338](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810145948338.png)
+      * Class Metadata Address，类型指针指向对象的类元数据，JVM通过这个指针确定该对象是那个类的数据
+    * Monitor
+      * 每个Java对象天生自带了一把看不见的锁
+  * 对象在内存中的布局
+    * 对象头、实例数据、对齐填充
+
+* 什么是重入
+
+  * 从互斥锁的设计上来说，当一个线程试图操作一个由其他线程持有的对象锁的临界资源时，将会处于阻塞状态，但当一个线程再次请求自己持有对象锁的临界资源时，这种情况属于重入
+
+* 自旋锁
+
+  * 许多情况下，共享数据的锁定状态持续时间较短，切换线程不值得
+  * 通过让线程执行忙循环等待锁的释放，不让出CPU
+  * 缺点：若锁被其他线程长时间占用，会带来许多性能上的开销
+
+* 自适应自旋锁
+
+  * 自旋的次数不再固定
+  * 由前一次在同一个锁上的自旋时间及锁的拥有者的状态来决定
+
+* 锁消除
+
+  * 更彻底的优化，JIT编译时，对运行上下文进行扫描，去除不可能存在竞争的锁
+
+* 锁粗化
+
+  * 另一种极端，通过扩大加锁的范围，避免反复加锁和解锁
+
+* synchronized的四种状态
+
+  * （锁膨胀方向）无锁-偏向锁-轻量级锁-重量级锁
+
+* 偏向锁
+
+  * 减少同一线程获取锁的代价，CAS（Compare And Swap）
+  * 大多数情况下，锁不存在多线程竞争，总是由同一线程多次获得
+  * 核心思想：
+    * 如果一个线程获得了锁，那么锁就进入偏向模式，此时Mark Word的结构也变为偏向锁结构，当该线程再次请求锁时，无需再做任何同步操作，即获取锁的过程只需要检查Mark Word的锁标记位为偏向锁以及当前线程Id等于Mark Word的ThreadID即可，这样就省去了大量有关锁申请的操作
+    * 不适用于锁竞争比较激烈的多线程场合
+
+* 轻量级锁
+
+  * 是由偏向锁升级而来的，偏向锁运行在一个线程进入同步块的情况下，当第二个线程加入锁争用的时候，偏向锁就会升级为轻量级锁
+
+  * 适用场景：线程交替执行同步块
+
+  * 若存在同一时间访问同一锁的情况，就会导致轻量级锁膨胀为重量级锁
+
+  * ![image-20190810151847944](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810151847944.png)
+
+  * ![image-20190810151939210](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810151939210.png)
+
+  * 
+
+    ![image-20190810152014284](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810152014284.png)
+
+* ![image-20190810152101938](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810152101938.png)
+
+* ![image-20190810152634452](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810152634452.png)
+
+* ReentrantLock（再入锁）
+
+  * 位于java.util.concurrent.locks包
+  * 和CountDownLatch、FutureTask、Semaphore一样基于AQS实现
+  * 能够实现比synchronized更细粒度的控制，如控制fairness
+  * 调用lock()之后，必须调用unlock()释放锁
+  * 性能未必比synchronized高，并且也是可重入的
+
+* ReentrantLock公平性的设置
+
+  * ReentrantLock fairLock = new ReentrantLock(true);
+  * 参数为true时，倾向于将锁赋予等待时间最久的线程
+  * 公平锁：获取锁的顺序按先后调用lock()的顺序（慎用）
+  * 非公平锁：抢占的顺序不一定，看运气
+  * synchronized是非公平锁
+
+  * ```java
+    public class ReentrantLockDemo implements  Runnable{
+        private static ReentrantLock lock = new ReentrantLock(false);
+        @Override
+        public void run(){
+            while (true){
+                try{
+                    lock.lock();
+                    System.out.println(Thread.currentThread().getName() + " get lock");
+                    Thread.sleep(1000);
+                } catch (Exception e){
+                    e.printStackTrace();
+                } finally {
+                    lock.unlock();
+                }
+            }
+        }
+    
+        public static void main(String[] args) {
+            ReentrantLockDemo rtld = new ReentrantLockDemo();
+            Thread thread1 = new Thread(rtld);
+            Thread thread2 = new Thread(rtld);
+            thread1.start();
+            thread2.start();
+        }
+    }
+    ```
+
+* ReentrantLock将锁对象化
+
+  * 判断是否有线程，或者某个特定线程，在排队等待获取锁
+  * 带超时的获取锁的尝试
+  * 感知有没有成功获取锁
+
+* synchronized和ReentrantLock的区别
+
+  * synchronized是关键字，ReentrantLock是类
+  * ReentrantLock可以对获取锁的等待时间进行设置，避免死锁
+  * ReentrantLock可以获取各种锁的信息
+  * ReentrantLock可以灵活地实现多路通知
+  * 机制：sync操作Mark Word，lock调用Unsafe类的park()
+
+* 什么是Java内存模型中的happens-before
+  
+  * ![image-20190810153605210](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810153605210.png)
+* JMM中的主内存
+  
+  * 存储Java实例对象，包括成员变量、类信息、常量、静态变量等，属于数据共享的区域，多线程并发操作时会引发线程安全问题
+* JMM中的工作内存
+  * 存储当前方法的所有本地变量信息，本地变量对其他线程不可见
+  * 字节码行号指示器、Native方法信息
+  * 属于线程私有数据区域，不存在线程安全问题
+* JMM与Java内存区域划分是不同的概念层次
+  * JMM描述的是一组规则，围绕原子性、有序性、可见性展开
+  * 相似点：存在共享区域和私有区域
+* 主内存与工作内存的数据存储类型以及操作方式归纳
+  * 方法里的基本数据类型本地变量将直接存储在工作内存的栈帧结构中
+  * 引用类型的本地变量：引用存储在工作内存中，实例存储在主内存中
+  * 成员变量、static变量、类信息均会被存储在主内存中
+  * 主内存共享的方式是线程各拷贝一份数据到工作内存，操作完成后刷新回主内存
+  * ![image-20190810153942006](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810153942006.png)
+* 指令重排序需要满足的条件
+  * 在单线程环境下不能改变程序运行的结果
+  * 存在数据依赖关系的不允许重排序
+  * 无法通过happens-before原则推导出来的，才能进行指令重排序
+* happens-before
+  * A操作的结果需要对B操作可见，则A与B存在happens-before关系
+  * ![image-20190810154149465](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810154149465.png)
+  * 如果两个操作不满足上述任意一个happens-before规则，那么这两个操作就没有顺序的保障，JVM可以对这两个操作进行重排序
+  * 如果操作A happens-before操作B，那么操作A在内存上所作的操作对操作B都是可见的
+* volatile
+  * JVM提供的轻量级同步机制
+  * 保证被volatile修饰的共享变量对所有线程总是可见的
+  * 禁止指令重排序优化
+* volatile变量为何立即可见
+  * 当写一个volatile变量时，JMM会把该线程对应的工作内存中的共享变量值刷新到主内存中
+  * 当读取一个volatile变量时，JMM会把该线程对应的工作内存置为无效
+* volatile如何禁止重排优化
+  * 内存屏障（Memory Barrier）
+    * 保证特定操作的执行顺序
+    * 保证某些变量的内存可见性
+  * 通过插入内存屏障指令禁止在内存屏障前后的指令执行重排序优化
+  * 强制刷出各种CPU的缓存数据，因此任何CPU上的线程都能读取到这些数据的最新版本
+* ![image-20190810155308354](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810155308354.png)
+* ![image-20190810155331839](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810155331839.png)
+* CAS（Compare and Swap）
+  * 一种高效实现线程安全性的方法
+    * 支持原子更新操作，适用于计数器，序列发生器等场景
+    * 属于乐观锁机制，号称lock-free
+    * CAS操作失败时由开发者决定是继续尝试，还是执行别的操作
+  * 思想：包含三个操作数：内存位置（V）、预期原值（A）和新值（B）
+  * CAS多数情况下对开发者来说是透明的
+    * J.U.C的atomic包提供了常用的原子性数据类型以及引用、数组等相关原子类型和更新操作工具，是很多线程安全程序的首选
+    * Unsafe类虽提供CAS服务，但因能够操纵任意内存地址读写而有隐患
+    * Java9以后，可以使用Variable Handle API来替代Unsafe
+  * 缺点
+    * 若循环时间长，则开销很大
+    * 只能保证一个共享变量的原子操作
+    * ABA问题，结局：AtomicStampedReference
+* ![image-20190810155937758](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810155937758.png)
+* ![image-20190810160133836](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810160133836.png)
+* 为什么要使用线程池
+  * 降低资源消耗
+  * 提高线程的可管理性
+* ![image-20190810160352674](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810160352674.png)
+* J.U.C的三个Executor接口
+  * Executor：运行新任务的简单接口，将任务提交和任务执行细节解耦
+  * ExecutorService：具备管理执行器和任务生命周期的方法，提交任务机制更完善
+  * ScheduledExecutorService：支持Future和定期执行任务
+* ![image-20190810160622158](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810160622158.png)
+* ThreadPoolExecutor的构造函数
+  * corePoolSize：核心线程数量
+  * maximumPoolSize：线程不够用时能够创建的最大线程数
+  * workQueue：任务等待队列
+  * keepAliveTime：抢占的顺序不一定，看运气
+  * threadFactory：创建新线程，Executor.defaultThreadFactory()
+  * handler：线程池的饱和策略
+    * AbortPolicy：直接抛出异常（默认）
+    * CallerRunsPolicy：用调用者所在的线程来执行任务
+    * DiscardOldestPolicy：丢弃队列中最靠前的任务，并执行当前任务
+    * DiscardPolicy：直接丢弃任务
+    * 实现RejectedExecutionHandler接口的自定义handler
+  * ![image-20190810161010929](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810161010929.png)
+  * ![image-20190810161101074](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810161101074.png)
+* 线程池的状态
+  * RUNNING：能接受新提交的任务，并且也能处理阻塞队列中的任务
+  * SHUTDOWN：不再接受新提交的任务，但可以处理存量任务
+  * STOP：不再接受新提交的任务，也不处理存量任务
+  * TIDYING：所有的任务都已终止
+  * TERMINATED：terminated()方法执行完后进入该状态
+* ![image-20190810161316160](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810161316160.png)
+* ![image-20190810161343084](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810161343084.png)
+* 线程池的大小如何选定
+  * CPU密集型：线程数=按照核数或者核数+1 设定
+  * I/O密集型：线程数=CPU核数*（1+平均等待时间/平均工作时间）
+
+# 类库
+
+* Java异常
+  * 什么被抛出：异常类型
+  * 在哪抛出：异常堆栈跟踪
+  * 为什么被抛出：异常信息
+* Error和Exception的区别
+  * Java的异常体系
+    * Throwable
+      * Error
+      * Exception
+        * RuntimeException：不可预知的，程序应当自自行避免
+        * 非RuntimeException：可预知的，从编译器校验的异常
+  * 从责任角度看
+    * Error属于JVM需要负担的责任
+    * RuntimeException是程序应该负担的责任
+    * CheckedException可检查异常是Java编译器应该负担的责任
+  * 从概念角度解析Java的异常处理机制
+    * Error：程序无法处理的系统错误，编译器不做检查
+    * Exception：程序可以处理的异常，捕获后可能恢复
+  * 前者是程序无法处理的错误，后者是可以处理的异常
+  * ![image-20190810163717836](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810163717836.png)
+  * Java的异常处理机制
+    * 抛出异常：创建异常对象，交由运行时系统处理
+    * 捕获异常：寻找合适的异常处理器处理异常，否则终止运行
+  * Java异常的处理原则
+    * 具体明确：抛出的异常应能通过异常类名和message准确说明异常的类型和产生异常的原因
+    * 提早抛出：应尽可能早地发现并抛出异常，便于精确定位问题
+    * 延迟捕获：异常的捕获和处理应尽可能延迟，让掌握更多信息的作用域来处理异常
+  * ![image-20190810164536725](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810164536725.png)
+    * 设计一个通用的继承自RuntimeException的异常来统一处理
+    * 其余异常都统一转译为上述异常AppException
+    * 在catch之后，抛出上述异常的子类，并提供足以定位的信息
+    * 由前端接收AppException做统一处理
+  * t ry-catch的性能
+    * Java异常处理消耗性能的地方
+      * try-catch块影响JVM的优化
+      * 异常对象实例需要保存栈快照等信息，开销大
+* ![image-20190810164827033](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810164827033.png)
+* ![image-20190810164914716](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810164914716.png)
+* ![image-20190810165033259](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810165033259.png)
+* ![image-20190810165144006](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810165144006.png)
+* ![image-20190810170557357](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810170557357.png)
+* ![image-20190810170744029](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810170744029.png)
+* ![image-20190810170828128](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810170828128.png)
+* ![image-20190810171213444](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810171213444.png)
+* HashMap：如何有效减少碰撞
+  * 扰动函数：促使元素位置分布均匀，减少碰撞几率
+  * 使用final对象，并采用合适的equals()和hashCode()方法
+* ![image-20190810171608898](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810171608898.png)
+* HashMap：扩容的问题
+  * 多线程环境下，调整大小会存在条件竞争，容易造成死锁
+  * rehashing是一个比较耗时的过程
+* 如何优化Hashtable？
+  * 通过锁细粒度化，将整锁拆解成多个锁进行优化
+* ![image-20190810172146869](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810172146869.png)
+* ![image-20190810172225888](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810172225888.png)
+* ![image-20190810172733996](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810172733996.png)
+* ConcurrentHashMap总结
+  * 比起Segment，锁拆得更细
+    - 首先使用无锁操作CAS插入头节点，失败则循环重试
+    - 若头节点已存在，则尝试获取头节点的同步锁，再进行操作
+  * 别的需要注意的点
+    - size()和mappingCount()方法的异同，两者计算是否准确
+    - 多线程环境下如何进行扩容
+  * 三者的区别
+    * HashMap线程不安全，数组+链表+红黑树
+    * Hashtable线程安全，锁住整个对象，数组+链表
+    * ConcurrentHashMap线程安全，CAS+同步锁，数组+链表+红黑树
+    * HashMap的key、value均可为null，而其他的两个类不支持
+* J.U.C知识点梳理
+  * java.util.concurrent：提供了并发编程的解决方案
+    - CAS是java.util.concurrent.atomic包的基础
+    - AQS是java.util.concurrent.locks包以及一些常用类，比如Semophore、ReentrantLock等类的基础
+  * J.U.C包的分类
+    - 线程执行器executor、锁locks、原子变量类atomic、并发工具类tools、并发合集collections
+* ![image-20190810174026698](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810174026698.png)
+* 并发工具类
+  * 闭锁CountDownLatch：
+    * 让主线程等待一组事件发生后继续执行，事件指的是CountDownLatch里的countDown()
+    * ![image-20190814230506543](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190814230506543.png)
+    * ![image-20190810174620932](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810174620932.png)
+  * 栅栏CyclicBarrier：阻塞当前线程，等待其他线程
+    * 等待其他线程，且会阻塞自己当前线程，所有线程必须同时到达栅栏位置后，才能继续执行
+    * 所有线程到达栅栏处，可以触发执行另外一个预先设置的线程
+    * ![image-20190814230945784](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190814230945784.png)
+    * ![image-20190810174811678](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810174811678.png)
+  * 信号量Semaphor：控制某个资源可被同时访问的线程个数
+    * ![image-20190814231458130](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190814231458130.png)
+    * ![image-20190810174902311](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810174902311.png)
+  * 交换器Exchanger：两个线程到达同步点后，相互交换数据
+    * ![image-20190814231620414](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190814231620414.png)
+    * ![image-20190810175105722](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810175105722.png)
+* BlockingQueue：提供可阻塞的入队和出队操作
+  * ![image-20190814232229962](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190814232229962.png)
+  * 主要用于生产者-消费者模式，在多线程场景时生产者线程在队列尾部添加元素，而消费者线程则在队列头部消费元素，通过这种方式能够达到将任务的额生产和消费进行隔离的目的
+  * ![image-20190810175601872](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810175601872.png)
+* ![image-20190810175931244](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810175931244.png)
+* ![image-20190810180025226](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810180025226.png)
+* NIO的核心
+  - Channel
+    - FileChannel
+      - transferTo：把FileChannel中的数据拷贝到另外一个Channel
+      - transferFrom：把另外一个Channel中的数据拷贝到FileChannel
+      - 避免了两次用户态和内核态间的上下文切换，即“零拷贝”，效率较高
+    - DatagramChannel、SocketChannel、ServerSocketChannel
+  - Buffer
+  - Selector
+* ![image-20190810180536626](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810180536626.png)
+* ![image-20190810180626671](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810180626671.png)
+* ![image-20190810180714296](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810180714296.png)
+* ![image-20190810180732485](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810180732485.png)
+* ![image-20190810180751244](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810180751244.png)
+* AIO如何进一步加工处理结果
+  - 基于回调：实现CompletionHandler接口，调用时触发回调函数
+  - 返回Future：通过isDone()查看是否准备好，通过get()等待返回数据
+* ![image-20190810181410837](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810181410837.png)
+
+# Spring
+
+- Spring IOC
+  - 控制反转
+  - Spring Core最核心的部分
+  - 需先了解依赖注入
+- 依赖注入
+  - 把底层类作为参数传递给上层类，实现上层对下层的“控制”
+- 依赖注入的方式
+  - Setter、Interface、Constructor、Annotation
+- 依赖倒置原则、IOC、DI、IOC容器的关系
+  - ![image-20190815095800038](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815095800038.png)
+- IOC容器的优势
+  - 避免在各处使用new来创建类，并且可以做到统一维护
+  - 创建实例的时候不需要了解其中的细节
+  - ![image-20190810195535801](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810195535801.png)
+- Spring IOC支持的功能
+  - 依赖注入、依赖检查、自动装配、支持集合、指定初始化方法和销毁方法、支持回调方法
+- Spring IOC容器的核心接口
+  - BeanFactory
+  - ApplicationContext
+- BeanDefinition
+  - 主要用来描述Bean的定义
+- BeanDefinitionRegistry
+  - 提供向IOC容器注册BeanDefinition对象的方法
+- BeanFactory
+  - 提供IOC的配置机制
+  - 包含Bean的各种定义，便于实例化Bean
+  - 建立Bean之间的依赖关系
+  - Bean的生命周期控制
+- BeanFactory与ApplicationContext的比较
+  - BeanFactory是Spring框架的基础设施，面向Spring
+  - ApplicationContext面向使用Spring框架的开发者
+- ApplicationContext的功能（继承多个接口）
+  - BeanFactory：能够管理、装配Bean
+  - ResourcePatternResolver：能够加载资源文件
+  - MessageSource：能够实现国际化等功能
+  - ApplicationEventPublisher：能够注册监听器，实现监听机制
+- getBean方法的代码逻辑
+  - 转换BeanName、从缓存中加载实例、实例化Bean、检测parentBeanFactory、初始化依赖的Bean、创建Bean
+
+- SpringBean的作用域
+  - singleton：Spring的默认作用域，容器里拥有唯一的Bean实例
+  - prototype：针对每个getBean请求，容器都会创建一个Bean实例
+  - request：会为每个Http请求创建一个Bean实例
+  - session：会为每个session创建一个Bean实例
+  - globalSession：会为每个全局Http Session创建一个Bean实例，该作用域仅对Portlet有效
+
+- SpringBean的生命周期
+
+  - 创建过程
+    - 实例化Bean 
+    - Aware（注入Bean ID、 BeanFactory和ApplicationContext） 
+    - BeanPostProcessor(s)，postProcessBeforeInitialization
+    - InitializingBean(s)，afterPropertiesSet
+    - 定制的Bean init方法
+    - BeanPostProcessor(s)，postProcessAfterInitialization
+    - Bean初始化完毕
+  - 销毁过程
+    - 若实现了DisposableBean接口，则会调用destory方法
+    - 若配置了destry-method属性，则会调用其配置的销毁方法
+
+- Sprint AOP
+
+  - 关注点分离：不同的问题交给不同的部分去解决
+    - 面向切面编程AOP正是此种技术的体现
+    - 通用化功能代码的实现，对应的就是所谓的切面（Aspect）
+    - 业务功能代码和切面代码分开后，架构将变得高内聚低耦合
+    - 确保功能的完整性：切面最终需要被合并到业务中（Weave）
+  - 三种织入方式
+    - 编译时织入：需要特殊的Java编译器，如AspectJ
+    - 类加载时织入：需要特殊的Java编译器，如AspectJ和AspectWerkz
+    - 运行时织入：Spring采用的方式，通过动态代理的方式，实现简单
+  - ![image-20190810203223341](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810203223341.png)
+  - ![image-20190810203240946](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190810203240946.png)
+  - 主要名词概念
+    - Aspect：通用功能的代码体现
+    - Target：被织入Aspect的对象
+    - Join Point：可以作为切入点的机会，所有方法都可以作为切入点
+    - Pointcut：Aspect实际被应用在的Join Point，支持正则
+    - Advice：类里的方法以及这个方法如何织入到目标方法的方式
+    - Weaving：Aop的实现过程
+
+  - Advice的种类
+    - 前置通知-Before、后置通知-AfterReturning、异常通知-AfterThrowing、最终通知-After、环绕通知-Around
+  - AOP的实现：JdkProxy和Cglib
+    - 由AopProxyFactory根据AdvisedSupport对象的配置来决定
+    - 默认策略如果目标类是接口，则用JDKProxy来实现，否则用后者
+    - JDKProxy的核心：InvocationHandler接口和Proxy类
+    - Cglib：以继承的方式动态生成目标类的代理
+    - JDKProxy：通过Java的内部反射机制实现
+    - Cglib：借助ASM实现
+    - 反射机制在生成类的过程中比较高效
+    - ASM在生成类之后的执行过程中比较高效
+
+- Spring里的代理模式的实现
+
+  - 真实实现类的逻辑包含在了getBean方法里
+  - getBean方法返回的实际上是Proxy的实例
+  - Proxy实例是Spring采用JDK Proxy或CGLIB动态生成的
+
+- Spring事务相关
+
+  - ACID
+  - 隔离级别
+  - 事务传播
