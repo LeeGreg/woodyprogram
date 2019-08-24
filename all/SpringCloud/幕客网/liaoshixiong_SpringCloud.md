@@ -1,4 +1,8 @@
+# Readme
+
 ```shell
+# 注意坑，一定是要在完成对整个购物车扣库存完成后再发送MQ消息，不能遍历的发送MQ消息，因为要防止抛出异常，数据库可以回滚，但是MQ消息不能
+
 # 启动eureka
 cd /Users/dingyuanjie/code/SpringCloud_liao/liao_SpringCloud/SpringCloud_Sell/eureka
 mvn clean package
@@ -114,7 +118,7 @@ nohup java -jar target/eureka-0.0.1-SNAPSHOT.jar > /dev/null 2>&1 &
 * Eureka Client（服务注册）
 
   ```yaml
-  @EnableEurekaClient
+  @EnableEurekaClient(只为Eureka) / @EnableDiscoveryClient(所有服务注册组件)
   # 高可用
   eureka:
     client:
@@ -239,6 +243,7 @@ nohup java -jar target/eureka-0.0.1-SNAPSHOT.jar > /dev/null 2>&1 &
   * 所有业务逻辑
 * product-client
   * 对外暴露的接口
+  * Fegin 调用 server中 controller
 * product-common
   * 公用的对象
 
@@ -264,7 +269,7 @@ mvn -Dmaven.test.skip=true -U clean install
 * 天生一对
   * 从系统环境开始，自底至上打包应用，避免环境问题
   * 轻量级，对资源的有效隔离和管理
-  * 可服用、版本化
+  * 可复用、版本化
 * 微服务、Docket、Devops
 
 ## 统一配置中心
@@ -277,12 +282,11 @@ mvn -Dmaven.test.skip=true -U clean install
 
 * config-server
 
-  ![image-20190806063930030](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806063930030.png)
-
-  ```shell
+  ```yaml
+  @EnableDiscoveryClient
+  @EnableConfigServer
   # application.yml
-  # git上创建一个仓库 config-repo
-  # 然后创建一个order.yml文件（该格式是【通用配置】，不管指定哪个环境，其都会加载并合并到那个环境一起返回），内容为
+  # git上创建一个仓库 config-repo，然后创建一个order.yml文件（该格式是【通用配置】，不管指定哪个环境，其都会加载并合并到那个环境一起返回），内容为
   spring:
     application:
       name: config
@@ -294,7 +298,7 @@ mvn -Dmaven.test.skip=true -U clean install
             username: lly835@163.com
             password: nKfm9JMUfWEh
             # basedir - 本地仓库
-  #         basedir: /Users/admin/code/myProjects/java/imooc/SpringCloud_Sell/config/basedir
+  #          basedir: /Users/admin/code/myProjects/java/imooc/SpringCloud_Sell/config/basedir
   eureka:
     client:
       service-url:
@@ -303,32 +307,27 @@ mvn -Dmaven.test.skip=true -U clean install
     endpoints:
       web:
         expose: "*"
-  env: 
-  	test
-  # 然后启动config-server，访问以下链接都会显示上述配置信息
+  env:
+    test      
+  #然后启动config-server，访问以下链接都会显示上述配置信息
   http://localhost:8080/order-a.yml 
   http://localhost:8080/order-a.properties
   http://localhost:8080/order-a.json
-  # 访问规则
+  #访问规则: label 分支，name 服务名，profiles 环境
   /{name}-{profiles}.yml
   /{label}/{name}-{profiles}.yml
-  # name 服务名
-  # profiles 环境
-  # label 分支
-  # 新建 order-test.yml - http://localhost:8080/order-test.yml 
-  # 新建 order-dev.yml - http://localhost:8080/order-dev.yml
-  # 新建分支 release - http://localhost:8080/release/order-dev.yml
-  
-  # 指定不同端口，多启动几个实例注册到eureka，client端负载均衡访问
-  
-  # 【git上每个服务都有各自的配置文件】
-  # 【可以配置公共配置文件】
+  #新建 order-test.yml - http://localhost:8080/order-test.yml 
+  #新建 order-dev.yml - http://localhost:8080/order-dev.yml
+  #新建分支 release - http://localhost:8080/release/order-dev.yml
+  #指定不同端口，多启动几个实例注册到eureka，client端负载均衡访问
+  【git上每个服务都有各自的配置文件】
+  【可以配置公共配置文件】
   ```
 
-* config-client
+*  config-client
 
   ```yaml
-  # bootstrap.yml 最先启动
+ # bootstrap.yml 最先启动
   spring:
     application:
       name: order
@@ -505,22 +504,22 @@ mvn -Dmaven.test.skip=true -U clean install
   
       @Test
       public void send() {
+          // routingKey, object
           amqpTemplate.convertAndSend("myQueue", "now " + new Date());
       }
   
       @Test
       public void sendOrder() {
+          // exchange, routingKey, object
           amqpTemplate.convertAndSend("myOrder", "computer", "now " + new Date());
       }
   }
   @RunWith(SpringRunner.class)
   @SpringBootTest
   public class OrderApplicationTests {
-  
   	@Test
   	public void contextLoads() {
   	}
-  
   }
   ```
 
@@ -800,6 +799,7 @@ public class TokenFilter extends ZuulFilter {
 
     @Override
     public Object run() {
+      	// com.netflix.zuul.context
         RequestContext requestContext = RequestContext.getCurrentContext();
         HttpServletRequest request = requestContext.getRequest();
 
@@ -850,6 +850,7 @@ public class addResponseHeaderFilter extends ZuulFilter{
 
     ```java
     // 限流拦截器，google已有实现
+    import com.google.common.util.concurrent.RateLimiter;
     @Component
     public class RateLimitFilter extends ZuulFilter{
       // 每秒钟放100个令牌
@@ -930,10 +931,7 @@ public class addResponseHeaderFilter extends ZuulFilter{
         public Object run() {
             RequestContext requestContext = RequestContext.getCurrentContext();
             HttpServletRequest request = requestContext.getRequest();
-    
-            /**
-             * /order/finish 只能卖家访问（cookie里有token，并且对应的redis中有值）
-             */
+            // /order/finish 只能卖家访问（cookie里有token，并且对应的redis中有值）
             Cookie cookie = CookieUtil.get(request, "token");
             if(cookie == null
                     || StringUtils.isEmpty(cookie.getValue())
@@ -941,16 +939,15 @@ public class addResponseHeaderFilter extends ZuulFilter{
                 requestContext.setSendZuulResponse(false);
                 requestContext.setResponseStatusCode(HttpStatus.UNAUTHORIZED.value());
             }
-    
             return null;
         }
     }
     ```
-
+    
     ```java
     // 买家
     @Component
-    public class AuthBuyerFilter extends ZuulFilter {
+public class AuthBuyerFilter extends ZuulFilter {
     
         @Autowired
         private StringRedisTemplate stringRedisTemplate;
@@ -969,7 +966,6 @@ public class addResponseHeaderFilter extends ZuulFilter{
         public boolean shouldFilter() {
             RequestContext requestContext = RequestContext.getCurrentContext();
             HttpServletRequest request = requestContext.getRequest();
-    
             if("/order/order/create".equals(request.getRequestURI())) {
                 return true;
             }
@@ -980,101 +976,95 @@ public class addResponseHeaderFilter extends ZuulFilter{
         public Object run() {
             RequestContext requestContext = RequestContext.getCurrentContext();
             HttpServletRequest request = requestContext.getRequest();
-    
-            /**
-             * /order/create 只能买家访问（cookie里有openid）
-             */
+            // /order/create 只能买家访问（cookie里有openid）
             Cookie cookie = CookieUtil.get(request, "openid");
             if(cookie == null || StringUtils.isEmpty(cookie.getValue())) {
                 requestContext.setSendZuulResponse(false);
                 requestContext.setResponseStatusCode(HttpStatus.UNAUTHORIZED.value());
             }
-    
             return null;
         }
     }
     ```
-
+    
     ![image-20190806140615721](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806140615721.png)
-
+    
     ![image-20190806140911545](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806140911545.png)
-
+    
     ![image-20190806141007875](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806141007875.png)
-
+    
     ```yaml
     # user服务  git上配置 数据库和redis配置
     # application.yml
     spring:
-      application:
-        name: user
+    	application:
+    		name: user
       cloud:
-        config:
+    		config:
           discovery:
-            enabled: true
-            service-id: CONFIG
-          profile: dev
-    eureka:
-      client:
-        service-url:
-          defaultZone: http://localhost:8761/eureka/
+    				enabled: true
+    				service-id: CONFIG
+    			profile: dev
+    	eureka:
+          client:
+            service-url:
+              defaultZone: http://localhost:8761/eureka/  
+    ```
+    ```java
+// 买家登录
+//1. openid和数据库里的数据是否匹配
+//2. 判断角色
+//3. cookie里设置openid=abc
+public static void set(HttpServletResponse response,String name,String value,
+                       int maxAge) {
+  Cookie cookie = new Cookie(name, value);  
+  cookie.setPath("/");
+  cookie.setMaxAge(maxAge);
+  response.addCookie(cookie);
+}
     ```
 
-    ```java
-    // 买家登录
-    //1. openid和数据库里的数据是否匹配
-    //2. 判断角色
-    //3. cookie里设置openid=abc
-    public static void set(HttpServletResponse response,String name,String value,
-                           int maxAge) {
-      Cookie cookie = new Cookie(name, value);
-      cookie.setPath("/");
-      cookie.setMaxAge(maxAge);
-      response.addCookie(cookie);
-    }
-    ```
-
-    ```java
-    // 卖家登录
-    // 判断是否已登录
-    Cookie cookie = CookieUtil.get(request, CookieConstant.TOKEN);
-    if (cookie != null &&   !StringUtils.isEmpty(stringRedisTemplate.opsForValue().get(String.format(RedisConstant.TOKEN_TEMPLATE, cookie.getValue())))) {
-      return ResultVOUtil.success();
-    }
-    
-    public static Cookie get(HttpServletRequest request, String name) {
-      Cookie[] cookies = request.getCookies();
-      if (cookies != null) {
-        for (Cookie cookie: cookies) {
-          if (name.equals(cookie.getName())) {
-            return cookie;
-          }
-        }
+```java
+// 卖家登录
+// 判断是否已登录
+Cookie cookie = CookieUtil.get(request, CookieConstant.TOKEN);
+if (cookie != null &&   !StringUtils.isEmpty(stringRedisTemplate.opsForValue().get(String.format(RedisConstant.TOKEN_TEMPLATE, cookie.getValue())))) {
+  return ResultVOUtil.success();
+}
+public static Cookie get(HttpServletRequest request, String name) {
+  Cookie[] cookies = request.getCookies();
+  if (cookies != null) {
+    for (Cookie cookie: cookies) {
+      if (name.equals(cookie.getName())) {
+        return cookie;
       }
-      return null;
     }
-    // 1. openid和数据库里的数据是否匹配
-    // 2. 判断角色
-    // 3. redis设置key=UUID, value=xyz
-    // 4. cookie里设置token=UUID
-    ```
+  }
+  return null;
+}
+// 1. openid和数据库里的数据是否匹配
+// 2. 判断角色
+// 3. redis设置key=UUID, value=xyz
+// 4. cookie里设置token=UUID
+```
 
   * Zuul跨域
-
+  
     * 在被调用的类或方法上增加@CrossOrigin注解
-
+    
       * `@CrossOrigin(allowCredentials="true")`允许`cookie`跨域
-
+    
     * 在Zuul里增加CorsFilter过滤器
-
-      ```java
+    
+    ```java
       /**
-       * 跨域配置
+     * 跨域配置
        * C - Cross  O - Origin  R - Resource  S - Sharing
-       */
+     */
       @Configuration
-      public class CorsConfig {
+    public class CorsConfig {
       
-      	@Bean
+    	@Bean
       	public CorsFilter corsFilter() {
       		final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
       		final CorsConfiguration config = new CorsConfiguration();
@@ -1089,7 +1079,7 @@ public class addResponseHeaderFilter extends ZuulFilter{
       		return new CorsFilter(source);
       	}
       }
-      ```
+    ```
 
 ## 服务容错
 
@@ -1120,10 +1110,14 @@ public class addResponseHeaderFilter extends ZuulFilter{
   
   // 服务熔断
   //	@HystrixCommand(commandProperties = {
-  //			@HystrixProperty(name = "circuitBreaker.enabled", value = "true"),  				//设置熔断
-  //			@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),	//请求数达到后才计算
-  //			@HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "10000"), //休眠时间窗
-  //			@HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "60"),	//错误率
+  			// 设置熔断
+  //			@HystrixProperty(name = "circuitBreaker.enabled", value = "true"),  	
+  			// 请求数达到后才计算
+  //			@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),	
+  		  // 休眠时间窗
+  //			@HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "10000"), 
+  			// 错误率
+  //			@HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "60"),
   //	})
   @HystrixCommand
   @GetMapping("/getProductInfoList")
@@ -1138,24 +1132,19 @@ public class addResponseHeaderFilter extends ZuulFilter{
     //		throw new RuntimeException("发送异常了");  // 抛出异常也可触发降级
   }
   
-  private String fallback() {
-    return "太拥挤了, 请稍后再试~~";
-  }
-  
-  private String defaultFallback() {
-    return "默认提示：太拥挤了, 请稍后再试~~";
-  }
+  private String fallback() { return "太拥挤了, 请稍后再试~~"; }
+  private String defaultFallback() {  return "默认提示：太拥挤了, 请稍后再试~~"; }
   ```
-
-  * 微服务和分布式中容错是必须要考虑的
+  
+* 微服务和分布式中容错是必须要考虑的
     * 重试机制：对于预期的短暂问题，重试是可以解决的，更长时间的故障问题则无意义
     * 断路器模式：将受保护的服务封装在一个可以监控故障的断路器对象里，当故障达到一定的值，短路器将会跳闸，断路器返回错误
 
-  ![image-20190806160257813](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806160257813.png)
+![image-20190806160257813](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190806160257813.png)
 
-  * Circuit Breaker：断路器
-
-    ```java
+* Circuit Breaker：断路器
+  
+  ```java
     // 请求数达到后才计算，设置在滚动时间窗口中，断路器的最小请求数
     @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
     // 断路器确定是否要打开统计请求错误数据时会有个时间范围，该范围称为时间窗口，当断路器打开对主逻辑进行熔断后，Hystrix会启动一个休眠时间窗
@@ -1163,14 +1152,14 @@ public class addResponseHeaderFilter extends ZuulFilter{
     @HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "10000"),
     // 错误率，断路器打开的错误百分比条件，在滚动时间窗口中，10次调用有7次异常，超过设置百分比，则断路器打开，否则设置关闭状态
     @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "60"),	
-    ```
-
-    * 状态机状态：
+  ```
+  
+  * 状态机状态：
       * Closed：调用失败次数累计到一定阈值或一定比例就会启动熔断机制
       * Open：此时服务直接返回错误，设置了一个时钟选项，到了时钟会进入半熔断状态允许定量服务请求，如果调用成功占到了一定比例，则认为服务恢复了，会关闭断路器，否则任务服务还没恢复，会回到断路器打开状态
       * Half Open
-
-    ```yaml
+  
+  ```yaml
     # 记得加 @HystrixCommand 注解
     # application.yml
     hystrix:
@@ -1185,11 +1174,11 @@ public class addResponseHeaderFilter extends ZuulFilter{
             isolation:
               thread:
                 timeoutInMilliseconds: 1000
-    ```
-
-    * 可视化组件
-
-      ```yaml
+  ```
+  
+  * 可视化组件
+  
+    ```yaml
       # 添加依赖 spring-cloud-starter-hystrix-dashboard
       management:
       	context-path: /
@@ -1198,7 +1187,7 @@ public class addResponseHeaderFilter extends ZuulFilter{
       	http://localhost:8081/hystrix.stream
       	100 order
       【postman能够设置自动调用接口】	
-      ```
+    ```
 
 ## 服务追踪
 

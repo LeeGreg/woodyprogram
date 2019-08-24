@@ -1,0 +1,46 @@
+* 微服务架构
+  * 特点
+    * 一组小的服务
+    * 独立的进程
+    * 轻量级通信
+    * 基于业务能力
+    * 独立部署
+    * 无集中式管理
+  * 优点
+    * 强模块化边界
+    * 可独立部署
+    * 技术多样性
+  * 缺点
+    * 分布式复杂性
+    * 最终一致性
+    * 运维复杂性
+    * 测试复杂性
+* 微服务中台战略
+  * ![image-20190815161820546](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815161820546.png)
+* 服务分层
+  * ![image-20190815162201871](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815162201871.png)
+* 微服务总体技术架构体系
+  * ![image-20190815162912393](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815162912393.png)
+
+* API网关
+  * 反向路由、认证安全、限流熔断、日志监控
+* ![image-20190815165544795](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815165544795.png)
+* 微服务治理
+  * ![image-20190815170019873](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815170019873.png)
+* 监控
+  * ![image-20190815170952732](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815170952732.png)
+  * ![image-20190815170910278](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815170910278.png)
+* 调用链监控
+  * ![image-20190815171244043](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815171244043.png)
+  * ![image-20190815171511755](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815171511755.png)
+* 容错限流
+  * ![image-20190815190442259](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815190442259.png)
+  * ![image-20190815190526909](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815190526909.png)
+
+* 容器
+  * ![image-20190815190620561](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815190620561.png)
+  * ![image-20190815190951719](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815190951719.png)
+* 容器集群调度和基于容器的发布体系
+  * ![image-20190815191121453](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815191121453.png)
+  * ![image-20190815191350218](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190815191350218.png)
+  * 

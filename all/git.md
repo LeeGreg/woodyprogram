@@ -1,3 +1,45 @@
+# readme
+
+```shell
+# 什么是git
+开源分布式版本控制系统，可以有效、高速地处理从很小到非常大的项目版本管理
+# 让Git显示颜色，会让命令输出看起来更醒目
+git config --global color.ui true
+# 版本回退
+A -> B	-> C
+Server（C）回滚到B
+1. 本地reset到B
+git log
+	B commit 3832343nsesd32sf3423dsfsdssd2342
+git reset --hard 3832343nsesd32sf3423dsfsdssd2342
+2. 远端
+git push -f origin master 
+
+# Git的版本回退速度非常快，因为Git在内部有个指向当前版本的HEAD指针，当你回退版本的时候，Git仅仅是把HEAD从指向要回腿的版本
+
+# 记录的每一次命令
+git reflog
+```
+
+## git和svn的区别
+
+Git是分布式版本控制，SVN是集中式版本控制
+
+- 集中式版本控制系统
+  - 版本库是集中存放在中央服务器，要先从中央服务器取得最新的版本
+  - 必须联网才能工作
+- 分布式版本控制系统
+  - 没有“中央服务器”，每个人的电脑上都是一个完整的版本库，即使没有网络也一样可以Commit，查看历史版本记录，创建项目分支等操作，等网络再次连接上Push到Server端
+  - 分布式版本控制系统通常也有一台充当“中央服务器”的电脑，但这个服务器的作用仅仅是用来方便“交换”大家的修改，没有它大家也一样干活，只是交换修改不方便而已
+  - Git把内容按元数据方式存储，而SVN是按文件：因为,.git目录是处于自己机器上的一个克隆版的版本库，它拥有中心版本库上所有的东西，例如标签，分支，版本记录等。.git目录的体积大小跟.svn比较相对小很多
+  - Git的内容的完整性要优于SVN: GIT的内容存储使用的是SHA-1哈希算法。这能确保代码内容的完整性，确保在遇到磁盘故障和网络问题时降低对版本库的破坏
+  - Git下载下来后，在OffLine状态下可以看到所有的Log，SVN不可以
+  - Git没有一个全局版本号，而SVN有
+  - 在SVN，分支是一个完整的目录。且这个目录拥有完整的实际文件，改一个分支，还得让其他人重新切分支重新下载。而 Git，每个工作成员可以任意在自己的本地版本库开啟无限个分支，只要不合并及提交到主要版本库，没有一个工作成员会被影响
+- Push/pull要联网
+- 如果Server硬盘坏了怎么办？使用不同公司的硬盘
+- git保证完整性
+
 ```shell
 # 下载
 # 配置用户信息
@@ -23,6 +65,41 @@ git status
 git rm bash_demo.txt
 git status
 git commit -m "..."
+
+ll -a
+cd .git/
+# HEAD ： 在Git中，用HEAD表示当前版本，也就是最新的提交commitID
+# 上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
+# HEAD指向的版本就是当前版本，因此，Git允许们在版本的历史之间穿梭，使用命令git reset --hard commit_id
+# 穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本
+# 要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本
+
+# 工作区（Working Directory）
+工作区有一个隐藏目录.git，这个不算工作区，而是Git的版本库
+# 版本库（Repository）
+.git
+stage（或者叫index）的暂存区，还有Git自动创建的第一个分支master，以及指向master的一个指针叫HEAD
+git add		把文件修改添加到暂存区
+git commit	把暂存区的所有内容提交到当前分支
+# 需要提交的文件修改通通放到暂存区，然后，一次性提交暂存区的所有修改
+
+# 第一次修改 -> git add -> 第二次修改 -> git commit
+git commit只负责把暂存区的修改提交了，也就是第一次的修改被提交了，第二次的修改不会被提交
+# 查看工作区和版本库里面最新版本的区别
+git diff HEAD -- filename
+# 每次修改，如果不用git add到暂存区，那就不会加入到commit中
+
+# fetch
+本地与远端同步一次，分支不会立马更新，更新需要 git pull origin master
+# git pull
+更新本地仓库至最新改动，相当于是git fetch + git merge
+git pull -r，也就是git pull –rebase，相当于git fetch + git rebase
+# push
+本地推送到远端
+# 推送分支，就是把该分支上的所有本地提交推送到远程库。推送时，要指定本地分支，这样，Git就会把该分支推送到远程库对应的远程分支上
+git push origin master
+# 要推送其他分支，比如dev，就改成
+git push origin dev
 ```
 
 ```shell
@@ -85,6 +162,50 @@ git merge feature_x
 # 删除分支
 git branch -d feature_x
 ```
+
+```shell
+# 本地项目推送到git上
+mkdir test10
+cd test10
+ll -a # 没.git
+# 创建git仓库
+1. git init
+	ll -a # .gti已有
+	touch 10.txt
+	git status
+	git ac 'init'
+	git status
+	# 远端创建目录 git@git.oschina.net:gupaoedu_com_vip/test10.git  项目必须是空的，不包括readme文件
+# 远端与本地建立联系
+2. git remote add origin git@git.oschina.net:gupaoedu_com_vip/test10.git
+	git config --list
+3. （git fetch 可选）
+   git pull origin master
+4. git push -u origin master
+```
+
+## checkout
+
+```shell
+1. 切新分支 # -b新增
+	git checkout -b dev-0416-demo		# 创建并切换到新分支
+	git checkout master        			# 切回到master
+2. 本地撤销更改（更改了文件内容）
+	git checkout .                      # 所有文件
+	git checkout 1.txt					# 只1.txt
+	
+# 丢弃工作区的修改
+git checkout -- file
+# 总之，就是让这个文件回到最近一次git commit或git add时的状态
+# 一种是file自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态
+# 一种是file已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态
+
+场景1：当改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令git checkout -- file。
+场景2：当不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令git reset HEAD <file>，就回到了场景1，第二步按场景1操作。
+场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，参考版本回退一节，不过前提是没有推送到远程库
+```
+
+
 
 # Git
 
@@ -188,6 +309,165 @@ Switched to a new branch 'face2.0'
 3. git branch -a 
 4. git checkout 远程新分支face_server
 本地就提交到远程新分支face_server上了
+```
+
+## 分支
+
+```shell
+# 列出所有分支，当前分支前面会标一个*号
+git branch
+# 把dev分支的工作成果合并到master分支上
+git checkout master
+git merge dev           # 合并指定分支到当前分支
+
+# 删除dev分支
+git branch -d dev
+
+# 开发一个新feature，最好新建一个分支；
+# 如果要丢弃一个没有被合并过的分支，可以通过git branch -D <name>强行删除。
+git branch -D <name>
+
+# 多人协作
+首先，可以试图用git push origin <branch-name>推送自己的修改；
+如果推送失败，则因为远程分支比你的本地更新，需要先用git pull试图合并；
+如果合并有冲突，则解决冲突，并在本地提交；
+没有冲突或者解决掉冲突后，再用git push origin <branch-name>推送就能成功！
+
+如果git pull提示no tracking information，则说明本地分支和远程分支的链接关系没有创建，用命令git branch --set-upstream-to <branch-name> origin/<branch-name>。
+
+# 在本地创建和远程分支对应的分支，本地和远程分支的名称最好一致
+git checkout -b branch-name origin/branch-name
+# 建立本地分支和远程分支的关联
+git branch --set-upstream branch-name origin/branch-name
+```
+
+## stash
+
+```shell
+# 栈，不建议用，可能忘记之前入栈的操作
+当未做完功能时要切换到另一个分支，但是不想提交没完成的代码导致生成多次log
+
+# stash功能，可以把当前工作现场“储藏”起来，等以后恢复现场后继续工作
+git stash
+# 用git status查看工作区，就是干净的（除非有没有被Git管理的文件），因此可以放心地创建分支来修复bug
+
+# 工作现场存到哪去了？用git stash list命令看看
+git stash list
+# 恢复指定的stash
+git stash apply stash@{0}
+
+# 恢复
+1. 用git stash apply恢复，但是恢复后，stash内容并不删除，需要用git stash drop来删除
+2. 用git stash pop，恢复的同时把stash内容也删了
+
+# 当手头工作没有完成时，先把工作现场git stash一下，然后去修复bug，修复后，再git stash pop，回到工作现场
+```
+
+##  merge/rebase
+
+```shell
+# merge 合并分支
+远端merge    # 远端发起merge request
+# 合并其他分支到你的当前分支
+git merge <branch>
+
+git merge原理：
+	git 会自动根据两个分支的共同祖先commit和两个分支的最新提交进行一个三方合并，然后将合并中修改的内容生成一个新的 commit，简单来说就合并两个分支并生成一个新的提交
+
+git rebase原理：
+	两个分支一个master，一个develop，执行git rebase develop时，git 会从两个分支的共同祖先开始提取当前分支（此时是master分支）上的修改，再将 master 分支指向目标分支的最新提交（此时是develop分支）处，然后将刚刚提取的修改应用到这个最新提交后面，如果提取的修改有多个，那git将依次应用到最新的提交后面。将在原始分支上的已提取的commit删除。
+	
+可以看出merge结果能够体现出时间线，但是r	ebase会打乱时间线
+rebase看起来简洁，但是merge看起来不太简洁
+最终结果是都把代码合起来了
+
+# 人工修改冲突，然后执行git add <filename>将它们标记为合并成功
+# 在合并改动之前，也可以使用git diff <source_branch> <target_branch>命令查看
+
+master——v2
+从v2切个分支v3，然后合并v3到v2，会再创建v4，master——v4
+
+# 冲突
+1. 本地为主
+	在冲突中，删除远端不同的内容
+	git ac 'merge dev'
+	git push origin dev-0416-demo
+	
+# rebase
+# 本地分支比远程分支超前3个提交，用git log --graph --pretty=oneline --abbrev-commit查看
+git rebase
+# 最后，通过push操作把本地分支推送到远程
+# rebase操作的特点 ：
+把分叉的提交历史“整理”成一条直线，看上去更直观。缺点是本地的分叉提交已经被修改过了
+
+# rebase操作可以把本地未push的分叉提交历史整理成直线
+# rebase的目的是使得我们在查看历史提交的变化时更容易，因为分叉的提交需要三方对比
+```
+
+## tag
+
+```shell
+# 标签也是版本库的一个快照，但其实它就是指向某个commit的指针
+# tag就是一个让人容易记住的有意义的名字，它跟某个commit绑在一起
+# 创建和删除标签都是瞬间完成的
+
+# 首先，切换到需要打标签的分支上
+git branch
+* dev
+  master
+git checkout master
+# 打新标签
+git tag v1.0
+# 查看所有标签,标签不是按时间顺序列出，而是按字母排序的
+git tag
+# 查看标签信息
+git show <tagname>
+# 删除
+git tag -d v0.1
+# 创建的标签都只存储在本地，不会自动推送到远程
+# 推送某个标签到远程
+git push origin <tagname>
+# 一次性推送全部尚未推送到远程的本地标签
+git push origin --tags
+# 要删除远程标签
+# 先从本地删除
+git tag -d v0.9
+# 再远程删除
+git push origin :refs/tags/v0.9
+
+# 给之前commit打标签
+git log --pretty=oneline --abbrev-commit
+git tag v0.9 commit_id
+
+# 标签总是和某个commit挂钩。如果这个commit既出现在master分支，又出现在dev分支，那么在这两个分支上都可以看到这个标签
+```
+
+## alias
+
+```shell
+git config --list
+alias.ac=!git add -A && git commit -m
+
+git config --global alias.st status
+git config --global alias.co checkout
+git config --global alias.ci commit
+	git ci -m "bala bala bala..."
+git config --global alias.br branch
+
+# git reset HEAD file可以把暂存区的修改撤销掉（unstage），重新放回工作区。既然是一个unstage操作，就可以配置一个unstage别名
+git config --global alias.unstage 'reset HEAD'
+git unstage test.py			# 实际执行 git reset HEAD test.py
+
+# 配置一个git last，让其显示最后一次提交信息：
+git config --global alias.last 'log -1'
+
+# git lg
+git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
+
+# 每个仓库的Git配置文件都放在.git/config文件中
+# 别名就在[alias]后面，要删除别名，直接把对应的行删掉即可
+# 而当前用户的Git配置文件放在用户主目录下的一个隐藏文件.gitconfig中
+# 配置别名也可以直接修改这个文件，如果改错了，可以删掉文件重新通过命令配置。
 ```
 
 ## 场景
@@ -549,5 +829,32 @@ Switched to a new branch 'face2.0'
   $ git stash pop
   ```
 
-  
+## 搭建git服务器
+
+```shell
+# 自己搭建一台Git服务器作为私有仓库使用
+# 需要准备一台运行Linux的机器
+# 1. 安装git
+	sudo apt-get install git
+# 2. 创建一个git用户，用来运行git服务
+	sudo adduser git
+# 3. 创建证书登录
+	收集所有需要登录的用户的公钥，就是他们自己的id_rsa.pub文件，把所有公钥导入到/home/git/.ssh/authorized_keys文件里，一行一个
+# 4. 初始化Git仓库：
+	先选定一个目录作为Git仓库，假定是/srv/sample.git，在/srv目录下输入命令
+		sudo git init --bare sample.git
+	Git就会创建一个裸仓库，裸仓库没有工作区，因为服务器上的Git仓库纯粹是为了共享，所以不让用户直接登录到服务器上去改工作区，并且服务器上的Git仓库通常都以.git结尾。然后，把owner改为git：
+		sudo chown -R git:git sample.git
+# 5. 禁用shell登录：
+	出于安全考虑，第二步创建的git用户不允许登录shell，这可以通过编辑/etc/passwd文件完成。找到类似下面的一行：
+		git:x:1001:1001:,,,:/home/git:/bin/bash
+	改为
+		git:x:1001:1001:,,,:/home/git:/usr/bin/git-shell
+    这样，git用户可以正常通过ssh使用git，但无法登录shell，因为我们为git用户指定的git-shell每次一登录就自动退出
+# 6. 克隆远程仓库：
+	现在，可以通过git clone命令克隆远程仓库了，在各自的电脑上运行
+		git clone git@server:/srv/sample.git
+```
+
+
 

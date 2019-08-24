@@ -1,3 +1,26 @@
+# Readme
+
+```java
+// 必看
+https://juejin.im/post/5b55b842f265da0f9e589e79
+https://segmentfault.com/a/1190000012650596
+https://blog.csdn.net/qq_34337272/article/details/81252853
+https://blog.csdn.net/qq_34337272/article/details/80611486
+https://segmentfault.com/a/1190000006158186
+https://mp.weixin.qq.com/s?__biz=Mzg2OTA0Njk0OA==&mid=2247485097&idx=1&sn=84c89da477b1338bdf3e9fcd65514ac1&chksm=cea24962f9d5c074d8d3ff1ab04ee8f0d6486e3d015cfd783503685986485c11738ccb542ba7&token=79317275&lang=zh_CN#rd
+https://mp.weixin.qq.com/s?__biz=Mzg2OTA0Njk0OA==&mid=2247485117&idx=1&sn=92361755b7c3de488b415ec4c5f46d73&chksm=cea24976f9d5c060babe50c3747616cce63df5d50947903a262704988143c2eeb4069ae45420&token=79317275&lang=zh_CN#rd
+https://mp.weixin.qq.com/s?__biz=Mzg2OTA0Njk0OA==&mid=2247485185&idx=1&sn=66ef08b4ab6af5757792223a83fc0d45&chksm=cea248caf9d5c1dc72ec8a281ec16aa3ec3e8066dbb252e27362438a26c33fbe842b0e0adf47&token=79317275&lang=zh_CN#rd
+https://github.com/Snailclimb/JavaGuide/blob/master/docs/database/Redis/Redis%E6%8C%81%E4%B9%85%E5%8C%96.md
+https://blog.csdn.net/zeb_perfect/article/details/54135506
+https://www.jianshu.com/p/8bddd381de06
+https://xiaozhuanlan.com/topic/9546203817
+https://www.cnblogs.com/zrtqsk/p/3735273.html
+https://mp.weixin.qq.com/s?__biz=Mzg2OTA0Njk0OA==&mid=2247485303&idx=1&sn=9e4626a1e3f001f9b0d84a6fa0cff04a&chksm=cea248bcf9d5c1aaf48b67cc52bac74eb29d6037848d6cf213b0e5466f2d1fda970db700ba41&token=255050878&lang=zh_CN#rd
+https://github.com/Snailclimb/springboot-integration-examples/blob/master/md/springboot-dubbo.md
+https://mp.weixin.qq.com/s?__biz=Mzg2OTA0Njk0OA==&mid=2247484766&idx=1&sn=9823b8378c5378280d826547b1ae64a3&chksm=cea24a95f9d5c38314de52cc2e1229dd530f523669ba401db3ebbdcd0b61f2505f1cd1c1443f&token=1883509977&lang=zh_CN#rd
+https://blog.csdn.net/qiangcuo6087/article/details/79067136
+```
+
 # Java基础
 
 * JDK、JRE、JVM、字节码
@@ -21,7 +44,7 @@
 * 封装、继承、多态
   * 封装：把一个对象的属性私有化，同时提供一些可以被外界访问的属性的方法
   * 继承：使用已存在的类的定义作为基础建立新类，能够非常方便地复用以前的代码
-    * 子类拥有父类对象所有的属性和方法（包括私有属性和私有方法），但是父类中的私有属性和方法子类是无法访问，**只是拥有**
+    * 子类拥有父类对象所有的属性和方法（包括私有属性和私有方法），但是父类中的私有属性和方法子类是无法访问，只是拥有
   * 多态：运行期间才能决定一个引用变量到底会指向哪个类的实例对象
     * 在Java中有两种形式可以实现多态：继承（多个子类对同一方法的重写）和接口（实现接口并覆盖接口中同一方法）
 * String
@@ -71,7 +94,7 @@
   * HashMap 的长度为什么是2的幂次方
     * 取余(%)操作中如果除数是2的幂次则等价于与其除数减一的与(&)操作（也就是说 hash%length==hash&(length-1)的前提是 length 是2的 n 次方；）。并且采用二进制位操作 &，相对于%能够提高运算效率
   * HashMap多线程操作导致死循环
-    * [原因](https://coolshell.cn/articles/9606.html)在于 并发下的Rehash 会造成元素之间会形成一个循环链表
+    * [原因](https://coolshell.cn/articles/9606.html)在于并发下的Rehash 会造成元素之间会形成一个循环链表
 * ConcurrentHashMap
   * jdk1.7
     * 将数据分为一段一段的存储，然后给每一段数据配一把锁，当一个线程占用锁访问其中一个段数据时，其他段的数据也能被其他线程访问
@@ -463,3 +486,255 @@
 
 # MySQL
 
+* 存储过程：可以看成是一些 SQL 语句的集合，中间加了点逻辑控制语句，预编译过
+
+* drop、delete与truncate区别？
+
+  * `drop table 表名` ，直接将表都删除掉
+  * `truncate table 表名` ，只删除表中的数据，再插入数据的时候自增长id又从1开始
+  * `delete from 表名 where 列名=值`
+  * truncate和drop 属于DDL(数据定义语言)语句，操作立即生效，原数据不放到 rollback segment 中，不能回滚，操作不触发 trigger。而 delete 语句是DML (数据库操作语言)语句，这个操作会放到 rollback segement 中，事务提交之后才生效
+
+* 事务
+
+  * ACID
+    * **原子性：** 事务是最小的执行单位，不允许分割。确保动作要么全部完成，要么全部失败
+    * **一致性：** 执行事务前后，数据保持一致
+    * **隔离性：** 并发访问数据库时，一个用户的事务不被其他事务所干扰，各并发事务之间数据库是独立的
+    * **持久性：** 一个事务被提交之后。它对数据库中数据的改变是持久的。
+  * **不可重复度和幻读区别：**
+    * 不可重复读的重点是修改，幻读的重点在于新增或者删除
+    * 事务A，读取两次数据之间时刻，其他事物B提交修改或新增/删除的事务
+    * ![f3f34283a61ddb8d86bad05062e1f824](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/f3f34283a61ddb8d86bad05062e1f824.jpg)
+
+* [索引](https://juejin.im/post/5b55b842f265da0f9e589e79)
+
+  * 最左前缀原则
+
+    * 如果查询的时候查询条件精确匹配索引的左边连续一列或几列，则此列就可以被用到，如User表的name和city加联合索引就是(name,city)，查询的时候如果两个条件都用上了，但是顺序不同，查询引擎会自动优化为匹配联合索引的顺序
+
+  * 如何为表字段添加索引
+
+    * ```sql
+      -- 添加PRIMARY KEY（主键索引）
+      ALTER TABLE `table_name` ADD PRIMARY KEY ( `column` ) 
+      -- 添加UNIQUE(唯一索引)
+      ALTER TABLE `table_name` ADD UNIQUE ( `column` ) 
+      -- 添加INDEX(普通索引)
+      ALTER TABLE `table_name` ADD INDEX index_name ( `column` )
+      -- 添加FULLTEXT(全文索引)
+      ALTER TABLE `table_name` ADD FULLTEXT ( `column`) 
+      -- 添加多列索引
+      ALTER TABLE `table_name` ADD INDEX index_name ( `column1`, `column2`, `column3` )
+      ```
+
+# Redis
+
+* redis和memcached的区别
+  * **redis支持更丰富的数据类型**
+    * memcache支持简单的数据类型，String
+    * Redis不仅仅支持简单的k/v类型的数据，同时还提供list，set，zset，hash等数据结构的存储
+  * **Redis支持数据的持久化**，**而Memecache不支持**
+  * **Memcached是多线程，非阻塞IO复用的网络模型；Redis使用单线程的多路 IO 复用模型**
+* redis 常见数据结构以及使用场景
+  * String
+    * `set,get,decr,incr,mget`
+  * Hash
+    * `hget,hset,hgetall`
+    * 是一个 string 类型的 field 和 value 的映射表，hash 特别适合用于存储对象
+  * List
+    * `lpush,rpush,lpop,rpop,lrange`
+    * 双向链表，即可以支持反向查找和遍历
+  * Set
+    * `sadd,spop,smembers,sunion`
+    * `sinterstore key1 key2 key3  将交集存在key1`
+  * Sorted Set
+    * `zadd,zrange,zrem,zcard`
+    * 和set相比，sorted set增加了一个权重参数score，使得集合中的元素能够按score进行有序排列
+* redis淘汰策略
+  * **volatile-lru**：从已设置过期时间的数据集（server.db[i].expires）中挑选最近最少使用的数据淘汰
+  * **volatile-ttl**：从已设置过期时间的数据集（server.db[i].expires）中挑选将要过期的数据淘汰
+  * **volatile-random**：从已设置过期时间的数据集（server.db[i].expires）中任意选择数据淘汰
+  * **allkeys-lru**：当内存不足以容纳新写入数据时，在键空间中，移除最近最少使用的key
+  * **allkeys-random**：从数据集（server.db[i].dict）中任意选择数据淘汰
+  * **no-eviction**：禁止驱逐数据，也就是说当内存不足以容纳新写入数据时，新写入操作会报错
+  * **volatile-lfu**：从已设置过期时间的数据集(server.db[i].expires)中挑选最不经常使用的数据淘汰
+  * **allkeys-lfu**：当内存不足以容纳新写入数据时，在键空间中，移除最不经常使用的key
+* 缓存雪崩
+  * 缓存同一时间大面积的失效，所以，后面的请求都会落到数据库上，造成数据库短时间内承受大量请求而崩掉
+  * 解决办法
+    * 事前：尽量保证整个 redis 集群的高可用性，发现机器宕机尽快补上。选择合适的内存淘汰策略
+    * 事中：本地ehcache缓存 + hystrix限流&降级，避免MySQL崩掉
+    * 事后：利用 redis 持久化机制保存的数据尽快恢复缓存
+    * ![image-20190816143323082](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190816143323082.png)
+* **缓存穿透**
+  * 故意请求缓存中不存在的数据，导致所有的请求都落到数据库上，造成数据库短时间内承受大量请求而崩掉
+  * 解决
+    * 采用布隆过滤器，将所有可能存在的数据哈希到一个足够大的bitmap中，一个一定不存在的数据会被 这个bitmap拦截掉，从而避免了对底层存储系统的查询压力
+    * 更为简单粗暴的方法，如果一个查询返回的数据为空（不管是数据不存在，还是系统故障），仍然把这个空结果进行缓存，但它的过期时间会很短，最长不超过五分钟
+
+# Spring
+
+* IOC
+  * 控制反转，是一种**设计思想**，就是 **将原本在程序中手动创建对象的控制权，交由Spring框架来管理**
+  * 将对象之间的相互依赖关系交给 IoC 容器来管理，并由 IoC 容器完成对象的注入
+* AOP
+  * 将那些与业务无关，**却为业务模块所共同调用的逻辑或责任（例如事务处理、日志管理、权限控制等）封装起来**，便于**减少系统的重复代码**，**降低模块间的耦合度**，并**有利于未来的可拓展性和可维护性**
+* Spring AOP 和 AspectJ AOP有什么区别
+  * **Spring AOP 属于运行时增强，而 AspectJ 是编译时增强。** Spring AOP 基于代理，而 AspectJ 基于字节码操作
+  * Spring AOP 已经集成了 AspectJ ，AspectJ 应该算的上是 Java 生态系统中最完整的 AOP 框架了。AspectJ 相比于 Spring AOP 功能更加强大，但是 Spring AOP 相对来说更简单，如果切面比较少，那么两者性能差异不大。但是，当切面太多的话，最好选择 AspectJ ，它比Spring AOP 快很多
+* Spring Bean 单例模式线程安全问题
+  * 单例 bean 存在线程问题，主要是因为当多个线程操作同一个对象的时候，对这个对象的非静态成员变量的写操作会存在线程安全问题
+  * 解决
+    * 在Bean对象中尽量避免定义可变的成员变量（不太现实）
+    * 在类中定义一个ThreadLocal成员变量，将需要的可变成员变量保存在 ThreadLocal 中
+* Spring Bean生命周期
+  * Bean 容器找到配置文件中 Spring Bean 的定义。
+  * Bean 容器利用 Java Reflection API 创建一个Bean的实例。
+  * 如果涉及到一些属性值 利用 `set()`方法设置一些属性值。
+  * 如果 Bean 实现了 `BeanNameAware` 接口，调用 `setBeanName()`方法，传入Bean的名字。
+  * 如果 Bean 实现了 `BeanClassLoaderAware` 接口，调用 `setBeanClassLoader()`方法，传入 `ClassLoader`对象的实例。
+  * 如果Bean实现了 `BeanFactoryAware` 接口，调用 `setBeanClassLoader()`方法，传入 `ClassLoade` r对象的实例。
+  * 与上面的类似，如果实现了其他 `*.Aware`接口，就调用相应的方法。
+  * 如果有和加载这个 Bean 的 Spring 容器相关的 `BeanPostProcessor` 对象，执行`postProcessBeforeInitialization()` 方法
+  * 如果Bean实现了`InitializingBean`接口，执行`afterPropertiesSet()`方法。
+  * 如果 Bean 在配置文件中的定义包含 init-method 属性，执行指定的方法。
+  * 如果有和加载这个 Bean的 Spring 容器相关的 `BeanPostProcessor` 对象，执行`postProcessAfterInitialization()` 方法
+  * 当要销毁 Bean 的时候，如果 Bean 实现了 `DisposableBean` 接口，执行 `destroy()`方法。
+  * 当要销毁 Bean 的时候，如果 Bean 在配置文件中的定义包含 destroy-method 属性，执行指定的方法
+  * ![image-20190816145935778](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190816145935778.png)
+* Spring MVC
+  1. 客户端（浏览器）发送请求，直接请求到 `DispatcherServlet`。
+  2. `DispatcherServlet` 根据请求信息调用 `HandlerMapping`，解析请求对应的 `Handler`。
+  3. 解析到对应的 `Handler`（也就是我们平常说的 `Controller` 控制器）后，开始由 `HandlerAdapter` 适配器处理。
+  4. `HandlerAdapter` 会根据 `Handler`来调用真正的处理器开处理请求，并处理相应的业务逻辑。
+  5. 处理器处理完业务后，会返回一个 `ModelAndView` 对象，`Model` 是返回的数据对象，`View` 是个逻辑上的 `View`。
+  6. `ViewResolver` 会根据逻辑 `View` 查找实际的 `View`。
+  7. `DispaterServlet` 把返回的 `Model` 传给 `View`（视图渲染）。
+  8. 把 `View` 返回给请求者（浏览器）
+* Spring中的设计模式
+  * **工厂设计模式** : Spring使用工厂模式通过 `BeanFactory`、`ApplicationContext` 创建 bean 对象。
+  * **代理设计模式** : Spring AOP 功能的实现。
+  * **单例设计模式** : Spring 中的 Bean 默认都是单例的。
+  * **模板方法模式** : Spring 中 `jdbcTemplate`、`hibernateTemplate` 等以 Template 结尾的对数据库操作的类，它们就使用到了模板模式。
+  * **包装器设计模式** : 我们的项目需要连接多个数据库，而且不同的客户在每次访问中根据需要会去访问不同的数据库。这种模式让我们可以根据客户的需求能够动态切换不同的数据源。
+  * **观察者模式:** Spring 事件驱动模型就是观察者模式很经典的一个应用。
+  * **适配器模式** :Spring AOP 的增强或通知(Advice)使用到了适配器模式、spring MVC 中也是用到了适配器模式适配`Controller`
+* Spring管理事务的方式
+  1. 编程式事务，在代码中硬编码。(不推荐使用)
+  2. 声明式事务，在配置文件中配置（推荐使用）
+     * 基于XML的声明式事务
+     * 基于注解的声明式事务
+* Spring事务中隔离级别
+  * **TransactionDefinition.ISOLATION_DEFAULT:** 使用后端数据库默认的隔离级别，Mysql 默认采用的 REPEATABLE_READ隔离级别 Oracle 默认采用的 READ_COMMITTED隔离级别.
+  * **TransactionDefinition.ISOLATION_READ_UNCOMMITTED:** 最低的隔离级别，允许读取尚未提交的数据变更，**可能会导致脏读、幻读或不可重复读**
+  * **TransactionDefinition.ISOLATION_READ_COMMITTED:** 允许读取并发事务已经提交的数据，**可以阻止脏读，但是幻读或不可重复读仍有可能发生**
+  * **TransactionDefinition.ISOLATION_REPEATABLE_READ:** 对同一字段的多次读取结果都是一致的，除非数据是被本身事务自己所修改，**可以阻止脏读和不可重复读，但幻读仍有可能发生。**
+  * **TransactionDefinition.ISOLATION_SERIALIZABLE:** 最高的隔离级别，完全服从ACID的隔离级别。所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰，也就是说，**该级别可以防止脏读、不可重复读以及幻读**。但是这将严重影响程序的性能。通常情况下也不会用到该级别
+* Spring事务传播行为
+  * 支持当前事务的情况
+    * **TransactionDefinition.PROPAGATION_REQUIRED：** 如果当前存在事务，则加入该事务；如果当前没有事务，则创建一个新的事务。
+    * **TransactionDefinition.PROPAGATION_SUPPORTS：** 如果当前存在事务，则加入该事务；如果当前没有事务，则以非事务的方式继续运行。
+    * **TransactionDefinition.PROPAGATION_MANDATORY：** 如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。（mandatory：强制性）
+  * 不支持当前事务情况
+    * **TransactionDefinition.PROPAGATION_REQUIRES_NEW：** 创建一个新的事务，如果当前存在事务，则把当前事务挂起。
+    * **TransactionDefinition.PROPAGATION_NOT_SUPPORTED：** 以非事务方式运行，如果当前存在事务，则把当前事务挂起。
+    * **TransactionDefinition.PROPAGATION_NEVER：** 以非事务方式运行，如果当前存在事务，则抛出异常
+  * 其他情况
+    * **TransactionDefinition.PROPAGATION_NESTED：** 如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；如果当前没有事务，则该取值等价于TransactionDefinition.PROPAGATION_REQUIRED
+
+# Zookeeper
+
+* 是一个开源的分布式协调服务
+* **设计目标是将那些复杂且容易出错的分布式一致性服务封装起来，构成一个高效可靠的原语集，并以一系列简单易用的接口提供给用户使用**
+  
+  * 原语：是由若干条指令组成的，用于完成一定功能的一个过程
+* **ZooKeeper 是一个典型的分布式数据一致性解决方案，分布式应用程序可以基于 ZooKeeper 实现诸如数据发布/订阅、负载均衡、命名服务、分布式协调/通知、集群管理、Master 选举、分布式锁和分布式队列等功能**
+* **Zookeeper 一个最常用的使用场景就是用于担任服务生产者和服务消费者的注册中心(提供发布订阅服务)。** 服务生产者将自己提供的服务注册到Zookeeper中心，服务的消费者在进行服务调用的时候先到Zookeeper中查找服务，获取到服务生产者的详细信息之后，再去调用服务生产者的内容与数据
+
+* ZooKeeper 的典型应用场景发布订阅功能有啥用
+
+  * 作为配置中心
+    * **应用配置保存在 Zookeeper 的某个目录节点中，对指定的节点设置一个 Watcher 监听** ，**一旦配置信息发生变化，每个应用程序就会收到 Zookeeper 的通知，然后可以从 Zookeeper 获取新的配置信息应用到系统中**
+  * 作为Dubbo 的注册中心也就是发布订阅中心
+    * 服务生产者将自己提供的服务注册到 Zookeeper 的一个或一系列节点上去，服务的消费者在进行服务调用的时候先到 Zookeeper 中查找服务，获取到服务生产者的详细信息之后，再去调用服务生产者的内容与数据
+
+* 数据节点
+
+  * 数据模型：树型结构
+  * Node由stat-状态信息、data-数据内容，组成
+
+* 概念
+
+  * **ZooKeeper 本身就是一个分布式程序（只要半数以上节点存活，ZooKeeper 就能正常服务）。**
+  * **为了保证高可用，最好是以集群形态来部署 ZooKeeper，这样只要集群中大部分机器是可用的（能够容忍一定的机器故障），那么 ZooKeeper 本身仍然是可用的。**
+  * **ZooKeeper 将数据保存在内存中，这也就保证了 高吞吐量和低延迟**（但是内存限制了能够存储的容量不太大，此限制也是保持znode中存储的数据量较小的进一步原因）。
+  * **ZooKeeper 是高性能的。 在“读”多于“写”的应用程序中尤其地高性能，因为“写”会导致所有的服务器间同步状态。**（“读”多于“写”是协调服务的典型场景。）
+  * **ZooKeeper有临时节点的概念。 当创建临时节点的客户端会话一直保持活动，瞬时节点就一直存在。而当会话终结时，瞬时节点被删除。持久节点是指一旦这个ZNode被创建了，除非主动进行ZNode的移除操作，否则这个ZNode将一直保存在Zookeeper上。**
+  * ZooKeeper 底层其实只提供了两个功能：①管理（存储、读取）用户程序提交的数据；②为用户程序提供数据节点监听服务。
+
+* 特点
+
+  * **顺序一致性：** 从同一客户端发起的事务请求，最终将会严格地按照顺序被应用到 ZooKeeper 中去。
+  * **原子性：** 所有事务请求的处理结果在整个集群中所有机器上的应用情况是一致的，也就是说，要么整个集群中所有的机器都成功应用了某一个事务，要么都没有应用。
+  * **单一系统映像 ：** 无论客户端连到哪一个 ZooKeeper 服务器上，其看到的服务端数据模型都是一致的。
+  * **可靠性：** 一旦一次更改请求被应用，更改的结果就会被持久化，直到被下一次更改覆盖
+
+* 设计目标
+
+  * 简单的数据模型
+    * 允许分布式进程通过共享的层次结构命名空间进行相互协调
+    * 数据保存在内存中，这意味着ZooKeeper可以实现高吞吐量和低延迟
+  * 可构建集群
+    * 组成 ZooKeeper 服务的服务器都会在内存中维护当前的服务器状态，并且每台服务器之间都互相保持着通信。集群间通过 Zab 协议（Zookeeper Atomic Broadcast）来保持数据的一致性
+  * 顺序访问
+    * **对于来自客户端的每个更新请求，ZooKeeper 都会分配一个全局唯一的递增编号，这个编号反应了所有事务操作的先后顺序，应用程序可以使用 ZooKeeper 这个特性来实现更高层次的同步原语。** **这个编号也叫做时间戳——zxid（Zookeeper Transaction Id）**
+  * 高性能
+    *  **在“读”多于“写”的应用程序中尤其地高性能，因为“写”会导致所有的服务器间同步状态。（“读”多于“写”是协调服务的典型场景。）**
+
+* 集群角色
+
+  * **最典型集群模式： Master/Slave 模式（主备模式）**
+    * 通常 Master服务器作为主服务器提供写服务，其他的 Slave 服务器从服务器通过异步复制的方式获取 Master 服务器最新的数据提供读服务
+    * **ZooKeeper 集群中的所有机器通过一个 Leader 选举过程来选定一台称为 “Leader” 的机器，Leader 既可以为客户端提供写服务又能提供读服务。除了 Leader 外，Follower 和 Observer 都只能提供读服务。Follower 和 Observer 唯一的区别在于 Observer 机器不参与 Leader 的选举过程，也不参与写操作的“过半写成功”策略，因此 Observer 机器可以在不影响写性能的情况下提升集群的读性能**
+    * **当 Leader 服务器出现网络中断、崩溃退出与重启等异常情况时，ZAB 协议就会进人恢复模式并选举产生新的Leader服务器**
+      1. Leader election（选举阶段）：节点在一开始都处于选举阶段，只要有一个节点得到超半数节点的票数，它就可以当选准 leader。
+      2. Discovery（发现阶段）：在这个阶段，followers 跟准 leader 进行通信，同步 followers 最近接收的事务提议。
+      3. Synchronization（同步阶段）:同步阶段主要是利用 leader 前一阶段获得的最新提议历史，同步集群中所有的副本。同步完成之后
+         准 leader 才会成为真正的 leader。
+      4. Broadcast（广播阶段）
+         到了这个阶段，Zookeeper 集群才能正式对外提供事务服务，并且 leader 可以进行消息广播。同时如果有新的节点加入，还需要对新节点进行同步
+
+* ZAB协议
+
+  * 作为其保证数据一致性的核心算法，是一种特别为Zookeeper设计的崩溃可恢复的原子消息广播算法
+  * **在 ZooKeeper 中，主要依赖 ZAB 协议来实现分布式数据一致性，基于该协议，ZooKeeper 实现了一种主备模式的系统架构来保持集群中各个副本之间的数据一致性**
+  * 两种基本模式
+    * 崩溃恢复
+      * 当整个服务框架在启动过程中，或是当 Leader 服务器出现网络中断、崩溃退出与重启等异常情况时，ZAB 协议就会进人恢复模式并选举产生新的Leader服务器。当选举产生了新的 Leader 服务器，同时集群中已经有过半的机器与该Leader服务器完成了状态同步之后，ZAB协议就会退出恢复模式。其中，**所谓的状态同步是指数据同步，用来保证集群中存在过半的机器能够和Leader服务器的数据状态保持一致**
+    * 消息广播
+      * **当集群中已经有过半的Follower服务器完成了和Leader服务器的状态同步，那么整个服务框架就可以进人消息广播模式了。** 当一台同样遵守ZAB协议的服务器启动后加人到集群中时，如果此时集群中已经存在一个Leader服务器在负责进行消息广播，那么新加人的服务器就会自觉地进人数据恢复模式：找到Leader所在的服务器，并与其进行数据同步，然后一起参与到消息广播流程中去。正如上文介绍中所说的，ZooKeeper设计成只允许唯一的一个Leader服务器来进行事务请求的处理。Leader服务器在接收到客户端的事务请求后，会生成对应的事务提案并发起一轮广播协议；而如果集群中的其他机器接收到客户端的事务请求，那么这些非Leader服务器会首先将这个事务请求转发给Leader服务器
+
+* 常用命令
+
+  ```shell
+  # 连接 ZooKeeper 服务, bin 目录下
+  ./zkCli.sh -server 127.0.0.1:2181
+  # 创建节点(create 命令)
+  create /node1 “node1”
+  create /node1/node1.1 123
+  # 更新节点数据内容(set 命令)
+  set /node1 "set node1"
+  # 获取节点的数据(get 命令)
+  #  查看某个目录下的子节点(ls 命令)
+  ls /
+  ls /node1
+  # 查看节点状态(stat 命令)
+  stat /node1
+  # 查看节点信息和状态(ls2 命令)
+  ls2 /node1
+  # 删除节点(delete 命令)
+  delete /node1/node1.1
+  ```
+
+  

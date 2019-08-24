@@ -31,6 +31,9 @@
 ```java
 // uat 环境jenkins
 admin/Byton_12
+测试环境：ec-service-test.byton.cn
+预生产环境：ec-service-uat.byton.cn
+生产环境：ec-service.byton.cn
 
 // 项目 git 地址
 git:  https://git.byton.cn/user/login
@@ -38,6 +41,11 @@ ext_taow_efast
 qwe123
 ext_dingyj_efast
 dyj123dyj
+// 新gitlab地址
+https://gitlab.com/bytonccs/orderfulfillment
+yuanjie.ding@efastserv.com
+dyj123dyj
+
 
 // gradle 
  gradle clean build --stacktrace --info

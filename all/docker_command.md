@@ -1,3 +1,9 @@
+# Readme
+
+```java
+// 主要看常用命令这块
+```
+
 # 概念
 
 * 简单的说，容器是独立运行的一个或一组应用，以及它们的运行态环境。对应的，虚拟机可以理解为模拟运行的一整套操作系统（提供了运行态环境和其他系统环境）和跑在上面的应用
@@ -18,6 +24,55 @@ docker 命令 --help
 -d   																# 运行后台
 -p 8080:80 													# HostPort:ContainerPort 访问8080会转到80
 --restart=always　　						 		 # 随着docker容器的启动而启动
+docker exec -ti 容器id bash          # 进入到容器中            
+docker exec -ti 容器id sh
+docker run --rm imageID pwd         # 启动容器，并显示目录
+docker tag 5089850c0cde wget:0.2    # 打标签
+docker run --rm -ti wget:0.1 bash
+docker rm -v container1              # 删除容器时顺便删除volume
+# 容器中目录(datavol)和主机目录(Users)互通   
+			# 设置-file sharing
+			docker run -it --name container1 -v /Users:/datavol busybox
+			cd datavol
+			ls
+#从容器中拷贝文件到宿主机 不需要容器启动
+docker cp containerName:/etc/mysql/my.cnf  /home/xxx/my.cnf 
+# 将宿主机的文件拷贝容器里面的目录下 会覆盖老的文件
+docker cp /home/xxx/my.cnf   containerName:/etc/mysql/	
+docker exec -ti aic-mysql bash
+# 主机（本地）连接docker中的mysql
+docker exec -ti aic-mysql mysql -uroot -p
+mysql -uroot -p
+Aic_woody
+	select version();
+#
+docker pull redis
+# 本机连接docker中的redis
+docker exec -ti redis redis-cli -a qwer6379
+docker run -itd -p 6379:6379 redis --requirepass qwer6379
+telnet localhost 6379
+get 20190630
+# 获取容器的输出信息 
+docker container logs
+# 清理所有处于终止状态的容器
+docker container prune
+
+# 开启redis
+-it参数：容器的shell映射到当前的shell，然后在本机窗口输入的命令，就会传入容器
+-d：容器启动后，在后台运行
+	# 方式一
+		docker run --name myredis -itd -p 6379:6379 redis --requirepass yuYU6U7J
+	# 方式二	
+		docker run --rm -itd -p 6379:6379 redis --requirepass yuYU6U7J
+	# 方式三	
+    	docker run -itd -p 6379:6379 redis --requirepass qwer6379
+    	
+# 连接到redis客户端
+	# 方式一
+		docker exec -it 4e2841e0c672 redis-cli
+	# 方式二
+    	docker exec -it myredis redis-cli
+
 docker version
 docker info
 docker attach containerid
@@ -40,12 +95,8 @@ docker image rm $(docker image ls -q -f before=mongo:3.2)  # 删除所有在3.2�
 docker search mysql
 docker stop  容器id		 					     # 停止容器
 docker start 容器id		 					     # 启动容器
-docker exec -ti 容器id bash          # 进入到容器中            
-docker exec -ti 容器id sh
-docker run --rm imageID pwd         # 启动容器，并显示目录
 docker rm 容器id/容器名字             # 删除容器，容器无状态，退出后，数据会删除
 docker rm -f 容器id/容器名字          # 强制删除
-docker tag 5089850c0cde wget:0.2    # 打标签
 docker inspect --help		            # 查看容器运行信息				
 docker inspect 容器id
 docker history [image]							# Display the history of a particular image
@@ -139,11 +190,6 @@ docker kill $(docker ps -q)         # Kill all containers that are currently run
 		get myvar
 	# docker compose
 		
-#从容器中拷贝文件到宿主机 不需要容器启动
-docker cp containerName:/etc/mysql/my.cnf  /home/xxx/my.cnf 
-# 将宿主机的文件拷贝容器里面的目录下 会覆盖老的文件
-docker cp /home/xxx/my.cnf   containerName:/etc/mysql/
-
 docker pull openjdk:8-jre          
 docker images|grep jdk
 docker run -it --entrypoint bash openjdk:8-jre
@@ -152,27 +198,12 @@ docker pull mysql
 sh start.sh
 docker logs [-f] aic-mysql
 
-
-docker exec -ti aic-mysql bash
-# 主机（本地）连接docker中的mysql
-docker exec -ti aic-mysql mysql -uroot -p
-mysql -uroot -p
-Aic_woody
-	select version();
-
 # 解决 MySQL 8.0 - Client does not support authentication protocol requested by server; consider upgrading MySQL client
 ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'Aic_woody';
 flush privileges;
 # root的plugin为mysql_native_password才正常
 select Host,User,plugin from mysql.user;
 		%         | root             | mysql_native_password
-
-docker pull redis
-# 本机连接docker中的redis
-docker exec -ti redis redis-cli -a qwer6379
-docker run -itd -p 6379:6379 redis --requirepass qwer6379
-telnet localhost 6379
-get 20190630
 
 docker pull zookeeper 
 docker run -it --rm --link aic-zookeeper:zookeeper zookeeper zkCli.sh -server zookeeper
@@ -236,6 +267,159 @@ docker build - < Dockerfile  或  cat Dockerfile | docker build -
 # 4. 从标准输入中读取上下文压缩包进行构建
 docker build - < context.tar.gz
 ```
+
+```shell
+# Dockerfile
+# 基础镜像
+FROM centos        
+ #标签
+LABEL maintainer "Clare Yang(zhangsan@qq.com)" 
+# 后面路径覆盖前面路径
+WORKDIR /apps  # 相对路径
+WORKDIR nginx/logs # 相对路径会附加上上一个绝对路径上，/apps/nginx/logs
+
+COPY test.txt .
+COPY test1.txt .    #正则匹配 COPY *.txt /apps  
+
+CMD curl
+# docker build -t cmd:0.1 .
+# docker run --rm cmd:0.1 curl -s https://httpbin.org/uuid
+#或者
+ENTRYPOINT ["curl","-s"]
+CMD ["https://httpbin.org/uuid"]
+# docker build -t cmd:0.2 .
+# docker run --rm cmd:0.2
+# docker run --rm cmd:0.2 http://www.baidu.com
+
+RUN yum update -y && yum install -y wget  # 指令
+```
+
+- FROM指令
+
+  Dockerfile必须以FROM开头
+
+  ```shell
+  FROM <image>[AS <name>]
+  FROM <image>[:<tag>][AS <name>]
+  ```
+
+- WORKDIR指令
+
+  > WORKDIR指令设置RUN、CMD、ENTRYPOINT、COPY和ADD的工作目录
+  >
+  > 语法：
+  >
+  > ```shell
+  > WORKDIR  /path/to/directory	
+  > ```
+  >
+  > 默认WORKDIR是根目录/，任何通过WORKDIR指令设置的WORKDIR都相对于根目录/
+  >
+  > 在同一Dockerfile中可设置多个WORKDIR指令，如果设置WORKDIR为绝对路径，后续WORKDIR指令设置的相对路径被附加到初始绝对路径
+
+- COPY和ADD指令
+
+  > COPY和ADD指令实现从主机到容器的文件传输功能
+  >
+  > COPY支持简单的文件服务
+  >
+  > ADD除了COPY支持的功能外还支持其他功能，如tar包自动解压、远程URL等
+  >
+  > 语法：
+  >
+  > ```shell
+  > ADD <source> <destination>
+  > COPY <source> <destination>
+  > ADD --chown=<user>:<group><source><destination>
+  > COPY --chown=<user>:<group><source><destination>
+  > ```
+  >
+  > 如果destination不存在，则自动创建
+  >
+  > 所有新创建的文件或者文件夹UID和GID为0，即root用户，通过--chown选项可修改
+  >
+  > 如果destination未以/结尾，则认为destination为文件，source的内容将写入该文件
+  >
+  > 如果source包含有通配符，则destination必须为目录，且以/结尾，否则build失败
+  >
+  > source必须在build上下文存在，不能在build上下文之外
+  >
+  > 针对ADD指令，如果source是URL，而destination不是目录且不以/结尾，则从URL下载的文件写入destination；如果descination是目录且以/结尾，则URL对应的文件被下载到destination所在目录，如<destination>/<filename>;如果source是本地tar包，tar包被自动解压为目录，而远端tar包暂时不支持
+
+- RUN指令
+
+  > 语法
+  >
+  > ```shell
+  > RUN <command>
+  > RUN ["executable","parameter1","parameter2"]
+  > ```
+  >
+  > RUN指令在容器的可写入层执行命令，并commit容器为新的镜像
+  >
+  > 上一步RUN指令生成的镜像被接下来RUN使用，每次RUN指令生成一个新的镜像
+  >
+  > Dockerfile中最好链式输入命令以减少创建镜像层数量，从而减少镜像大小
+
+- CMD/ENTRYPOINT指令
+
+  > 如何制定容器启动时执行什么命令
+  >
+  > 语法
+  >
+  > ```shell
+  > CMD ["executable","param1","param2"](exec形式)
+  > CMD ["param1","param2"](作为ENTRYPOINT的默认参数)
+  > CMD command param1 param2(shell形式)
+  > ENTRYPOINT ["executable","param1","param2"](exec形式)
+  > ENTRYPOINT command param1 param2(shell形式)
+  > ```
+  >
+  > 如果在Dockerfile中不指定CMD/ENTRYPOINT指令，Docker将使用基础镜像提供的默认命令
+  >
+  > CMD/ENTYRPOINT指令在创建Docker镜像时不执行，只有在容器启动时才执行
+  >
+  > 既可以exec形式，也可以shell形式指定要执行的指令
+
+  ![image-20181203115230408](/Users/dingyuanjie/Desktop/MyKnowledge/2.code/java/2.%E5%92%95%E6%B3%A1%E5%AD%A6%E9%99%A2/02.%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%93%E9%A2%98/11.docker/image-20181203115230408-3809150.png)
+
+  > ENTRYPOINT指令最好以exec形式执行，如果以shell形式，则一些参数不能正确传入或不能正常工作
+  >
+  > shell形式整个命令作为参数传入，可执行子命令，管道等
+  >
+  > exec形式不会调用shell命令，这意味着shell的一些特性如变量替换，管道等不能正常工作
+  >
+  > shell形式下将以/bin/sh -c 调用可执行程序，这意味着可执行程序没有PID与之对应，将不能接收UNIX信号
+
+- VOLUME指令
+
+  > VOLUME指令在Docker主机上创建目录并挂载到容器中，通常在Docker的根目录
+  >
+  > 语法
+  >
+  > ```shell
+  > VOLUME <dir>
+  > ```
+
+- EXPOSE指令
+
+  > EXPOSE指令告知Docker容器将监听在指定的端口
+  >
+  > 语法
+  >
+  > ```shell
+  > EXPOSE <port> [<port>/<protocol>...]
+  > ```
+
+- Dockerfile Best Practice
+
+  > 确保build上下文尽可能的小，以此减少镜像大小，.dockerignore可用于忽略不想被包含到Docker镜像的文件
+  >
+  > 尽可能使用multi-stage创建镜像
+  >
+  > 避免安装不必要的包
+  >
+  > 尽可能减少镜像的layer数量，以此减少镜像大小（Docker 1.10及以上版本只有RUN，COPY和ADD创建新的layer）
 
 # Docker指令
 
@@ -488,13 +672,6 @@ docker save <镜像名> | bzip2 | pv | ssh <用户名>@<主机名> 'cat | docker
 # 容器
 
 ```shell
-# 输出一个 “Hello World”，之后终止容器
-docker run ubuntu:18.04 /bin/echo 'Hello world'
-# 启动一个 bash 终端，允许用户进行交互
-docker run -t -i ubuntu:18.04 /bin/bash
-# 启动已终止容器
-docker container start
-
 # docker run 来创建容器时，Docker 在后台运行的标准操作包括
 # 1. 检查本地是否存在指定的镜像，不存在就从公有仓库下载
 # 2. 利用镜像创建并启动一个容器
@@ -504,14 +681,6 @@ docker container start
 # 6. 执行用户指定的应用程序
 # 7. 执行完毕后容器被终止
 
-# -d 后台运行，而不是直接把执行命令的结果输出在当前宿主机下
-# 获取容器的输出信息 
-docker container logs
-# 终止一个运行中的容器
-docker container stop
-# 终止状态的容器可以用下面命令看到 
-docker container ls -a 
-
 # 导出容器快照到本地文件
 docker export 7691a814370e > ubuntu.tar
 # 从容器快照文件中再导入为镜像
@@ -520,20 +689,6 @@ cat ubuntu.tar | docker import - test/ubuntu:v1.0
 docker import http://example.com/exampleimage.tgz example/imagerepo
 # docker import导入一个容器快照到本地镜像库，将丢弃所有的历史记录和元数据信息，可以重新指定标签等元数据信息
 # docker load导入镜像存储文件到本地镜像库，将保存完整记录
-
-# 进入后台运行容器
-	# attach命令, exit，会导致容器的停止
-		docker attach 243c
-	# exec 命令（推荐）， exit，不会导致容器的停止
-		docker exec -it 69d1 bash
-		
-# 终止一个运行中的容器
-docker container stop
-		
-# 删除一个处于终止状态的容器，删除一个运行中的容器，可以添加 -f 参数
-docker container rm  trusting_newton
-# 清理所有处于终止状态的容器
-docker container prune
 ```
 
 # 访问仓库

@@ -96,11 +96,6 @@
 
   * Collection的forEach()方法，接收Consumer参数，使用lambda表达式
 
-    ```java
-  List<Integer> myList = Arrays.asList(1,2,3,4,5,6,7,8,9,11,12,12);
-    myList.forEach(t -> System.out.println("forEach anonymous class Value::"+t));
-  ```
-  
 * 为什么String是不可变的？
   * final修饰、不可变
     * 使字符串常量池成为可能，能够节省很多堆空间，因为不同的String变量可引用池中相同String变量
@@ -257,14 +252,14 @@
   * 说明：`CSRF(Cross-site request forgery)`跨站请求伪造是一类常⻅编程漏洞。对于存在 CSRF 漏洞的应用/网站，攻击者可以事先构造好URL，只要受害者⽤户一访问，后台便在用户不知情的情况下对数据库中⽤户参数进行相应修改
 * 【强制】在使用平台资源，譬如短信、邮件、电话、下单、⽀付，必须实现正确的防重放的机制，如数量限制、疲劳度控制、验证码校验，避免被滥刷而导致资损。
 
-  * 说明：如注册时发送验证码到⼿机，如果没有限制次数和频率，那么可以利⽤用此功能骚扰到其它用户，并造成短信平台资源浪费。
+  * 说明：如注册时发送验证码到⼿机，如果没有限制次数和频率，那么可以利⽤此功能骚扰到其它用户，并造成短信平台资源浪费。
 * 【推荐】发贴、评论、发送即时消息等用户生成内容的场景必须实现防刷、⽂本内容违禁词过滤等⻛控策略
 * `fnal`、`fnally`、` finalize`有什么不同?
 * `fnal`，关键字，修饰的：`class`不可以被继承、变量不可以修改，方法不可以重写
     * 方法或者类声明为fnal后不能修改，保证平台安全的手段
     * 修饰参数或者变量，避免意外赋值导致的编程错误
     * 可用于保护只读数据，并发编程中有利于减少额外的同步开销
-    * `fnal`不是`immutable`!
+    * `final`不是`immutable`!
   * `fnally`，是`Java`保证重点代码一定要被执行的一种机制，通常和`try、try/catch`结合使用关闭连接资源
   * `finalize`，`Object`的方法，对象逃脱死亡命运的最后一次机会，无法保证什么时候执行
 
@@ -276,6 +271,8 @@
 
 * `byte` 1个字节 、`short` 2个字节 、`char` 2个字节 、`int` 4个字节、` float` 4个字节、`long` 8个字节 、`double` 8个字节、 `boolean` Java规范中没有明确指定`boolean`大小，1个字节（编译后1和0）或4个字节（当作`int`来处理）
 
+  * int范围：（-2的31次方，2的31次方-1）
+  * long范围：（-2的63次方，2的63次方-1）
   * `Integer`：-128~127自动装箱(数组中缓存起来，不在这个范围内的，每次都是新建实例)
   
 * 自动装箱：算一种语法糖-Java平台自动进行一些转换，保证不同写法在运行时等价，发生在编译阶段
@@ -296,6 +293,7 @@
 * 静态⽅法`.Xxx(String str)`构造器
   
 * `Integer it = new Integer("123");`
+  
   * `String.valueof(XXX xx)` 、`Xxx + ""` =>基本类型转字符串
   
 * 定义类的主要作⽤：定义变量、创建实例和作为⽗类被继承
@@ -449,7 +447,7 @@ static {
   * 实际上JDK本身就自带了一些`immutable`类，比如`String`，`Integer`以及其他包装类
   * 实现不可变类
     * 将`class`自身声明为`final`
-    * 将所有成员变量定义为`private`和`fnal`，并不实现`setter`方法
+    * 将所有成员变量定义为`private`和`final`，并不实现`setter`方法
     * 通常构造对象时，成员变量使用深度拷贝来初始化
   
   * 不可变类对象的状态在创建之后就不能发生改变，任何对它的改变都应该产生一个新的对象
@@ -496,7 +494,7 @@ static {
 
 * 是指一个域下的文档或脚本试图去请求另一个域下的资源，由浏览器的同源策略造成的，是一种安全策略
 
-* 同源是指，域名、协议、端口均为相同
+* 同源是指，协议、域名、端口均为相同
 
 * 常见跨域场景：
 
@@ -991,7 +989,7 @@ AppVersionTypeEnum.ENTRANCE_MACHINE.getVal()
   
 * `TreeMap`
 
-  * 可对`key`进行排序，实现有序，`key`不允许为`nul`l、`value`允许为`null`，线程不安全
+  * 可对`key`进行排序，实现有序，`key`不允许为`null`、`value`允许为`null`，线程不安全
   * 红黑树数据结构，可以保证所有的`key-value`对处于有序状态
     * 自然排序：所有`key`应是同⼀个类的对象，且`key`必须实现`Comparable`接⼝
     * 定制排序：创建`TreeMap`时，传⼊一个`Comparator`对象，其负责对`TreeMap`中的所有key进行排序，不要求`Map`的`key`实现`Comparable`接⼝
@@ -1299,7 +1297,7 @@ AppVersionTypeEnum.ENTRANCE_MACHINE.getVal()
   * 主要通过操作java.lang.Class类，其存放着对应类型对象的运行时信息
   * Class对象的获取
     1. 实例.getClass()
-    2. Class类的静态方法：Class.forName("类的权限定名称");
+    2. Class类的静态方法：Class.forName("类的全限定名称");
     3. 类的Class属性：类名.Class
 
 * 在`Java`程序运行时，`Java`虚拟机为所有类型维护一个`java.lang.Class`对象
@@ -1621,8 +1619,8 @@ AppVersionTypeEnum.ENTRANCE_MACHINE.getVal()
     //注解的作⽤就是给类、方法注⼊信息
     public @interface MyAnnotation {
     	//定义了两个成员变量 
-        String username(); 
-        int age();
+      String username(); 
+      int age();
     }
     ```
 
