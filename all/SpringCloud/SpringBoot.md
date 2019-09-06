@@ -6,14 +6,22 @@
   * 使用动态代理技术在运行期为目标`Bean`织入增强的代码
   * 将这些与业务无关的重复代码抽取出来，然后再嵌入到业务代码当中
 * 优点：对事务的抽象-AOP、Spring Web MVC
-* 局限：自身并非容器，不得不随Java EE容器启动而装载
+* 局限：==自身并非容器，不得不随Java EE容器启动而装载==
 
 # SpringBoot
 
-* 为快速启动且最小化配置的Spring应用而设计，可用于构建微服务的基础框架
+* ==为快速启动且最小化配置的Spring应用而设计，可用于构建微服务的基础框架==
+  
   * Spring Framework是SpringBoot的核心，Java规范才是它们的基石
   * SpringBoot 2.0 — Spring Framework 5.0 — Java8
-* 搭配`SpringBoot starter`技术引入相关的依赖，结合`SpringBoot`自动装配，利用`SpringBoot`和`SpringFramework`的生命周期，使用嵌入式的Web容器，利用外部化配置影响`SpringApplication`的行为，通过`SpringApplication API`引导应用，`SpringBoot Actuator`提供运维-为生产准备特性
+  
+  1. ==搭配`SpringBoot starter`技术引入相关的依赖，简化构建配置，不需要维护错综复杂的依赖关系==
+  
+  2. ==当条件满足时自动地装配Spring或第三方类库到应用的Class Path中，其关联的特性随应用的启动而自动地装载==
+  
+  3. （利用`SpringBoot`和`SpringFramework`的生命周期，）==使用嵌入式的Web容器，利用外部化配置影响`SpringApplication`的行为，通过`SpringApplication API`引导应用，`SpringBoot Actuator`提供运维-为生产准备特性，如指标信息、健康检查==
+  4. ==可当成一个独立的Spring应用==
+  
 * 特性
   * 创建独立的Spring应用
   * 直接嵌入Tomcat、Jetty或Undertow等Web容器，不需要部署WAR文件
@@ -24,24 +32,26 @@
     * maven-starter添加到应用的Class Path中时，其关联的特性随应用的启动而自动地装载
   * 提供运维-为生产准备特性，如指标信息、健康检查以及外部化配置
   * 绝无代码生成，并且不需要XML配置
+  
 * 五大特性
   * SpringApplication
   * 自动装配
   * 外部化配置
   * SpringBoot Actuator
   * 嵌入式Web容器
+  
 * SpringCloud
-  * 微服务是系统架构上的一种设计风格， 它的主旨是将一个原本独立的系统拆分成多个小型服务，这些小型服务都在各自独立的进程中运行，服务之间通过基于HTTP的RESTful API进行通信协作
+  * ==微服务是系统架构上的一种设计风格， 它的主旨是将一个原本独立的系统拆分成多个小型服务，这些小型服务都在各自独立的进程中运行，服务之间通过基于HTTP的RESTful API进行通信协作==
     * 服务组件化，都能够独立部署和扩展，可有效避免修改一个服务而引起整个系统的重新部署
     * 通常会使用两种服务调用方式
       *  使用HTTP的RESTfulAPI或轻量级的消息发送协议， 实现信息传递与服务调用的触发
-      *  通过在轻量级消息总线上传递消息，类似 RabbitMQ等一些提供可靠异步交换的中间件
+         *  通过在轻量级消息总线上传递消息，类似 RabbitMQ等一些提供可靠异步交换的中间件
     * 去中心化管理数据，希望让每一个服务来管理其自有的数据库
       * 分布式事务本身的实现难度就非常大， 所以在微服务架构中， 更强调在各服务之间进行 “ 无事务” 的调用， 而对于数据一致性， 只要求数据在最后的处理状态是一致的即可；若在过程中发现错误， 通过补偿机制来进行处理，使得错误数据能够达到最终的一致性
     * 容错设计，快速检测出故障源并尽可能地自动恢复服务
     * 基础设施自动化，构建可持续交付，自动化测试和自动化部署
-  * Spring官方在SpringBoot的基础上研发出SpringCloud，致力于提供一些快速构建通用的分布式系统
-    * 服务注册和发现、服务调用、负载均衡、熔断机制、分布式配置、路由、分布式消息
+  * ==Spring官方在SpringBoot的基础上研发出SpringCloud，致力于提供一些快速构建通用的分布式系统==
+    * ==服务注册和发现、服务调用、负载均衡、熔断机制、分布式配置、路由、分布式消息==
     * `SpringCloud Config`：配置管理工具，支持使用Git存储配置内容，可以使用它实现应用配置的外部化存储，并支持客户端配置信息刷新、加密/解密配置内容等
     * `SpringCloudNetflix`：核心组件， 对多个Netflix OSS开源套件进行整合。
       - `Eureka`：服务治理组件， 包含服务注册中心、 服务注册与发现机制的实现
@@ -53,38 +63,38 @@
     * `Spring Cloud Stream`：通过Rabbit 或Kafka 实现的消费微服务，可通过简单的声明式模型来发送和接收消息
     * `Spring Cloud Sleuth`：Spring Cloud 应用的分布式跟踪实现，可以完美整合 Zipkin
   * 优势
-    * 高度抽象的接口，不需要关心底层的实现，当需要更替实现时，按需要配置即可，不需要过多的业务回归测试
+    * ==高度抽象的接口，不需要关心底层的实现，当需要更替实现时，按需要配置即可==，不需要过多的业务回归测试
     * `SpringCloud Stream`整合，通过`Stream`编程模式，使得不同的通道之间可以自由的切换传输介质，达到数据通信的目的，比如通过消息、文件、网络等
   * 版本说明
     * `1.5.8.RELEASE`、`java8`、`Dalston.RELEASE`
 
 ## 独立的Spring应用
 
-* 在大多数`SpringBoot`应用场景中，程序使用`SpringApplication API`引导应用，其中又结合嵌入式Web容器，对外提供HTTP服务
+* ==在大多数`SpringBoot`应用场景中，程序使用`SpringApplication API`引导应用，其中又结合嵌入式Web容器，对外提供HTTP服务==
 
 * `Spring Web`应用
 
-  * 传统的`Servlet`、`Spring Web MVC``、Reactive Web`（SpringBoot 2.0）
+  * 传统的`Servlet`、`Spring Web MVC`、`Reactive Web`（SpringBoot 2.0）
   * 在SpringApplication API上增加setWebApplicationType方法显示设置Web应用的枚举类型
   * 采用嵌入式容器，属于Spring应用上下文中的组件Beans，独立于外部容器，对应用生命周期拥有完全自主的控制（方便快捷的启动方式，可以提升开发和部署效率），这些组件和其他组件均由自动装配特性组装成Spring Bean定义（BeanDefinition），随Spring应用上下文启动而注册并初始化，而驱动Spring应用上下文启动的核心组件则是Spring Boot核心API SpringApplication
-    * 外置容器需要启动脚本将其引导，随其生命周期回调执行Spring上下文的初始化
+    * ==外置容器需要启动脚本将其引导，随其生命周期回调执行Spring上下文的初始化==
       * SpringWeb中的ContextLoaderListener
         * 利用ServletContext生命周期构建Web ROOT Spring应用上下文
       * WebMVC中的DispatcherServlet
         * 结合Servlet生命周期创建DispatcherServlet的Spring应用上下文
-      * 均属于被动的回调执行，没有完整的应用主导权
+      * ==均属于被动的回调执行，没有完整的应用主导权==
 
 * Spring非Web应用
 
   * 主要用于服务提供、调度任务、消息处理等场景
 
-* 创建可执行Jar
+* ==创建可执行Jar==
 
   * 打包分为依赖jar包和可执行jar包，两者要分开，可执行包不可以被其他项目依赖
   * 前提需添加`spring-boot-maven-plugin`到`pom.xml`文件中
   * `mvn package`
 
-* 启动
+* ==启动==
 
   * 在`Java`启动命令中，通过`-D`命令行参数设置`Java`的系统属性：`System.getProperties()`
     * `java -jar xxx.jar --server.port= 8888`
@@ -130,7 +140,7 @@
 
 * `spring-boot-starter-tomcat`是由`spring-boot-starter-web`间接依赖
 
-* Spring Boot项目可以通过指定容器的Maven依赖来切换Spring Boot应用的嵌入式容器类型，无需代码层面的调整，不同的嵌入式容器存在专属的配置属性，自然也不再需要以WAR文件方式进行部署
+* ==Spring Boot项目可以通过指定容器的Maven依赖来切换Spring Boot应用的嵌入式容器类型，无需代码层面的调整，不同的嵌入式容器存在专属的配置属性，自然也不再需要以WAR文件方式进行部署==
 
   * tomcat、jetty、undertow都能作为嵌入式Servlet容器或ReactiveWeb容器
   * WebServer实现类：TomcatWebServer、JettyWebServer、UndertowWebServer
@@ -148,7 +158,7 @@
     * 与嵌入式Tomcat的差异
       * 它不需要编码，也不需要外置Tomcat容器，将当前应用直接打包时将完整的Tomcat运行时资源添加至当前可执行JAR或WAR文件中，通过java -jar命令启动，类似于Spring Boot FAR  JAR或FAT WAR
   * 嵌入式tomcat
-    * SpringBoot2.0的实现，利用嵌入式Tomcat API构建为TomcatWebServer Bean，由Spring应用上下文将其引导，其嵌入式Tomcat组件的运行（如Context、Connector等），以及ClassLoader的装载均由SpringBoot框架代码实现
+    * ==SpringBoot2.0的实现，利用嵌入式Tomcat API构建为TomcatWebServer Bean，由Spring应用上下文将其引导，其嵌入式Tomcat组件的运行（如Context、Connector等），以及ClassLoader的装载均由SpringBoot框架代码实现==
 
 * 嵌入式Reactive Web容器
 
@@ -167,11 +177,11 @@
 ## 自动装配
 
 * 自动装配存在前提
-  * 取决于应用的Class Path下添加的JAR文件依赖，而且并非一定装载，需要条件
+  * ==取决于应用的Class Path下添加的JAR文件依赖，而且并非一定装载，需要条件==
     * SpringBoot自动装配的对象是Spring Bean，例如通过XML配置文件或Java编码等方式组装Bean
   
 * 激活
-  * `@EnableAutoConfiguration`和@`SpringBootApplication`，二选一标注`在@Configuration`类上
+  * ==`@EnableAutoConfiguration`和@`SpringBootApplication`，二选一标注`在@Configuration`类上==
     * `Spring Framework`，三种方式，不过都需Spring应用上下文引导
       * XML元素`<context:component-scan>`，采用`ClassPathXmlApplicationContext`加载
       * `@Import`，需要`AnnotationConfigApplicationContext`注册
@@ -179,15 +189,15 @@
   
 * @SpringBootApplication
   * 被用于激活
-    * @EnableAutoConfiguration，负责激活SpringBoot自动装配机制
+    * ==@EnableAutoConfiguration，负责激活SpringBoot自动装配机制==
       * @EnableAutoConfiguration能够激活SpringBoot内建和自定义组件的自动装配特性
-    * @ComponentScan，激活@Component的扫描
+    * ==@ComponentScan，激活@Component的扫描==
       * 扫描标有该注解类所在的包
       * SpringBoot为了改善传统Spring应用繁杂的配置内容，采用了包扫描和自动化配置的机制来加载原本集中于XML文件中的各项内容
       * 添加了排除的TypeFilter实现：
         - TypeExcludeFilter
         - AutoConfigurationExcludeFilter：排除其他同时标注@Configuration和@EnableAuto Configuration的类
-    * @Configuration，申明被标注为配置类
+    * ==@Configuration，申明被标注为配置类==
       - 1.4开始，换成@SpringBootConfiguration，但是两者运行上无差异
       - @SpringBootConfiguration元标注在@SpringBootApplication上更多的意义在于@SpringBootApplication的配置类能够被@ComponentScan识别
   * 属性别名
@@ -207,16 +217,17 @@
   
 * @EnableAutoConfiguration
 
-  * 激活自动装配，并非@Configuration类的派生注解
+  * ==激活自动装配，并非@Configuration类的派生注解==
   * @Bean在@Component类与@Configuration类中存在差异
     * @Component类中@Bean的声明为"轻量模式Lite"
     * @Configuration类中@Bean的声明为"完全模式Full"，会执行CGLIB提升操作
 
-* 多层次@Component派生性
+* ==多层次@Component派生性==
+  
   * 简言之，@Configuration注解上标注了@Component
   * 都能被@ComponentScan扫描识别
-  * 如直接派生，@Service、@Controller、@Repository——Spring模式注解
-
+* 如直接派生，@Service、@Controller、@Repository——Spring模式注解
+  
 * 自动装配机制
 
   * 在SpringBoot出现之前，SpringFramework提供Bean生命周期管理和Spring编程模型
@@ -226,14 +237,14 @@
 
   * 自动装配类能够打包到外部的JAR文件中，并且将被SpringBoot装载。同时，自动装配也能被关联到starter中，这些starter提供自动装配的代码及关联的依赖
 
-  * SpringBoot自动装配底层实现与Spring Framework注解@Configuration和@Conditional的联系
+  * ==SpringBoot自动装配底层实现与Spring Framework注解@Configuration和@Conditional的联系==
 
-    * Conditional实现类中方法返回true则条件成立，实例的class对象作为@Conditional的属性值，可标注在@Configuration类、@Bean方法上
+    * ==Conditional实现类中方法返回true则条件成立，实例的class对象作为@Conditional的属性值，可标注在@Configuration类、@Bean方法上==
       * 最常见：
         * @ConditionalOnClass，标注在@Configuration类上时，当且仅当目标类存在于Class Path下时才予以装配
         * @ConditionalOnMissingBean
 
-  * 创建自动配置类
+  * ==创建自动配置类==
 
     * 激活自动装配
 
@@ -253,11 +264,11 @@
 
       * Spring Framework5.0引入，在代码编译时，向@Component和派生注解添加索引，从而减少运行时性能消耗
     
-    * 通过@EnableAutoConfiguration启用自动装配
+    * ==通过@EnableAutoConfiguration启用自动装配==
     
       * SpringFactoriesLoader#loadFactoryNames()会加载classpath下所有JAR文件里面的META-INF/spring.factories文件
     
-        * SpringFactoriesLoader的实现类似于SPI（Service Provider Interface），为某个接口寻找服务实现的机制
+        * ==SpringFactoriesLoader的实现类似于SPI（Service Provider Interface），为某个接口寻找服务实现的机制==
     
           * 比如有个接口，想运行时动态的给它添加实现，只需要添加一个实现
     
@@ -278,52 +289,52 @@
 
 * SpringBoot Actuator
 
-  * 基于SpringBoot自动装配实现，用于监管Spring应用，可通过HTTP Endpoint与其交互
+  * ==基于SpringBoot自动装配实现，用于监管Spring应用，可通过HTTP Endpoint与其交互==
     * 端点类型：审计、健康、指标收集
   * `http://127.0.0.1:8080/actuator/beans`
-  * 常用的`Endpoins`
-    * `beans`：显示当前Spring应用上下文的SpringBean完整列表
+  * ==常用的`Endpoins`==
+    * ==`beans`：显示当前Spring应用上下文的SpringBean完整列表==
     * `conditions`：显示当前应用所有配置类和自动装配类的条件评估结果（包含匹配和非匹配）
     * `evn`：暴露Spring ConfigurableEnvironment中的PropertySource属性，获取应用所有可用的环境属性报告。 包括环境变量、JVM属性、应用的配置属性、命令行中的参数
-    * `health`：显示应用的健康信息。
+    * ==`health`：显示应用的健康信息==
       * 可实现一个用来采集健康信息的检测器（实现Healthindicator接口，@Component）
-    * `info`：显示任意的应用信息，返回一些应用自定义的信息。 默认清况下， 该瑞点只会返回一个空的JSON内容。可以在application.properties配置文件中通过info前缀来设置一 些属性
-    * `mappings`：返回所有Spring MVC的控制器映射关系报告
+    * ==`info`：显示任意的应用信息，返回一些应用自定义的信息。 默认清况下， 该瑞点只会返回一个空的JSON内容。可以在application.properties配置文件中通过info前缀来设置一 些属性==
+    * ==`mappings`：返回所有Spring MVC的控制器映射关系报告==
     * `autoconfig`：获取应用的自动化配置报告， 其中包括所有自动化配置的候选项。 同时还列出了每个候选项是否满足自动化配置的各个先决条件。可以方便地找到一些自动化配置为什么没有生效的具体原因
     * `configprops:`：获取应用中配置的属性信息报告，可看到各个属性的配置路径。通过使用
       `endpoints.configprops.enabled=false` 来关闭
-    * `metrics`：返回当前应用的各类重要度量指标，比如内存信息、线程信息、垃圾回收信息等。可以提供应用运行状态的完整度量指标报告。可通过`/metrics/{name}`接口来更细粒度地获取度量信息 ， 比如可以通过访问/metrics/mem.free来获取当前可用内存数量
+    * ==`metrics`：返回当前应用的各类重要度量指标，比如内存信息、线程信息、垃圾回收信息等。可以提供应用运行状态的完整度量指标报告。可通过`/metrics/{name}`接口来更细粒度地获取度量信息 ， 比如可以通过访问/metrics/mem.free来获取当前可用内存数量==
     * `dump`：暴露程序运行中的线程信息
-    * `trace`：返回基本的 HTTP 跟踪信息，始终保留最近的100条请求记录
+    * ==`trace`：返回基本的 HTTP 跟踪信息，始终保留最近的100条请求记录==
     * `shutdown`：关闭应用
   * 默认暴露`health`和`info`，增加`management.endpoints.web.exposure.include=*`的配置属性到`application.properties`或启动参数中
   * `management.security.enabled=false`
 
-* 外部化配置
+* ==外部化配置==
 
-  * 可通过Properties文件、YAML文件、环境变量或命令行参数
+  * ==可通过Properties文件、YAML文件、环境变量或命令行参数==
     * Bean的@Value注入
     * Spring Environment 读取
     * @ConfigurationProperties绑定到结构化对象
   * 17种内建PropertySource顺序（高-低）
     * @TestPropertySource、@SpringBootTest
-    * 命令行参数
+    * ==命令行参数==
     * ServletConfig init参数、ServletContext init参数
     * java:comp/env中的JNDI属性
     * Java系统属性，可以通过System.getProperties()获得的内容 
     * 操作系统的环境变量
     * 随机属性源，通过random.*配置的随机属性
-    * jar包外部配置：application-{profile}.properties或YAML
-    * jar包内配置：application-{profile}.properties或YAML
-    * jar包外配置：application.properties或YAML
-    * jar包内配置：application.properties或YAML
-    * @Configuration类上@PropertySource注解定义的属性
+    * ==jar包外部配置：application-{profile}.properties或YAML==
+    * ==jar包内配置：application-{profile}.properties或YAML==
+    * ==jar包外配置：application.properties或YAML==
+    * ==jar包内配置：application.properties或YAML==
+    * ==@Configuration类上@PropertySource注解定义的属性==
     * 应用默认属性，SpringApplication.setDefaultProperties 定义的内容 
 
 * 多环境配置
 
   * 多环境配置的文件名需要满足 application-{profile}. properties的格式， 其中{profile}对应的环境标识
-    * 在application.properties文件中通过spring.profiles.active 属性来设置{profile}值
+    * ==在application.properties文件中通过spring.profiles.active 属性来设置{profile}值==
   * 在application.properties中配置通用内容，并设置spring.profiles.active= dev, 以开发环境为默认配置 
   * 在application-{profile}.properties中配置各个环境不同的内容 
   * 通过命令行方式去激活不同环境的配置
@@ -356,7 +367,7 @@
       - 其value()属性可指定Condition的实现类，而Condition提供装配条件的实现逻辑
       - 更直观地表达了Spring Bean装载时所需的前置条件，使得条件性装配成为可能
 
-  * `ClassPathXmlApplicationContext`
+  * ==`ClassPathXmlApplicationContext`==
 
     ```java
     static{
@@ -377,7 +388,7 @@
     }
     ```
 
-  * `AnnotationConfigApplicationContext`
+  * ==`AnnotationConfigApplicationContext`==
 
     ```java
     public static void main(String[] args) {
@@ -401,11 +412,11 @@
   * 能声明在其他注解上的注解，如@Component
   * 任何被@Component元标注的注解，如@Service，均为组件扫描的候选对象
 
-* Spring模式注解
+* ==Spring模式注解==
 
-  * 即@Component派生注解
+  * ==即@Component派生注解==
 
-  * 内建模式注解，如@Component、@Service、@Repository、@Controller、@RestController及@Configuration
+  * ==内建模式注解，如@Component、@Service、@Repository、@Controller、@RestController及@Configuration==
 
   * 可扩展的XML编写机制，提供了一种XML元素与Bean定义解析器之间的扩展机制
 
@@ -496,7 +507,7 @@
       ```
 
   * Spring组合注解
-    - 包含一个或多个其他注解，目的在于将这些关联的注解行为组合成单个自定义注解
+    - ==包含一个或多个其他注解，目的在于将这些关联的注解行为组合成单个自定义注解==
     - 如@SpringBootApplication既是Spring模式注解，又是组合注解
     - 在Java中，Class对象是类的元信息载体，承载了其成员的元信息对象，包括字段(Filed)、方法(Method)、构造器(Constructor)及注解Annotation等，而Class的加载通过ClassLoader#loadClass(String)方法实现
     - Spring Framework的类加载则通过ASM实现，如ClassReader，ASM更为底层，读取的是类资源，直接操作其中的字节码，获取相关元信息，同时便于Spring相关的字节码提升。在读取元信息方面，Spring抽象出MetadataReader接口
@@ -510,9 +521,9 @@
 
 * `Spring` `@Enable`模块驱动
 
-  * 模块是指具备相同领域的功能组件集合，组合所形成的一个独立单元
+  * ==模块是指具备相同领域的功能组件集合，组合所形成的一个独立单元==
     * 如Web MVC模块、AspectJ代理模块、Caching缓存模块、JMX（Java管理扩展）模块、Async（异步处理）模块等
-  * 能够简化装配步骤，实现按需装配，同时屏蔽组件集合装配的细节，但是该模式必须手动触发，即必须标注在某个配置Bean中
+  * ==能够简化装配步骤，实现按需装配，同时屏蔽组件集合装配的细节，但是该模式必须手动触发，即必须标注在某个配置Bean中==
   * Spring Framework
     - @EnableMvc、@EnableTransactionManagement、@EnableCaching、@EnableMBeanExport、@EnableAsync、@EnableWebFlux、@EnableAspectJAutoProxy
   * Spring Boot
@@ -522,11 +533,11 @@
   * Spring Cloud
     - @EnableEurekaServer、@EnableConfigServer、@EnableFeignClients、@EnableZuulProxy、@EnableCircuitBreaker
 
-* 自定义@Enable模块驱动
+* ==自定义@Enable模块驱动==
 
   * 注解驱动和接口编程都使用了@Import，其职责在于装载导入类，将其定义为Spring Bean
 
-  * 注解驱动实现
+  * ==注解驱动实现==
 
     * @Configuration标注一个含有@Bean标注方法的类
     * 自定义@EnableXXX注解，其中@Import(@Configuration标注的配置类.class)
@@ -693,8 +704,8 @@
       * `Servlet`和`Filte`对外提供服务之前，必然经过Servlet上下文初始化事件
       * 当容器或应用启动时，`ServletContainerInitializer#onStartup(Set<Class<?>>, ServletContext)`方法将被调用，同时通过`@HandlesTypes#value()`属性方法来指定关心的类型。该方法调用早于`ServletContextListener#contextInitialized(ServletContextEvent)`方法
         * 不过`ServletContainerInitializer`的一个或多个实现类需要存放在`javax.servlet.ServletContainerInitializer`的文本文件中（独立JAR包中的`/META-INF/services`目录下）
-      * 假设一个Servlet需要装配，并且提供Web服务，首先通过ServletContext配置方法addServlet动态地为其装配，随后，在`ServletContainerInitializer#onStartup`实现方法中加以实现
-        - 如果需要装配N个Servlet或Filter，那么Servlet或Filter及`ServletContainerInitializer`的实现打包在若干JAR包中，当Servlet应用依赖这些JAR包后，这些Servlet或Filter就自动装配到Web应用中了
+      * ==假设一个Servlet需要装配，并且提供Web服务，首先通过ServletContext配置方法addServlet动态地为其装配，随后，在`ServletContainerInitializer#onStartup`实现方法中加以实现==
+        - ==如果需要装配N个Servlet或Filter，那么Servlet或Filter及`ServletContainerInitializer`的实现打包在若干JAR包中，当Servlet应用依赖这些JAR包后，这些Servlet或Filter就自动装配到Web应用中了==
       * `AbstractContextLoaderInitializer`：如果构建`Web Root`应用上下文`(WebApplicationContext)`成功则替代web.xml注册`ContextLoaderListener`
         - `AbstractDispatcherServletInitializer`：替代`web.xml`注册`DispatcherServlet`，并且如果必要的话，创建`Web Root`应用上下文(`WebApplicationContext`)
           - `AbstractAnnotationConfigDispatcherServletInitializer`：具备`Annotation`配置驱动能力的`AbstractDispatcherServletInitializer`
@@ -712,7 +723,7 @@
           * `SpringServletContainerInitializer`通过实现`Servlet3.0 SPI` 接口`ServletContainerInitializer`，与`@HandlesTypes`配合过滤出`WebApplicationInitializer`具体实现类集合，随后顺序迭代地执行该集合元素，进而利用`Servlet3.0`配置`API`实现`Web`自动装配的目的。
           * 同时，结合`Spring Framework 3.2`抽象实现`AbstractAnnotationConfigDispatcherServletInitializer`，极大地简化了注解驱动开发的成本
 
-* Spring条件装配
+* ==Spring条件装配==
 
   * 编译时差异化
 
@@ -746,15 +757,15 @@
       * 接口A，接口B、C实现A，在B上`@Profile("java8")`、C上`@Profile("java7")`
       * 设置`ConfigurableEnvironment.setActiveProfiles("java8")`，`ConfigurableEnvironment.setDefaultProfiles("java7")`
 
-  * `@Conditional`条件装配
+  * ==`@Conditional`条件装配==
 
     * 与配置条件装配`Profile`（偏向于静态激活和配置）职责相似，都是加载匹配的Bean，不同的是`@Conditional`（关注运行时动态选择）具备更大的弹性
 
-    * 允许指定一个或多个`Condition`实现类，当所有的`Condition`均匹配时，说明当前条件成立
+    * ==允许指定一个或多个`Condition`实现类，当所有的`Condition`均匹配时，说明当前条件成立==
 
     * `@ConditionalOnClass`、`@ConditionOnBean`和`@ConditionalOnProperty`等
 
-    * 自定义`@Conditional`条件装配
+    * ==自定义`@Conditional`条件装配==
 
       ```java
       @Target({ElementType.METHOD}) //只能标注在方法上面
@@ -818,8 +829,8 @@
 
 * 在`Spring Framework`时代，当Spring应用的`@Component`或`@Configuration` Class需要被装配时，应用需要借助`@Import`或`@ComponentScan`的能力
   * `@ComponentScan(basePackages="")`仅扫描其标注类所在包，而不是所有包，考虑替换为`@ComponentScan(basePackageClasses="")`，其中`basePackagesClasses`指向默认包中的类即可
-* `SpringBoot`自动装配
-  * 整合Spring注解编程模型、`@Enable`模块驱动及条件装配等`Spring Framework`原生特性
+* ==`SpringBoot`自动装配==
+  * ==整合Spring注解编程模型、`@Enable`模块驱动及条件装配等`Spring Framework`原生特性==
   * `@SpringBootApplication`和`@EnableAutoConfiguration`都能激活自动装配（标注类作为`SpringApplication#run`参数），不过`@SpringBootApplication`能够减少多注解所带来的配置成本，如配置`@SpringBootApplication#scanBasePackages`属性，等同于配置`@Component#basePackages`属性等
 * 优雅地替换自动装配
   * `SpringBoot`优先解析自定义配置类，并且内建的自动装配配置类实际上为默认的条件配置，即一旦应用存在自定义实现，则不再将它们（内建）装配
@@ -832,7 +843,7 @@
   * `Spring Framework`时代失效自动装配
     * 要么阻断`@Configuration` Class `BeanDefinition`的注册，那么通过`@Conditional`实现条件控制
   * `@EnableAutoConfiguration`可通过`ImportSelector`实现，且`exclude()`和`excludeName()`属性可从其`AnnotationMetadata`对象中获取
-* SpringBoot自动装配原理
+* ==SpringBoot自动装配原理==
   * 通过`SpringFactoriesLoader`读取所有`META-INF/spring.factories`资源中`@EnableAutoConfiguration`所关联的自动装配Class集合
   * 读取当前配置类所标注的`@EnableAutoConfiguration`属性`exclude`和`excludeName`，并与`spring.autoconfigure.exclude`配置属性合并为自动装配Class排除集合，排除候选自动装配Class集合中的排除名单
 * `@EnableAutoConfiguration`排序自动装配组件
@@ -842,32 +853,32 @@
   * 当注解`@EnableAutoCongiguration`激活自动装配后，`META-INF/spring.factories`资源中声明的配置Class随即被装配——SPI机制
   * 自动装配包括配置资源`META-INF/spring.factories`和配置Class，两者可被关联到名为"starter"的共享类库
   * 自定义`SpringBoot Starter`
-* `SpringBoot`条件化自动装配
-  * `Class`条件注解
+* ==`SpringBoot`条件化自动装配==
+  * ==`Class`条件注解==
     - `@ConditionalOnClass`（当指定类存在于Class Path时）和`@ConditionalOnMissingClass`
-  * `Bean`条件注解
+  * ==`Bean`条件注解==
     * `@ConditionalOnBean`和`@ConditionalOnMissingBean`基于`BeanDefinition`进行名称或类型的匹配
     * `@ConditionalOnBean`标注的方法返回对象类型必须在所有的Spring应用上下文中存在
-  * 属性条件注解
+  * ==属性条件注解==
     * `@ConditionalOnProperty(prefix="formatter", name="enabled", havingValue="true", matchIfMissing=true)`
       * `matchIfMissing=true`表明当属性配置不存在时，同样视为匹配，可以使其为false来不装配
       * `Spring Environment`的属性`formatter.enable=true`时才会自动装配
         * 内部化配置：`SpringApplicationBuilder.properties("formatter.enable=true");`
         * 外部化配置：`application.properties`中
-  * `Resource`条件注解
+  * ==`Resource`条件注解==
     * `@ConditionalOnResource`属性方法`resources()`指示只有资源必须存在时条件方可成立
     * 如`@ConditionalOnResource(resource="META-INF/spring.factories")`
-  * Web应用条件注解
+  * ==Web应用条件注解==
     * `@ConditionalOnWebApplication`（当前应用是否为Web类型的条件判断注解）和`@ConditionalOnNotWebApplication`
-  * Spring表达式条件注解
+  * ==Spring表达式条件注解==
     * `@ConditionalOnExpression("${formatter.enabled:true} && ${spring.jmx.enabled:true}")`
 
 ## SpringApplication
 
 * SpringApplication是围绕SpringApplication生命周期来展开讨论的，分为"初始化"、"运行”和”结束“三个阶段，主要的核心特性包括SpringApplicationRunListener、SpringBoot事件和Spring应用上下文的生命周期管理等
   * SpringBoot引入SpringApplication是对Spring Framework的应用上下文生命周期的补充
-  * `Spring Framework`时代，Spring应用上下文通常由容器启动，如`ContextLoaderListener`或`WebApplicationInitializer`的实现类由Servlet容器装载并驱动
-  * `SpringBoot`时代，Spring应用上下文的启动则通过调用`SpringApplication#run(Object,String…)`或`SpringApplicationBuilder#run(String...)`方法配合`@SpringBootApplication`或`@EnableAutoConfiguration`注解的方式完成
+  * ==`Spring Framework`时代，Spring应用上下文通常由容器启动，如`ContextLoaderListener`或`WebApplicationInitializer`的实现类由Servlet容器装载并驱动==
+  * ==`SpringBoot`时代，Spring应用上下文的启动则通过调用`SpringApplication#run(Object,String…)`或`SpringApplicationBuilder#run(String...)`方法配合`@SpringBootApplication`或`@EnableAutoConfiguration`注解的方式完成==
   * SpringApplication可以引导非Web应用和嵌入式Web应用，而且它还能出现在SpringBoot应用部署在传统Servlet3.0+容器中的场景
   * 传统的Spring应用上下文生命的起点源于ConfigurableApplicationContext对象的创建，运行则由其refresh()方法引导，而终止于close()方法的调用
     * Spring Framework内建的ConfigurableApplicationContext实现类均继承于抽象类AbstractApplicationContext，在AbstractApplicationContext#refresh()方法执行过程中，伴随着组件BeanFactory、Environment、ApplicationEventMulticaster和ApplicationListener的创建，它们的职责分别涉及Bean容器、Spring属性配置、Spring事件广播和监听
@@ -877,10 +888,10 @@
 
 * 启动失败、自定义`Banner`、自定义`SpringApplication`、流式`Builder API`、`Spring`应用事件和监听器、Spring应用Web环境、存储Spring应用启动参数、使用`ApplicationRunner`或`CommandLineRunner`接口、Spring应用退出、Spring应用管理特性
 
-* `SpringApplication`初始化阶段
+* ==`SpringApplication`初始化阶段==
 
-  * 属于运行前的准备阶段
-    * 允许指定应用的类型，调整Banner输出、配置默认属性等，这些只要在run()方法之前指定即可
+  * ==属于运行前的准备阶段==
+    * ==允许指定应用的类型，调整Banner输出、配置默认属性等，这些只要在run()方法之前指定即可==
       * Web应用和非Web应用，SpringBoot2.0开始，Web应用又可分为Servlet Web和Reactive Web
   * 构造阶段
     * 由构造器完成，`SpringApplication.run()`等价于`new SpringApplication.run()`，都需要Class类型的`primarySources`参数，通常情况下，引导类将作为`primarySources`参数的内容
@@ -890,22 +901,22 @@
         * 主配置类属性`primarySources`除初始化构造器参数外，还能通过`SpringApplication#addPrimarySources(Collection)`方法追加修改
     * `SpringApplication`的构造过程
       * SpringApplication#run(Class,String...)方法的执行会伴随SpringApplication对象的构造，其中主配置primarySources被SpringApplication对象primarySources属性存储，随后依次执行
-        * 推断Web应用类型、加载Spring应用上下文初始化器、加载Spring应用事件监听器、推断应用引导类
-      * 推断Web应用类型
+        * ==推断Web应用类型、加载Spring应用上下文初始化器、加载Spring应用事件监听器、推断应用引导类==
+      * ==推断Web应用类型==
         * 应用类型可在SpringApplication构造后及run方法之前，再通过setWebApplicationType(WebApplicationType)方法调整
         * 由于当前Spring应用上下文尚未准备，所以实现采用的是检查当前ClassLoader下基准Class的存在性判断（通过ClassLoader判断核心类是否存在来推断Web应用类型）
           * 当`DispatcherHandler`存在，并且`DispatcherServlet`不存在时，即SpringBoot仅依赖`WebFlux`存在时，`WebApplicationType.REACTIVE`
           * 当`Servlet`和`ConfigurableWebApplicationContext`均不存在时为非Web应用，即`WebApplicationType.NONE`
           * 当`Spring WebFlux`和`Spring WebMVC`同时存在时，为`WebApplicationType.SERVLET`
-      * 加载Spring应用上下文初始化器`ApplicationContextInitializer`
+      * ==加载Spring应用上下文初始化器`ApplicationContextInitializer`==
         * 运用了Spring工厂加载机制方法`SpringFactoriesLoader.loadFactoryNames(Class,ClassLoader)`返回所有`META-INF/spring.factories`资源中配置的`ApplicationContextInitializer`实现类名单，然后初始化这些实现类（必须存在默认构造器），这些实现类可以实现Ordered接口进行排序
         * 然后将这些初始化后的实现类关联到`SpringApplication#initializers`属性，供后续操作使用
           * `setInitializers(Collection)`方法实现属于覆盖更新，即在执行`SpringApplication#run`方法前，这些在构造过程中加载的`ApplicationContextInitializer`实例集合存在被`setInitializers(Collection)`方法覆盖的可能
-      * 加载Spring应用事件监听器ApplicationListener
+      * ==加载Spring应用事件监听器ApplicationListener==
         * 在`SpringApplication`构建器执行`setInitializers(Collection)`方法后，立即执行
         * 实现手段与加载Spring应用上下文初始化器基本一致
           * 先执行`getSpringFactoriesInstances`方法，再设置实例集合，只不过初始化的对象类型从`ApplicationContextInitializer`变成`ApplicationListener`，`setListener(Collection)`方法同样时覆盖更新
-      * 推断引导类
+      * ==推断引导类==
         * 根据当前线程执行栈来判断其栈中哪个类包含main方法
   * 配置阶段
     * 可选，主要用于调整（Setter方法）或补充（add*方法）构造阶段的状态，左右运行时行为
@@ -922,13 +933,13 @@
         * environment，关联当前应用的Environment实现类，null
         * headless，Java系统属性，当为true时图形化界面交互方式失效
         * initializers，追加ApplicationContextIniaializer集合，所有META-INF/spring.factories资源中声明的ApplicationContextInitializer集合
-        * listeners，追加ApplicationListener集合，所有META-INF/spring.factories资源中声明的ApplicationListener集合
+        * ==listeners，追加ApplicationListener集合，所有META-INF/spring.factories资源中声明的ApplicationListener集合==
         * logStartupInfo，是否日志输出启动时信息，true
         * main，设置Main Class，主要用于调整日志输出，由deduceMainApplicationClass()方法推断
         * registerShutdownHook，设置是否让ApplicationContext注册ShutdownHook线程，true
         * resourceLoader，设置当前ApplicationContext的ResourceLoader，null
         * sources，增加SpringApplication配置源，空Set
-        * web，设置WebApplicationType，由deduceWebApplicationType()方法推断
+        * ==web，设置WebApplicationType，由deduceWebApplicationType()方法推断==
     * 增加SpringApplication配置源
       * SpringBoot 1.x中并不区分主配置类与@Configuration Class，允许参数为Class、Class名称、Package、Package名称或XML配置资源
       * SpringBoot 2.0的SpringApplication配置源分别来自主配置类、@Configuration Class、XML配置文件和package，仅允许Class名称、Package名称和XML配置资源配置
@@ -936,17 +947,16 @@
       - application.properties文件，实际上它可以覆盖SpringApplication#setDefaultProperties方法的设置，从而影响SpringApplication的行为
       - 同时，SpringApplication#setDefaultProperties方法也能影响application.properties文件搜索的路径，通过属性spring.config.location或spring.config.additional-location实现
 
-* `SpringApplication`运行阶段
+* ==`SpringApplication`运行阶段==
 
-  * 属于核心阶段，完整地围绕run(String...)方法展开
+  * 属于核心阶段，==完整地围绕run(String...)方法展开==
 
-  * 结合初始化阶段完成的状态，进一步完善了运行时所需要准备的资源，随后启动Spring应用上下文，在此期间伴随SpringBoot和Spring事件的触发，形成完整的SpringApplication生命周期
-
-    * 事件
+  * ==结合初始化阶段完成的状态，进一步完善了运行时所需要准备的资源，随后启动Spring应用上下文，在此期间伴随SpringBoot和Spring事件的触发，形成完整的SpringApplication生命周期==
+* 事件
       * 实际上，在创建ApplicationContext之前会触发某些事件，所以不能在@Bean上注册一个监听器，可以通过SpringApplication.addListeners(…)或SpringApplicationBuilder.listeners(…)注册监听器
       * 在SpringBoot场景中，无论Spring事件监听器，还是SpringBoot事件监听器，自动注册这些监听器，均配置在META-INF/spring.factories中，并以org.springframework.context.ApplicationListener作为属性名称，属性值为ApplicationListener的实现类
-
-    * SpringApplication准备阶段
+    
+* SpringApplication准备阶段
       * 从run(String...)方法调用开始，到refreshContext(ConfigurableApplicationContext)调用前
       * 该过程依次准备的核心对象为ApplicationArguments、SpringApplicationRunListeners、Banner、创建Spring应用上下文（ConfigurableApplicationContext）
         * 装配ApplicationArguments
@@ -954,11 +964,11 @@
           *  例如命令行参数"—name=woody"将被SimpleCommandLinePropertySource解析为"name:woody"的键值属性
     * ApplicationContext启动阶段
       * 由refreshContext(ConfigurableApplicationContext)方法实现
-      * 随着refreshContext(ConfigurableApplicationContext)方法的执行，Spring应用上下文正式进入Spring生命周期，SpringBoot核心特性也随之启动，如组件自动装配、嵌入式容器启动Production-Ready特性
+      * 随着refreshContext(ConfigurableApplicationContext)方法的执行，Spring应用上下文正式进入Spring生命周期，SpringBoot核心特性也随之启动，==如组件自动装配、嵌入式容器启动Production-Ready特性==
     * ApplicationContext启动后阶段
       * SpringApplication#afterRefresh(ConfigurableApplicationContext,ApplicationArguments)方法并未给Spring应用上下文启动后阶段提供实现，而是交给开发人员自行扩展
         * afterRefresh()
-
+  
 * SpringApplication结束阶段
 
   * 正常结束
@@ -1025,7 +1035,7 @@
 
 * SpringBoot应用退出
 
-  * SpringApplication注册shutdownhook线程，当JVM退出时，确保后续Spring应用上下文所管理的Bean能够在标准的Spring生命周期中回调，从而合理地销毁Bean所依赖的资源，如会话状态、JDBC连接、网络连接等
+  * ==SpringApplication注册shutdownhook线程，当JVM退出时，确保后续Spring应用上下文所管理的Bean能够在标准的Spring生命周期中回调，从而合理地销毁Bean所依赖的资源，如会话状态、JDBC连接、网络连接等==
     * 默认情况下，Spring应用上下文将注册shutdownHook线程，实现优雅的SpringBean销毁生命周期回调
     * 该特性是SpringApplication借助ConfigurableApplicationContext#registerShutdownHook API实现的
 

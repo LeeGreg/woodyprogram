@@ -1,9 +1,10 @@
 # Spring Cloud Hystrix：服务容错保护
 
-* 当某个服务单元发生故障之后，通过断路器的故障监控，向调用方返回一个错误响应，而不是长时间等待
+* ==故障监控、容错，防止故障蔓延==
+  * ==当某个服务单元发生故障之后，通过断路器的故障监控，向调用方返回一个错误响应，而不是长时间等待==
   * 这样不会使线程因调用故障服务而被长时间占用不释放，避免了故障在分布式系统中的蔓延 
 * 该框架的目标在于通过控制那些访问远程系统、服务和第三方库的节点， 从而对延迟和故障提供更强大的容错能力
-* Hystrix具备服务降级、 服务熔断、 线程和信号隔离、 请求缓存、 请求合并以及服务监控等强大功能。
+* ==Hystrix具备服务降级、 服务熔断、 线程和信号隔离、 请求缓存、 请求合并以及服务监控等强大功能。==
 
 ## 入门
 
@@ -22,7 +23,7 @@
 * 改造服务消费方式， 新增 HelloService 类， 注入 RestTemplate 实例
 
   * 在 ConsumerController 中对 RestTemplate 的使用迁移到 helloService函数中
-  * 在 helloService 函数上增加`@HystrixCornrnand`注解来指定回调方法
+  * 在 helloService ==函数上增加`@HystrixCommand`注解来指定回调方法==
   
 ```java
   @Service
@@ -39,8 +40,8 @@
     	return "error";
     }
   }
-  ```
-  
+```
+
 * 修改 ConsumerController 类， 注入上面实现的 HelloService 实例， 并在helloConsumer 中进行调用
 
   ```java
@@ -75,9 +76,9 @@
 
 ## 原理分析
 
-* 1.创建`HystrixCommand`或`HystrixObservableCommand`对象
+* ==1.创建`HystrixCommand`或`HystrixObservableCommand`对象==
 
-  * 用来表示对依赖服务的操作请求， 同时传递所有需要的参数
+  * ==用来表示对依赖服务的操作请求， 同时传递所有需要的参数==
 
     * `HystrixCommand`：用在依赖的服务返回单个操作结果的时候
     * `HystrixObservableCommand`：用在依赖的服务返回多个操作结果的时候
@@ -132,47 +133,52 @@
     }
     ```
 
-* 2.命令执行
+* ==2.命令执行==
+  
   * Hystrix在执行时会根据创建的Command对象以及具体的情况来选择一个执行
-    * HystrixComrnand实现了下面两个执行方式。
+    * ==HystrixComrnand实现了下面两个执行方式。==
       * execute(): 同步执行，从依赖的服务返回一个单一的结果对象， 或是在发生错误的时候抛出异常
       * queue(): 异步执行，直接返回 一个Future对象， 其中包含了服务执行结束时要返回的单一结果对象
-    * HystrixObservableCommand实现了另外两种执行方式
+    * ==HystrixObservableCommand实现了另外两种执行方式==
       * observe(): 返回Observable对象，它代表了操作的多个结果，它是 一个HotObservable
       * toObservable(): 同样会返回Observable对象， 也代表了操作的多个结果， 但它返回的是 一个Cold Observable 
-* 3.结果是否被缓存
+* ==3.结果是否被缓存==
 
   * 若当前命令的请求缓存功能是被启用的， 并且该命令缓存命中， 那么缓存的结果会立即以Observable 对象的形式返回  
-* 4.断路器是否打开
+* ==4.断路器是否打开==
+  
   * 在命令结果没有缓存命中的时候， Hystrix在执行命令前需要检查断路器是否为打开状态:
     * 如果断路器是打开的，那么Hystrix不会执行命令，而是转接到fallback处理逻辑(对应下面第8步) 
     * 如果断路器是关闭的， 那么Hystrix跳到第5步， 检查是否有可用资源来执行命令
-* 5.线程池/请求队列/信号量是否占满
-  * 如果与命令相关的线程池和请求队列，或者信号量(不使用线程池的时候)已经被占满，那么Hystrix也不会执行命令， 而是转接到fallback处理逻辑(对应下面第8步)。
-    * 这里Hystrix所判断的线程池并非容器的线程池，而是每个依赖服务的专有线程池。 Hystrix为了保证不会因为某个依赖服务的间题影响到其他依赖服务而采用了“舱壁模式" (Bulkhead Pattern)来隔离每个依赖的服务
-* 6.`HystrixObservableCommand.construct()`或`HystrixCommand.run()`
+* ==5.线程池/请求队列/信号量是否占满==
   
-  * Hystrix会根据编写的方法来决定采取什么样的方式去请求依赖服务
+  * 如果与命令相关的线程池和请求队列，或者信号量(不使用线程池的时候)已经被占满，那么Hystrix也不会执行命令， 而是转接到fallback处理逻辑(对应下面第8步)。
+    * 这里Hystrix所判断的线程池并非容器的线程池，而是==每个依赖服务的专有线程池==。 Hystrix为了==保证不会因为某个依赖服务的间题影响到其他依赖服务==而采用了“舱壁模式" (Bulkhead Pattern)来==隔离每个依赖的服务==
+* ==6.`HystrixObservableCommand.construct()`或`HystrixCommand.run()`==
+  
+  * Hystrix会根据编写的方法来决定采取什么样的方式去==请求依赖服务==
     * `HystrixCommand.run()`：返回一个单一的结果，或者抛出异常
     * `HystrixObservableCommand.construct()`： 返回一个Observable对象来发射多个结果，或通过onError发送错误通知 
-    * 如果run()或construet()方法的执行时间超过了命令设置的超时阙值， 当前处理线程将会抛出 一个TimeoutException (如果该命令不在其自身的线程中执行， 则会通过单独的计时线程来抛出)。在这种情况下，Hystrix会转接到fallback处理逻辑(第8步)。 同时，如果当前命令没有被取消或中断， 那么它最终会忽略run()或者construct ()方法的返回 
-    * 如果命令没有抛出异常并返回了结果，那么Hystrix在记录 一些日志并采集监控报告之后将该结果返回。 在使用 run()的情况下，Hystrix 会返回一 个Observable, 它发射单个结果并产生onCompleted的结束通知；而在使用construct ()的情况下，Hystrix会直接返回该方法产生的Observable对象 
-* 7.计算断路器的健康度
+    * 如果run()或construet()方法的==执行时间超过了命令设置的超时阙值==， 当前处理线程将会抛出 一个TimeoutException (如果该命令不在其自身的线程中执行， 则会通过单独的计时线程来抛出)。在这种情况下，Hystrix会转接到fallback处理逻辑(第8步)。 同时，如果当前命令没有被取消或中断， 那么它最终会忽略run()或者construct ()方法的返回 
+    * ==如果命令没有抛出异常并返回了结果，那么Hystrix在记录 一些日志并采集监控报告之后将该结果返回==。 在使用 run()的情况下，Hystrix 会返回一 个Observable, 它发射单个结果并产生onCompleted的结束通知；而在使用construct ()的情况下，Hystrix会直接返回该方法产生的Observable对象 
+* 7.==计算断路器的健康度==
+  
   * Hystrix会将“成功”、 “失败”、 “拒绝”、 “ 超时” 等信息报告给断路器，而断路器会维护一组计数器来统计这些数据
   * 断路器会使用这些统计数据来决定是否要将断路器打开， 来对某个依赖服务的请求进行 “熔断/短路”，直到恢复期结束。若在恢复期结束后，根据统计数据判断如果还是未达到健康指标，就再次 “熔断/短路” 
-* 8.fallback处理
+* ==8.fallback处理==
+  
   * 当命令执行失败的时候，Hystrix会进入fallback尝试回退处理， 通常也称该操作 为 “ 服务降级”。而能够引起服务降级处理的清况有下面几种: 
     * 第4步， 当前命令处于 “ 熔断I短路 ” 状态， 断路器是打开的时候
     * 第5步， 当前命令的线程池、 请求队列或 者信号量被占满的时候
     * 第6步，HysrixObservableCommandc.onstruct()或HystrixCommand.run() 抛出异常的时候 
   * 在服务降级逻辑中， 需要实现一个通用的响应结果， 并且该结果的处理逻辑应当是从缓存或是根据一些静态逻辑来获取，而不是依赖网络请求获取。
     * 如果一定要在降级逻辑中包含网络请求，那么该请求也必须被包装在HystrixCommand或是HystrixObservableCommand中， 从而形成级联的降级策略， 而最终的降级逻辑一定不是一个依赖网络请求的处理， 而是一个能够稳定地返回结果的处理逻辑
-    * 在HystrixCommand和HystrixObservableCommand中实现降级逻辑时还略有不同:
-      * 当使用HystrixCommand的时候，通过实现HystrixCommand.getFallback() 来实现服务降级逻辑 
-      * 当使用 HystrixObservableCommand 的时候， 通过 HystixObservable­-Command.resumeWithFallback()实现服务降级逻辑， 该方法会返回一个 Observable对象来发射一个或多个降级结果 
-      * 当命令的降级逻辑返回结果之后， Hystrix 就将该结果返回给调用者
-        * 当使用 HystrixCommand.getFallback()的时候， 它会返回 一个Observable对象， 该对象会发射 getFallback()的处理结果
-        * 而使用 HystrixObservableCommand. resumeWithFallback()实现的时候， 它会将Observable对象直接返回 
+  * 在HystrixCommand和HystrixObservableCommand中实现降级逻辑时还略有不同:
+    * 当使用HystrixCommand的时候，通过实现HystrixCommand.getFallback() 来实现服务降级逻辑 
+    * 当使用 HystrixObservableCommand 的时候， 通过 HystixObservable­-Command.resumeWithFallback()实现服务降级逻辑， 该方法会返回一个 Observable对象来发射一个或多个降级结果 
+    * 当命令的降级逻辑返回结果之后， Hystrix 就将该结果返回给调用者
+      * 当使用 HystrixCommand.getFallback()的时候， 它会返回 一个Observable对象， 该对象会发射 getFallback()的处理结果
+      * 而使用 HystrixObservableCommand. resumeWithFallback()实现的时候， 它会将Observable对象直接返回 
   * 如果没有为命令实现降级逻辑或者降级处理逻辑中抛出了异常，Hystrix 依然会返回一个Observable对象， 但是它不会发射任何结果数据， 而是通过onError 方法通知命令立即中断请求，并通过onError()方法将引起命令失败的异常发送给调用者
   * 如果降级执行发现失败的时候，Hystrix会根据不同的执行方法做出不同的处理
     * execute()：抛出异常

@@ -586,7 +586,7 @@ sbd.setSource(resource);
     * 创建过程完毕
   * 对于`singleton`的`Bean`，容器关闭时，如果`Bean`实现了`DisposableBean`接口则调用接口`destroy`方法（在此可以编写释放资源、记录日志等操作）；调用`Bean`自身的`destroy`方法完成`Bean`资源的释放等操作
 * `Bean`的完整生命周期经历了各种方法调用，这些方法可以划分为以下几类：
-* `Bean`自身方法：如调用`Bean`构造函数实例化`Bean`、调用`setter`设置`Bean`的属性值及通过`<bean>`的`init-method`和`destroy-method`所指定的方法
+  * `Bean`自身方法：如调用`Bean`构造函数实例化`Bean`、调用`setter`设置`Bean`的属性值及通过`<bean>`的`init-method`和`destroy-method`所指定的方法
   * `Bean`级生命周期接口方法：如`BeanNameAware`、`BeanFactoryAware`、`ApplicationContextAware`、`InitializingBean`和`DisposableBean`，这些接口方法由`Bean`类直接实现
   * 容器级生命周期接口方法：`InstantiationAwareBeanPostProcessor`和`BeanPostProcessor`两个接口——后置处理器
     * 当`Spring`容器创建任何`Bean`的时候，这些后置处理器都会发挥作用——影响时全局性的，不过可以合理编写后置处理器对要改造的`Bean`进行加工处理
@@ -604,8 +604,7 @@ sbd.setSource(resource);
   - 只是MVC设计模式的应用典范，给MVC的实现定制了一套标准
   - M：支持将url参数自动封装成一个`Object`或者`Map`
   - V：自己只有一个默认的`template`、支持扩展、自定义View，而且能够自定义
-- C：把限制放宽了，任何一个类，都有可能是一个`Controller`
-  
+  - C：把限制放宽了，任何一个类，都有可能是一个`Controller`
 * `Spring MVC`原理
   
 * `Servlet`是`j2ee`的标准，`Spring MVC`是对于`Servlet`的再包装，使得更易容，更专注于业务开发
@@ -618,7 +617,7 @@ sbd.setSource(resource);
     * `web.xml`
       * 配置`DispatcherServlet`，作为`SpringMVC`的启动入口
       * 配置`init-param`，固定属性名字`contextConfigLocation`，指定`application.xml`路径，通常会配置成`classpath:application.xml`
-    * 配置`servlet-pattern`，配置一个请求路径的规则，通常会配置成`/*`
+      * 配置`servlet-pattern`，配置一个请求路径的规则，通常会配置成`/*`
   
 * 初始化阶段
   
@@ -628,8 +627,7 @@ sbd.setSource(resource);
   
   ![image-20190519215044972](/Users/dingyuanjie/Documents/study/github/woodyprogram/img/image-20190519215044972.png)
   
-  1. `DispatcherServlet`接收请求后查询一个或多个处理映射器来确定将请求发送给相应的控制器
-     * 处理映射器会根据请求所携带的URL信息来进行决策
+  1. `DispatcherServlet`接收请求后查询一个或多个处理映射器，处理映射器会根据请求所携带的URL信息来进行决策，来确定将请求发送给相应的控制器
   2. 控制器接受请求并根据请求的类型（`Get/Post`）调用相应的服务方法完成业务逻辑后，将产生的模型数据和用于渲染输出的视图逻辑名返回给`DispatcherServlet`
   3. `DispatcherServlet`通过视图解析器来将逻辑视图名匹配为一个特定的视图实现，视图将使用模型数据渲染输出
   4. 输出会通过响应对象传递给客户端
@@ -761,14 +759,14 @@ sbd.setSource(resource);
 * `BeanFactory` 和 `ApplicationContext` 有什么区别?  
 
   * `BeanFactory`负责读取`Bean`配置文档，管理`Bean`的加载，实例化，维护`Bean`之间的依赖关系，负责`Bean`的生命周期
-* `ApplicationContext`由`BeanFactory`派生而来，还提供了以下的功能
-    * 利用`MessageSource`进行国际化
-      * 由于`ApplicationContext`扩展`MessageResource`接口，因而具有消息处理的能力(i18N)
-    * 事件机制(Event) 
-        * 当`ApplicationContext`中发布一个`ApplicationEvent`事件时，所有扩展了`ApplicationListener`的`Bean`都将会接受到这个事件，并进行相应处理
-    * 底层资源的访问
-        * `ApplicationContext`扩展了`ResourceLoader`(资源加载器)接口，从而可加载多个`Resource`，而`BeanFactory`是没有扩展`ResourceLoader  `
-    * 对Web应用的支持
+  * `ApplicationContext`由`BeanFactory`派生而来，还提供了以下的功能
+  * 利用`MessageSource`进行国际化
+    * 由于`ApplicationContext`扩展`MessageResource`接口，因而具有消息处理的能力(i18N)
+  * 事件机制(Event) 
+      * 当`ApplicationContext`中发布一个`ApplicationEvent`事件时，所有扩展了`ApplicationListener`的`Bean`都将会接受到这个事件，并进行相应处理
+  * 底层资源的访问
+      * `ApplicationContext`扩展了`ResourceLoader`(资源加载器)接口，从而可加载多个`Resource`，而`BeanFactory`是没有扩展`ResourceLoader  `
+  * 对Web应用的支持
   * 其它区别 
       * `BeanFactroy`采用延迟加载形式来注入`Bean`，即只有在使用到某个`Bean`时(调用`getBean()`)，才对该`Bean`进行加载实例化
       * `ApplicationContext`则相反，它是在容器启动时，一次性创建了所有作用范围为单例且非延迟加载的`Bean`。这样，在容器启动时就可以发现`Spring`中存在的配置错误
@@ -813,12 +811,11 @@ sbd.setSource(resource);
   1. `BeanDifinition`的`Resource`定位
      * 指的是`BeanDifinition`的资源定位，它由`ResourceLoader`通过统一的`Resource`接口来完成，这个`Resource`对各种形式的`BeanDifinition`的使用都提供了统一的接口
   2. `BeanDifinition`的载入与解析
-     * 把用户定义好的`Bean`表示成`Ioc`容器内部的数据结构，而这个容器内部的数据结构就是`BeanDifinition`
+     * 把用户定义好的`Bean`表示成`Ioc`容器内部的数据结构`BeanDifinition`
        * 具体来说，`BeanDifinition`实际上就是POJO对象在IOC容器中的抽象，通过这个`BeanDifinition`定义的数据结构，使IOC容器能够方便的对POJO对象也就是Bean进行管理
   3. `BeanDifinition`在Ioc容器中的注册
-     * 通过调用`BeanDifinitionRegistry`接口来实现
-       * 把载入过程中解析得到的`BeanDifinition`向Ioc容器进行注册
-
+     * 通过调用`BeanDifinitionRegistry`（接口来实现，）把载入过程中解析得到的`BeanDifinition`向Ioc容器进行注册
+  
 * `IOC`容器的初始化过程，一般不包含Bean依赖注入的实现
   * 在Ioc的设计中，`Bean`定义的载入和依赖注入是俩个独立的过程
   * 依赖注入一般发生在应用第一次通过`getBean`向容器索取`Bean`的时候。（使用预实例化的配置除外）

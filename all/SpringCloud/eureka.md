@@ -1,18 +1,18 @@
 # Spring Cloud Eureka：服务治理
 
 * 负责微服务架构中的服务治理功能
-  * 围绕着服务注册与服务发现机制来完成对微服务应用实例的自动化管理 
+  * ==围绕着服务注册与服务发现机制来完成对微服务应用实例的自动化管理==
 
 ## 服务注册
 
-* 每个服务单元向注册中心登记自己提供的服务
+* ==每个服务单元向注册中心登记自己提供的服务==
   * 将主机与端口号、 版本号、 通信协议等附加信息告知注册中心， 注册中心按服务名分类组织服务清单 
-* 服务注册中心以心跳的方式去监测清单中的服务是否可用
+* ==服务注册中心以心跳的方式去监测清单中的服务是否可用==
   * 若不可用需要从服务清单中剔除， 达到排除故障服务的效果 
 
 ## 服务发现
 
-* 在服务治理框架下，服务间不再通过指定具体的实例地址来调用，而是向服务名发起请求调用
+* ==在服务治理框架下，服务间不再通过指定具体的实例地址来调用，而是向服务名发起请求调用==
   * 服务调用方在调用服务提供方接口时，并不知道具体的服务实例位置
   * 调用方向服务注册中心咨询服务， 并获取所有服务的实例清单， 以实现对具体服务实例的访问 
 * 比如， 现有服务C希望调用服务A，服务C就需要向注册中心发起咨询服务请求， 服务注册中心就会将服务A的位置清单返回给服务C
@@ -23,11 +23,11 @@
 * 服务端与客户端均采用Java编写
   * 由于Eureka服务端的服务治理机制提供了完备的RESTful API，所以它也支持将非Java语言构建的微服务应用纳入Eureka的服务治理体系中
 * Eureka服务端，也称服务注册中心
-  * 支持高可用配置。它依托于强一致性提供良好的服务实例可用性，可以应对多种不同的故障场景
+  * ==支持高可用配置==。它依托于强一致性提供良好的服务实例可用性，可以应对多种不同的故障场景
     * 如果Eureka以集群模式部署， 当集群中有分片出现故障时， 那么Eureka就转入自我保护模
       式。 它允许在分片故障期间继续提供服务的发现和注册， 当故障分片恢复运行时， 集群中
       的其他分片会把它们的状态再次同步回来
-* Eureka客户端，主要处理服务的注册与发现
+* ==Eureka客户端，主要处理服务的注册与发现==
   * 客户端服务通过注解和参数配置的方式，嵌入在客户端应用程序的代码中，
     * 在应用程序运行时，Euerka客户端向注册中心注册自身提供的服务并周期性地发送心跳来更新它的服务租约
     * 同时， 它也能从服务端查询当前注册的服务信息并把它们缓存到本地并周期性地刷新服务状态 
@@ -43,7 +43,7 @@
 
 * 通过`@EnableEurekaServer` 注解主类启动一个服务注册中心提供给其他应用进行对话
 
-* 在默认设置下， 该服务注册中心也会将自己作为客户端来尝试注册它自己
+* ==在默认设置下， 该服务注册中心也会将自己作为客户端来尝试注册它自己==
 
   ```properties
   # application.properties
@@ -63,7 +63,7 @@
 
   * 实际上就是将自己作为服务向其他服务注册中心注册自己
 
-    * 形成一组互相注册的服务注册中心，以实现服务清单的互相同步，达到高可用的效果
+    * ==形成一组互相注册的服务注册中心，以实现服务清单的互相同步，达到高可用的效果==
 
     * 创建application-peer1.properties 作为peer1服务中心的配置， 并将serviceUrl指向peer2
     
@@ -72,24 +72,23 @@
       server.port=1111
       eureka.instance.hostname=peer1
       eureka.client.serviceUrl.defaultZone=http://peer2:1112/eureka/
-  ```
+      ```
       
-* 创建application-peer2.properties 作为peer1服务中心的配置， 并将serviceUrl指向peer1
-    
+    * 创建application-peer2.properties 作为peer1服务中心的配置， 并将serviceUrl指向peer1
+      
       ```properties
       spring.application.name=eureka-server
       server.port=1112
       eureka.instance.hostname=peer2
       eureka.client.serviceUrl.defaultZone=http://peer1:1111/eureka/
-    ```
-    
-    * 在/etc/hosts文件中添加对peer1和 peer2的转换， 让上面配置的host形式的serviceUrl能在本地正确访w问到
-      
-      ```properties
-      127.0.0.1 peerl
-      127.0.0.1 peer2
       ```
       
+    * 在/etc/hosts文件中添加对peer1和 peer2的转换， 让上面配置的host形式的serviceUrl能在本地正确访问到
+    
+      ```
+      127.0.0.1 peerl
+      127.0.0.1 peer2 
+      ```
     * 通过spring.profiles.active属性来分别启动peerl和peer
       
       ```shell
@@ -147,8 +146,8 @@
 
 * 服务发现的任务由Eureka的客户端完成，而服务消费的任务由ribbon完成
 
-  * Ribbon是一个基于HTTP和TCP的客户端负载均衡器
-    * 通过客户端中配置的`ribbonServerList`服务端列表去轮询访问以达到均衡负载的作用 
+  * ==Ribbon是一个基于HTTP和TCP的客户端负载均衡器==
+    * ==通过客户端中配置的`ribbonServerList`服务端列表去轮询访问以达到均衡负载的作用== 
     * 当Ribbon与Eureka联合使用时，Ribbon的服务实例清单RibbonServerList会被DiscoveryEnabledNIWSServerList重写， 扩展成从Eureka注册中心中获取服务端列表。
     * 同时它也会用 NIWSDiscoveryPing来取代IPing，它将职责委托给Eureka 来确定服务端是否已经启动 
 
@@ -176,8 +175,8 @@
   </dependency>
   ```
 
-* 通过`@EnableDiscoveryClient`注解主类，让该应用注册为 Eureka 客户端应用， 以获得服务发现的能力。 同时， 在该主类中创建 `RestTemplate` 的 Spring Bean 实例，并通过 `@LoadBalanced` 注解开启客户端
-  负载均衡
+* ==通过`@EnableDiscoveryClient`注解主类，让该应用注册为 Eureka 客户端应用， 以获得服务发现的能力。 同时， 在该主类中创建 `RestTemplate` 的 Spring Bean 实例，并通过 `@LoadBalanced` 注解开启客户端
+  负载均衡==
 
   ```java
   @Bean
@@ -223,17 +222,17 @@
 
 * 服务提供者
 
-  * 服务注册
+  * ==服务注册==
 
-    * 服务提供者在启动时会带上自身服务的一些元数据信息来发送REST请求将自己注册到EurekaServer
+    * ==服务提供者在启动时会带上自身服务的一些元数据信息来发送REST请求将自己注册到EurekaServer==
     * Eureka Server接收到这个REST请求之后，将元数据信息存储在一个双层结构Map中，其中第一层的key是服务名，第二层的key是具体服务的实例名 
     * 在服务注册时， 需要确认一 下`eureka.client.register-with-eureka=true`参数是否正确， 该值默认为true。 若设置为false将不会启动注册操作
 
-  * 服务同步
+  * ==服务同步==
 
     * 服务注册中心互相注册为服务，通过请求转发，服务提供者的服务信息可以通过任意一台注册中心获取到
 
-  * 服务续约
+  * ==服务续约==
 
     * 在注册完服务之后，服务提供者会维护一个心跳用来持续告诉EurekaServer自己还可用，以防止Eureka Server 的剔除任务将该服务实例从服务列表中排除出去
     
@@ -245,48 +244,44 @@
     ```
 
 * 服务消费者
-  * 获取服务
-    * 服务消费者启动时会发送一个REST请求给服务注册中心来获取注册的服务清单 
+  * ==获取服务==
+    * ==服务消费者启动时会发送一个REST请求给服务注册中心来获取注册的服务清单==
       * 为了性能考虑， Eureka Server会维护一份只读的服务清单来返回给客户端，同时该缓存清单会每隔30秒更新一次 
     * 确保`eureka.client.fetch-registry=true`参数没有被修改成false, 该值默认为true
     * 缓存清单的更新时间`eureka.client.registry-fetch-interval-seconds=30`
-  * 服务调用
-    * 服务消费者获取服务清单后，通过服务名可获得具体提供服务的实例名和该实例的元数据信息。
+  * ==服务调用==
+    * ==服务消费者获取服务清单后，通过服务名可获得具体提供服务的实例名和该实例的元数据信息==
       * 因为有这些服务实例的详细信息， 所以客户端可以根据自己的需要决定具体调用哪个实例
       * 在Ribbon中会默认采用轮询的方式进行调用，从而实现客户端的负载均衡 
     * 对于访问实例的选择，Eureka中有Region和Zone的概念
       * 一个Region中可以包含多个Zone, 每个服务客户端需要被注册到一个Zone中， 所以每个客户端对应一个Region和一个Zone
       * 在进行服务调用的时候，优先访问同处一个Zone中的服务提供方， 若访问不到，就访问其他的Zone 
-  * 服务下线
+  * ==服务下线==
     * 在客户端程序中， 当服务实例进行正常的关闭操作时， 它会触发一个服务下线的REST请求给Eureka Server，服务端在接收到请求之后， 将该服务状态置为下线(DOWN)，并把该下线事件传播出去
 * 服务注册中心
-  * 失效剔除
-    * 为将服务列表中无法提供服务的实例剔除，Eureka Server 在启动的时候会创建一个定时任务，默认每隔一段时间(默认为60秒) 将当前清单中超时(默认为90秒)没有续约的服务剔除出去
-  * 自我保护
+  * ==失效剔除==
+    * ==为将服务列表中无法提供服务的实例剔除，Eureka Server 在启动的时候会创建一个定时任务，默认每隔一段时间(默认为60秒) 将当前清单中超时(默认为90秒)没有续约的服务剔除出去==
+  * ==自我保护==
     * 服务注册到EurekaSrevre 之后，会维护一个心跳连接，告诉EurekaServer自己还可用
-    * Eurkea Server在运行期间，会统计心跳失败的比例在15分钟之内是否低于85%
-      * 如果出现低于的情况(在单机调试的时候很容易满足， 实际在生产环境上通常是由于网络不稳定导致)， EurekaServer会将当前的实例注册信息保护起来， 让这些实例不会过期， 尽可能保护这些注册信息
+    * ==Eurkea Server在运行期间，会统计心跳失败的比例在15分钟之内是否低于85%==
+      * 如果出现低于的情况(在单机调试的时候很容易满足， 实际在生产环境上通常是由于网络不稳定导致)， ==EurekaServer会将当前的实例注册信息保护起来， 让这些实例不会过期， 尽可能保护这些注册信息==
       *  但是， 在这段保护期间内实例若出现问题， 那么客户端很容易拿到实际已经不存在的服务实例， 会出现调用失败的清况， 所以客户端必须要有容错机制， 比如可以使用请求重试、 断路器等机制
     * 本地进行开发的时候， 可以使用`eureka.server.enable-self-preservation=false`参数来关闭保护机制， 以确保注册中心可以将不可用的实例正确剔除 
 
 ## 源码分析
 
-* `DiscoveryClient`是`Spring Cloud`的接口
-  * 定义了用来发现服务的常用抽象方法
-  * 该接口可以有效地屏蔽服务治理的实现细节
-    * 所以使用 Spring Cloud 构建的微服务应用可以方便地切换不同服务治理框架， 而不改动程序代码， 只需要另外添加一些针对服务治理框架的配置即可 
-
+* ==`DiscoveryClient`是`Spring Cloud`的接口==
+  * ==定义了用来发现服务的常用抽象方法==
+  * ==该接口可以有效地屏蔽服务治理的实现细节==
+    * ==所以使用 Spring Cloud 构建的微服务应用可以方便地切换不同服务治理框架， 而不改动程序代码， 只需要另外添加一些针对服务治理框架的配置即可==
 * `EurekaDiscoveryClient`是对该接口的实现，从命名来判断，它实现的是对 Eureka 发现服务的封装
-
-  ```java
-  //DiscoveryClient类，用于帮助与Eureka Server互相协作
-  //Eureka Client负责下面的任务:
-  	//-向Eureka Server注册服务实例 
-    //-向Eureka Server服务租约
-    //-当服务关闭期间， 向Eureka Server取消租约 
-    //-查询Eureka Server中的服务实例列表
-    //Eureka Client还需要配置一个Eureka Server的 URL列表。
-  ```
+* DiscoveryClient类，用于帮助与Eureka Server互相协作
+  * ==Eureka Client负责下面的任务：==
+  * 向Eureka Server注册服务实例
+    * 向Eureka Server服务租约
+    * 当服务关闭期间， 向Eureka Server取消租约
+    * 查询Eureka Server中的服务实例列表
+    * Eureka Client还需要配置一个Eureka Server的 URL列表
 
 ## 配置详解
 
@@ -335,7 +330,7 @@
       * 可直接通过设置`server.port=0`或使用随机数`server.port=${randorn.int[10000,19999]}`来
         让Tomcat 启动的时候采用随机端口，注册到 Eureka Server 的实例名都是相同的，使得只有一个服务实例能够正常提供服务
       * 通过设置实例名规则来轻松解决：`eureka.instance.instanceid=${spring.application.name}:${random.int}`
-        * 利用应用名加随机数的方式来区分不同的实例， 从而实现在同一主机上， 不指定端口就能轻松启动多个实例的效果
+        * ==利用应用名加随机数的方式来区分不同的实例， 从而实现在同一主机上， 不指定端口就能轻松启动多个实例的效果==
 
   * 端点配置
 
@@ -346,7 +341,7 @@
     eureka.instance.statusPageUrlPath=${management.context-path}/info
     eureka.instance.healthCheckUrlPa七h=${management.context-path}/health
     
-    # 有时候为了安全考虑， 也有可能会修改/info 和/health 端点的原始路径。
+    # 有时候为了安全考虑，也有可能会修改/info 和/health 端点的原始路径。
     endpoints.info.path=/appinfo 
     endpoints.health.path=/checkHealth
     eureka.instance.statusPageOrlPath=/${endpoints.info.path} 
@@ -361,8 +356,8 @@
 * 健康检测
   * 默认情况下，`Eureka`中各个服务实例的健康检测并不是通过`spring-boot-actuator`模块的`/health` 端点来实现的， 而是依靠客户端心跳的方式来保持服务实例的存活
     * 默认的心跳实现方式可有效检查客户端进程是否正常运作， 但却无法保证客户端应用能够正常提供服务
-      * 当微服务应用与外部资源（如数据库、缓存、消息代理等）无法联通时，无法提供正常的对外服务，但是心跳依然在运行，所以它还是会被服务消费者调用，但是实际不能获得预期结果 
-    * 通过简单的配置， 把`Eureka`客户端的健康检测交给`spring-boot-actuator`模块的`/health`端点， 以实现更加全面的健康状态维护
+      * ==当微服务应用与外部资源（如数据库、缓存、消息代理等）无法联通时，无法提供正常的对外服务，但是心跳依然在运行，所以它还是会被服务消费者调用，但是实际不能获得预期结果== 
+    * 通过简单的配置， ==把`Eureka`客户端的健康检测交给`spring-boot-actuator`模块的`/health`端点， 以实现更加全面的健康状态维护==
       * `spring-boot-starter-actuator`
       * 增加参数配置 `eureka.client.healthcheck.enabled=true`
       *  让服务注册中心可以正确访问到健康检测端点

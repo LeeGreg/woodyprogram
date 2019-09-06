@@ -53,7 +53,7 @@
 
   * 新的包，java.time包
 
-      * 该包包含了所有关于日期、时间、时区、持续时间、和时钟操作的类
+      * 该包包含了所有关于日期、时间、时区、持续时间和时钟操作的类
       * 这些类都是不可变的，线程安全的
 
   * 接口中增加静态方法和默认方法
@@ -769,9 +769,9 @@ String字符串变量的连接动作，在编译阶段会被转化成`StringBuil
   * 不用返回值作区分：因为可以忽略方法的返回值 =>可能让系统不能区分调用了那一个
 * 方法重写（两同两小一大）
   * 子类包含与父类同名方法的现象(要么都实例方法，要么都类方法)
+    * 方法名相同、形参列表相同
     * ⼦类方法访问权限 ⼤于等于 父类
     * 子类⽅法返回值类型 小于等于 父类的方法返回值类型
-    * 方法名相同、形参列表相同
     * ⼦类方法声明抛出的异常类 小于等于 父类
 
 ## 接口和抽象类
@@ -781,7 +781,7 @@ String字符串变量的连接动作，在编译阶段会被转化成`StringBuil
   * 静态常量；不包含初始化块；不包含构造器；抽象方法（`public abstract`）、静态方法、默认方法
 * 抽象类
   * 模版式设计、单继承
-  * 成员变量、静态常量；可包含初始化块；可包含构造器让子类调用完成属于抽象类的初始化操作、不能创建实例对象；抽象方法(`public，protected`和默认)、普通方法、静态方法
+  * 成员变量、静态常量；可包含初始化块；可包含构造器让子类调用完成属于抽象类的初始化操作；抽象方法(`public，protected`和默认)、普通方法、静态方法
 
 * 共同点
   * 都不能被实例化，都可包含抽象⽅法
@@ -938,8 +938,8 @@ AppVersionTypeEnum.ENTRANCE_MACHINE.getVal()
    * 修饰的类不可以有子类
 * 修饰的变量不可改变
    * 修饰引用类型变量的地址不会改变，但对象完全可发⽣改变
-   * 修饰的⽅法不可被重写
    
+* 修饰的⽅法不可被重写
 2. 好处：
    * final关键字提高了性能。JVM和Java应用都会缓存final变量
    * final变量可以安全的在多线程环境下进行共享，而不需要额外的同步开销
@@ -1107,7 +1107,7 @@ AppVersionTypeEnum.ENTRANCE_MACHINE.getVal()
 
   3. 只能保存同一个枚举类的枚举值作为集合元素
 
-只有当需要一个保持排序的Set时，才应该使⽤用TreeSet，否则都应该使用HashSet
+只有当需要一个保持排序的Set时，才应该使⽤TreeSet，否则都应该使用HashSet
 
 一般要对list进行除重的话，可以将list转化为set
 
@@ -1227,11 +1227,10 @@ AppVersionTypeEnum.ENTRANCE_MACHINE.getVal()
   * 性质
   
     1. 节点是红色或黑色
-    2. 根节点是黑色
-    3. 每个叶节点是黑色的
+    2. 根节点和叶子节点是黑色
     4. 每个红色节点的两个子节点都是黑色。(从每个叶子到根的所有路径上不能有两个连续的红色节点)
     5. 从任一节点到其每个叶子的所有路径都包含相同数目的黑色节点
-  
+    
   * 这些约束强制了红黑树的关键性质：
     * 从根到叶子的最长的可能路径不多于最短的可能路径的两倍长
     * 结果是这个树大致上是平衡的
@@ -1838,8 +1837,8 @@ AppVersionTypeEnum.ENTRANCE_MACHINE.getVal()
 public class LRUCache2 {
     private HashMap<Integer, Integer> cacheMap = new HashMap<>();
     private LinkedList<Integer> recentlyList = new LinkedList<>();
+  
     private int capacity;
-
     public LRUCache2(int capacity) {
         this.capacity = capacity;
     }

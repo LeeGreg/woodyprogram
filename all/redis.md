@@ -3,16 +3,43 @@
 * redis实现分布式锁代码
 
 - 如何保证缓存里都是热点数据？
+  
   - 可以将内存最大使用量设置为热点数据占用的内存量，然后启用`allkeys-lru`淘汰策略，将最近最少使用的数据淘汰
+  
 - 为什么使用Redis而不是使用Map做缓存
   - 应用内缓存（如Map）和组件缓存（如Redis、Memached）
     - 应用内缓存，生命周期随JVM的销毁而结束，在多实例的情况下，每个实例都各保存一份，具有不一致性
     - 组件缓存在多实例的情况下共用一份，具有一致性（需要维护高可用）
+  
 - 如果在setnx之后执行expire之前进程意外crash或者要重启维护了，那会怎么样？
   - 先拿setnx来争抢锁，抢到之后，再用expire给锁加一个过期时间防止锁忘记了释放
+  
   - Set有同时把setnx和expire合成一条指令来用的指令
+  
+    `set key value [EX seconds][PX milliseconds][NX|XX]`
+  
+    ```shell
+    # EX seconds ： 将键的过期时间设置为 seconds 秒。 执行 SET key value EX seconds 的效果等同于执行 SETEX key seconds value 
+    SET key-with-expire-time "hello" EX 10086
+    GET key-with-expire-time
+    TTL key-with-expire-time
+    # PX milliseconds ： 将键的过期时间设置为 milliseconds 毫秒。 执行 SET key value PX milliseconds 的效果等同于执行 PSETEX key milliseconds value
+    SET key-with-pexpire-time "moto" PX 123321
+    GET key-with-pexpire-time
+    PTTL key-with-pexpire-time
+    # NX ： 只在键不存在时， 才对键进行设置操作。 执行 SET key value NX 的效果等同于执行 SETNX key value
+    SET not-exists-key "value" NX        # 键不存在，设置成功
+    SET not-exists-key "new-value" NX	 	 # 键已经存在，设置失败
+    # XX ： 只在键已经存在时， 才对键进行设置操作
+    EXISTS exists-key
+    SET exists-key "value" XX         # 因为键不存在，设置失败
+    SET exists-key "value"						# 先给键设置一个值
+    SET exists-key "new-value" XX			# 设置新值成功
+    ```
+  
   - 针对字符串独有的过期时间设置方式`setex(String key,int seconds,String value)`
-- 假如Redis里面有1亿个key，其中有10w个key是以某个固定的已知的前缀开头的，如果将它们全部找出来？
+  
+- 假如Redis里面有1亿个key，其中有10w个key是以某个固定的已知的前缀开头的，如何将它们全部找出来？
   - 使用keys指令可以扫出指定模式的key列表
     - redis的单线程的。keys指令会导致线程阻塞一段时间，线上服务会停顿，直到指令执行完毕，服务才能恢复
   - 可以使用`scan`指令，`scan`指令可以无阻塞的提取出指定模式的key列表，但是会有一定的重复概率，在客户端做一次去重就可以了，但是整体所花费的时间会比直接用keys指令长
@@ -20,28 +47,41 @@
   - 一般使用list结构作为队列，`rpush`生产消息，`lpop`消费消息。当lpop没有消息的时候，要适当sleep一会再重试
     - 不用sleep，list还有个指令叫`blpop`，在没有消息的时候，它会阻塞住直到消息到来
   - 生产一次消费多次，使用pub/sub主题订阅者模式，可以实现1:N的消息队列；消费者下线的情况下，生产的消息会丢失，得使用专业的消息队列如rabbitmq等
+  
 - redis如何实现延时队列？
   - 使用`sortedset`
     - 时间戳作为`score`，消息内容作为`key`调用`zadd`来生产消息，消费者用`zrangebyscore`指令获取N秒之前的数据轮询进行处理
+  
 - 持久化时突然断电？
   - 取决于aof日志sync属性的配置
   - 如果不要求性能，在每条写指令时都sync一下磁盘，就不会丢失数据。但是在高性能的要求下每次都sync是不现实的，一般都使用定时sync，比如1s1次，这个时候最多就会丢失1s的数据
+  
 - bgsave的原理是什么？
+  
   - fork是指redis通过创建子进程来进行bgsave操作，cow指的是copy on write，子进程创建后，父子进程共享数据段，父进程继续提供读写服务，写脏的页面数据会逐渐和子进程分离开来
+  
 - Pipeline有什么好处，为什么要用pipeline？
+  
   - 可以将多次IO往返的时间缩减为一次，前提是pipeline执行的指令之间没有因果相关性
+  
 - 是否使用过Redis集群，集群的原理是什么？
   - Redis Sentinal着眼于高可用，在master宕机时会自动将slave提升为master，继续提供服务
   - Redis Cluster着眼于扩展性，在单个redis内存不足时，使用Cluster进行分片存储
+  
 - Redis相比memcached有哪些优势？
   - memcached所有的值均是简单的字符串，redis作为其替代者，支持更为丰富的数据类型
   - redis的速度比memcached快很多且可以持久化数据
+  
 - 修改配置不重启Redis会实时生效吗？
+  
   - 针对运行实例，有许多配置选项可以通过`CONFIG SET`命令进行修改，而无需执行任何形式的重启
+  
 - Redis常见性能问题和解决方案？
   - Master最好不要做任何持久化工作，如RDB内存快照和AOF日志文件
   - 如果数据比较重要，某个Slave开启AOF备份数据，策略设置为每秒同步一次
+  
 - Redis回收使用的是什么算法？
+  
   - LRU算法
 
 # Redis
@@ -337,12 +377,12 @@
   3. 执行事务，EXEC 命令触发事务并返回结果给客户端
 - ACID
   - Redis 事务保证了其中的一致性（C）和隔离性（I），但并不保证原子性（A）和持久性（D）
-  - 原子性
-    - 单个 Redis 命令的执行是原子性的，如果事务执行过程中被终止（如接到KILL信号、停机），那么事务执行失败，但是不会进行任何的重试或回滚动作
   - 一致性
     - 事务中的某个命令执行发生错误，只会将错误包含在事务的结果中，不会引起事务中断或失败，不会影响已执行或后面要执行命令的结果，对事务的一致性没影响
   - 隔离性
     - redis是单进程程序，事务可以运行直到执行完所有事务队列中的命令为止
+  - 原子性
+    - 单个 Redis 命令的执行是原子性的，如果事务执行过程中被终止（如接到KILL信号、停机），那么事务执行失败，但是不会进行任何的重试或回滚动作
   - 持久性
     - 取决于redis所使用的持久化模式
       - 事务不过是用队列包裹的一组redis命令，并没有提供额外的持久性功能
@@ -402,7 +442,7 @@ persist key
 
 ### RDB
 
-- 快找方式，当符合【条件】时，reids会fork子进程把数据同步到磁盘临时文件`dump.rdb`（同步完成后替换旧文件），主进程继续处理客户端请求
+- 快照方式，当符合【条件】时，reids会fork子进程把数据同步到磁盘临时文件`dump.rdb`（同步完成后替换旧文件），主进程继续处理客户端请求
 
   - 如需要进行大规模数据的恢复，且对于数据恢复的完整性不是非常敏感，那RDB方式要比AOF方式更加的高效。缺点是最后一次持久化后的数据可能丢失
 

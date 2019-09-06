@@ -103,6 +103,9 @@
   ```
 
 * 三条线程依次交替输出⼗次ABC
+  
+  * 一个线程执行一个任务
+  
   ```java
   class PrintABC {
       private int flag = 1;
@@ -176,10 +179,10 @@
                   }
               }
           }).start();
-      }//main
+    }//main
   }
   ```
-
+  
 * 三个线程T1,T2,T3,保证三个线程顺序执行T1结束执行T2,T2结束执行T3
 
   ```java
@@ -316,7 +319,7 @@
 Thread.State的定义
 
 * NEW：初始状态，线程被构建，但是还没有调用 start 方法
-* RUNNABLED：运行状态，JAVA 线程把操作系统中的就绪和运行两种状态统一 称为“运行中” 
+* RUNNABLED：运行状态，JAVA 线程把操作系统中的就绪和运行两种状态统一称为“运行中” 
   - 当线程对象调用start()方法后，该线程就进⼊就绪状态。
     - 就绪状态的线程处于就绪队列中， 要等待JVM里线程调度器的调度
   - 如果就绪状态的线程获取 CPU 资源，就可以执行 run()，此时线程便处于运行状态。
@@ -1031,16 +1034,16 @@ public class CyclicBarrierTest2 {
   
   ```java
   public class DeadLockSample extends Thread {
-  	private String frs;
+  	private String first;
   	private String second;
-  	public DeadLockSample(String name, String frs, String second) {
+  	public DeadLockSample(String name, String first, String second) {
   		super(name); 
-      this.frs = frs; 
+      this.first = first; 
       this.second = second;
   	}
   	public void run() { 
-      synchronized (frs) {
-  			System.out.println(this.getName() + " obtained: " + frs); 
+      synchronized (first) {
+  			System.out.println(this.getName() + " obtained: " + first); 
         try {
   				Thread.sleep(1000L); 
           synchronized (second) {

@@ -399,8 +399,8 @@ try {
 **Dubbo提供了6种容错机制，分别如下**
 
 * failover(默认)   失败自动切换，重试其他服务器； **retries（2）,不包含第一次**
-* failsafe 失败安全，出现异常时，直接忽略（记录日志）
 * failfast 快速失败， 失败以后立马报错，只发起一次调用
+* failsafe 失败安全，出现异常时，直接忽略（记录日志）
 * failback  失败自动恢复，记录失败请求，定时重发 
 * forking  并行调用多个服务器，只要一个成功即返回 
 * broadcast 广播逐个调用所有提供者，任意一个报错则报错
@@ -497,11 +497,11 @@ dubbo-server.xml和client-client.xml中服务都设置了timeout，客户端的�
 * SPI的缺点
 
   1. 需要遍历所有的实现，并实例化，然后在循环中才能找到需要的实现
-2. 没有给扩展实现命名
+  
+  2. 没有给扩展实现命名
   3. 扩展如果依赖其他的扩展，做不到自动注入和装配
-4. 不提供类似于Spring的IOC和AOP功能
+  4. 不提供类似于Spring的IOC和AOP功能
   5. 扩展很难和其他的框架集成，比如扩展里面依赖了一个Spring bean
-
 * Dubbo 优化后的SPI实现
 
   **Dubbo是基于Java原生SPI机制思想的一个改进**
@@ -510,25 +510,24 @@ dubbo-server.xml和client-client.xml中服务都设置了timeout，客户端的�
 
   1. 需要在resource目录下配置META-INF/dubbo或者META-INF/dubbo/internal或者META-INF/services，并基于SPI接口去创建一个文件
   2. 扩展都有一个别名，用于在应用中引用它们
-3. Dubbo的扩展机制支持IoC,AoP等高级功能
+  3. Dubbo的扩展机制支持IoC，AoP等高级功能
   4. Dubbo的扩展机制能很好的支持第三方IoC容器，默认支持Spring Bean
-  
-  ```java
-  dubbo-client
-  package com.gupaoedu.dubbo.protocol;
-  public class DefineProtocol implements Protocol {...}
-  
-  resources/MEAT-INF/dubbo
-      com.alibaba.dubbo.rpc.Protocol
-          defineProtocol=com.gupaoedu.dubbo.protocol.DefineProtocol
-          
-  public static void main( String[] args ) throws IOException, InterruptedException {
-          ClassPathXmlApplicationContext context=new
-                  ClassPathXmlApplicationContext
-                  ("dubbo-client.xml");
-         Protocol protocol=ExtensionLoader.getExtensionLoader(Protocol.class).
-                  getExtension("defineProtocol");
-          System.out.println(protocol.getDefaultPort());
-          System.in.read();
-  }
-  ```
+```java
+dubbo-client
+package com.gupaoedu.dubbo.protocol;
+public class DefineProtocol implements Protocol {...}
+
+resources/MEAT-INF/dubbo
+    com.alibaba.dubbo.rpc.Protocol
+        defineProtocol=com.gupaoedu.dubbo.protocol.DefineProtocol
+        
+public static void main( String[] args ) throws IOException, InterruptedException {
+        ClassPathXmlApplicationContext context=new
+                ClassPathXmlApplicationContext
+                ("dubbo-client.xml");
+       Protocol protocol=ExtensionLoader.getExtensionLoader(Protocol.class).
+                getExtension("defineProtocol");
+        System.out.println(protocol.getDefaultPort());
+        System.in.read();
+}
+```

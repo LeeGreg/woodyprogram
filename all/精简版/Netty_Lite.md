@@ -74,11 +74,11 @@
   * writeAndFlush()
     * 从tail节点开始往前传播、逐个调用channelHandler的write方法、逐个调用channelHandler的flush方法
 
-* Netty 服务端启动的流程：创建一个引导类，然后给他指定线程模型，IO模型，连接读写处理逻辑，绑定端口之后，服务端就启动起来了，bind 方法是异步的，可通过这个异步机制来实现端口递增绑定
+* Netty 服务端启动的流程：创建一个引导类，然后指定线程模型，IO模型，连接读写处理逻辑，绑定端口之后，服务端就启动起来了，bind 方法是异步的，可通过这个异步机制来实现端口递增绑定
 
   * 服务端 Channel 或者客户端 Channel 设置属性值，设置底层 TCP 参数
 
-* Netty 客户端启动的流程：创建一个引导类，然后给他指定线程模型，IO 模型，连接读写处理逻辑，连接上特定主机和端口，客户端就启动起来了， `connect` 是异步的，可通过异步回调机制来实现指数退避重连逻辑
+* Netty 客户端启动的流程：创建一个引导类，然后指定线程模型，IO 模型，连接读写处理逻辑，连接上特定主机和端口，客户端就启动起来了， `connect` 是异步的，可通过异步回调机制来实现指数退避重连逻辑
 
   * 客户端 Channel 绑定自定义属性值，设置底层 TCP 参数
 
@@ -404,7 +404,7 @@
   * 因此可存储一个到Channel的引用，并且每当需要向远程节点写数据时，都可使用它，即使当时许多线程都在使用它，消息将会保证按顺序发送
 * Channel的注册过程
   
-* 即将 Channel 与对应的 EventLoop 关联，然后调用底层的 Java NIO SocketChannel 的 register 方法, 将底层的 Java NIOSocketChannel 注册到指定的 selector 中
+  * 即将 Channel 与对应的 EventLoop 关联，然后调用底层的 Java NIO SocketChannel 的 register 方法, 将底层的 Java NIOSocketChannel 注册到指定的 selector 中
   
 * Future在操作完成时通知应用程序
 

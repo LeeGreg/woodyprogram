@@ -23,6 +23,19 @@ for(...) {
 // 比较两个金额是否相等：比较差值的绝对值是否小于0.01。Math.abs(d1 - d2);
 ```
 
+## git
+
+```shell
+# 在git上创建一个新仓库 https://github.com/xiaojieWoody/jvm_queue.git
+# 将本地代码推送到新仓库
+echo "# jvm_queue" >> README.md
+git init
+git add .
+git commit -m "init"
+git remote add origin https://github.com/xiaojieWoody/jvm_queue.git
+git push -u origin master
+```
+
 ## RPC与REST
 
 * 耦合性
@@ -73,7 +86,7 @@ for(...) {
   * A系统在自己本地一个事务里操作同时，插入一条数据到消息表
   * 接着A系统将这个消息发送到MQ中去
   * B系统接收到消息之后，在一个事务里，往自己本地消息表里插入一条数据，同时执行其他的业务操作，如果这个消息已经被处理过了，那么此时这个事务会回滚，这样保证不会重复处理消息
-  * B系统执行成功之后，就会更新自己本地消息表的状态以及A系统消息表的状态
+  * B系统执行成功之后，就会更新自己本地消息表的状态以及A系统消息表的状态（可通过zk）
   * 如果B系统处理失败了，那么就不会更新消息表状态，那么此时A系统会定时扫描自己的消息表，如果有没处理的消息，会再次发送到MQ中去，让B再次处理
   * 这个方案保证了最终一致性，哪怕B事务失败了，但是A会不断重发消息，直到B那边成功为止
   * 最大的问题就在于严重依赖于数据库的消息表来管理事务，高并发场景很难扩展
@@ -292,6 +305,17 @@ for(...) {
   
   都是为了减少内存队列中的请求积压，内存队列中积压的请求越多，就可能导致每个读请求hang住的时间越长，也可能导致多个读请求被hang住
   ```
+## JVM内存队列
+
+```java
+// Application#servletListenerRegistrationBean
+// InitListener
+// RequestProcessorThread
+// RequestProcessorThreadPool
+// Request
+// RequestQueue
+```
+
 ## Java8
 
 * lambda表达式
@@ -299,11 +323,8 @@ for(...) {
 ```java
 	// 将List对象中的某个属性取出到另一个List里
   List<Integer> categoryTypeList = productInfoList.stream()
+    // .map(e -> e.getCategoryType())
     .map(ProductInfo::getCategoryType)
-    .collect(Collectors.toList());
-  // 获取list对象中某个属性（List）
-  List<Integer> categoryTypeList = productInfoList.stream()
-    .map(e -> e.getCategoryType())
     .collect(Collectors.toList());
   // 提取某List对象中的几个几个属性去组成另一个List对象
   List<DecreaseStockInput> decreaseStockInputList = orderDTO.getOrderDetailList().stream()
@@ -330,7 +351,6 @@ roleNames.stream().collect(Collectors.joining(","))
 /** 创建时间. */
 @JsonSerialize(using = Date2LongSerializer.class)
 private Date createTime;
-
 /** 更新时间. */
 @JsonSerialize(using = Date2LongSerializer.class)
 private Date updateTime;
@@ -437,7 +457,6 @@ public class SellException extends RuntimeException{
 @Data
 public class GirlException extends RuntimeException{
     private Integer code;
-
     public GirlException(ResultEnum resultEnum) {
         super(resultEnum.getMsg());
         this.code = resultEnum.getCode();
@@ -452,7 +471,6 @@ public class SellerAuthorizeException extends RuntimeException {
 @ControllerAdvice
 public class ExceptionHandle {
     private final static Logger logger = LoggerFactory.getLogger(ExceptionHandle.class);
-
     //@ExceptionHandler(value = Exception.class)
     //@ResponseBody
     //public Result handle(Exception e) {
@@ -658,7 +676,6 @@ public class Luckymoney {
   //            return productInfoOptional.get().addImageHost(upYunConfig.getImageHost());
   //        }
   //        return null;
-
   		productInfoOptional.ifPresent(e -> e.addImageHost(upYunConfig.getImageHost()));
   		return productInfoOptional.orElse(null);
   }
@@ -726,10 +743,6 @@ public class ResultVOUtil {
     }
 }
 ```
-
-
-
-
 
 ## 事务
 
@@ -860,6 +873,7 @@ public class HttpAspect {
           if (!token.equalsIgnoreCase("123456")) {
               return "错误, 权限不合法!";
           }
+          // 如果是记录操作日志，则先执行业务joinPoint.proceed()，然后再记录日志
           return joinPoint.proceed();
       }
   
@@ -876,8 +890,8 @@ public class HttpAspect {
           return "";
       }
   }
-  ```
-
+```
+  
   ```java
   @RestController
   public class DemoController {
@@ -892,8 +906,8 @@ public class HttpAspect {
           return "调用了 user_info 接口.";
       }
   }
-  ```
-
+```
+  
   
 
 ## 单元测试

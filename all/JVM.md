@@ -38,7 +38,7 @@
   - java内存溢出问题你们是怎么排查的
     - 抓取对应pid的dump文件
       - `kill -3 <pid>`
-      - 当使用 `kill -3` 生成 dump 文件时，dump 文件会被输出到标准错误流。假应用运行在 tomcat 上，dump 内容将被发送到`<TOMCAT_HOME>/logs/catalina.out`文件里
+      - 当使用 `kill -3` 生成 dump 文件时，dump 文件会被输出到标准错误流。假设应用运行在 tomcat 上，dump 内容将被发送到`<TOMCAT_HOME>/logs/catalina.out`文件里
     - 然后用 Profiler 工具
   - 图形化工具：
     - jconsole：一个java GUI监视工具，可以以图表化的形式显示各种数据。并可通过远程连接监视远程的服务器VM

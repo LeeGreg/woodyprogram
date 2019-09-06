@@ -162,7 +162,7 @@
 - Consumer，消息消费者
 - Connection，Producer 和 Consumer 与Broker之间的TCP长连接
   - Connection 可以用来创建多个 Channel 实例，但是 Channel 实例不能在线程问共享，应用程序应该为每一个线程开辟一个 Channel
-  - 多线程问共享 Channel 实例是非线程安全的 
+  - 多线程间共享 Channel 实例是非线程安全的 
 - Channel，消息通道，在客户端的每个连接里可以建立多个Channel，每个Channel代表一个会话任务。在RabbitMQ Java Client API中，Channel上定义了大量的编程接口
   - 每个线程把持一个信道，所以信道复用了 Connection 的 TCP 连接
 - 由RoutingKey、Exchange、Queue三个才能决定一个从Exchange到Queue的唯一的线路
@@ -418,7 +418,7 @@ channel.basicPublish( "source", "exKey", null , "exToExDemo". getBytes ()) ;
 - 消息的过期时间
 
   1. `x-message-ttl`通过队列属性设置消息过期时间，队列中所有消息都有相同的过期时间
-2. `expiration`设置单条消息的过期时间:
+  2. `expiration`设置单条消息的过期时间:
 - 在RabbitMQ 重启后 ，持久化的队列的过期时间会被重新计算。
 - 队列的过期时间
 
@@ -723,7 +723,7 @@ try {
 
 * 无法路由的消息去了哪里？
   
-* 如果没有任何设置，无法路由的消息会被直接丢弃
+  * 如果没有任何设置，无法路由的消息会被直接丢弃
   
 * 可能因为路由关键字错误、队列不存在、队列名称错误等导致消息无法路由到相应队列
 
@@ -793,6 +793,7 @@ try {
     * deliveryTag发布的每一条消息都会获得一个唯一的deliveryTag，(任何channel上发布的第一条消息的deliveryTag为1，此后的每一条消息都会加1)，deliveryTag在channel范围内是唯一的 
     * multiple批量确认标志。如果值为true，则执行批量确认，此deliveryTag之前收到的消息全部进行确认; 如果值为false，则只对当前收到的消息进行确认
 * `channel.basicReject(long deliveryTag, boolean requeue);`  单条拒绝
+  
   * `channel.basicNack(long deliveryTag, boolean multiple, boolean requeue);`   批量拒绝  
 
 ## 5. 消费者回调
